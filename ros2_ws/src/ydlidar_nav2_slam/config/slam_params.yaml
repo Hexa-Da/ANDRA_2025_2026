@@ -1,0 +1,60 @@
+# ~/ros2_ws/src/ydlidar_nav2_slam/config/slam_params.yaml
+slam_toolbox:
+  ros__parameters:
+    # General Parameters
+    use_sim_time: false
+    
+    # SLAM Toolbox Params
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_link
+    scan_topic: /scan
+    mode: mapping  # Options: mapping, localization, offline_mapping, offline_localization
+
+    # Optimization Parameters
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+
+    # Mapping parameters
+    resolution: 0.05
+    max_laser_range: 12.0
+    minimum_time_interval: 0.5
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000  # 40 MB
+    
+    # Scanning/optimization parameters
+    optimizer_params:
+      enable_interactive_mode: false  # Interactive mode - needed for localization
+      max_iterations: 20
+      max_iterations_final_stack: 100
+      max_iterations_online: 20
+      max_iterations_recovery: 50
+      max_iterations_localization: 20
+      translation_threshold: 0.01
+      rotation_threshold: 0.01
+      force_exhaustive_loop_closing: false
+      
+    # Loop closure parameters
+    enable_interactive_mode: false
+    enable_detection: true
+    enable_map_update: true
+    max_covariance: 0.01
+    minimum_travel_distance: 0.5
+    minimum_travel_heading: 0.5
+    scan_matcher_profile: 0
+    loop_search_maximum_distance: 10.0
+    loop_match_minimum_response_coarse: 0.7
+    loop_match_minimum_response_fine: 0.5
+
+    # Visualization parameters
+    publish_occupancy_map: true
+    debug_logging: false
+    enable_scan_visualization: true
+
+    # Save the pose graph to file for later evaluation
+    enable_pose_graph_logging: true

@@ -1,0 +1,59 @@
+# ekf_config.yaml
+ekf_filter_node:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.1
+    two_d_mode: true  # Set to false if operating in 3D
+    publish_tf: true
+    
+    # Frame configuration
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link  # Critical - this must be your robot's base frame
+    world_frame: odom
+    
+    # Robot wheels
+    odom0: /odom_robot
+    odom0_config: [true, true, false,
+                  false, false, false,
+                  true, true, false,
+                  false, false, false,
+                  false, false, false]
+    odom0_queue_size: 10
+    odom0_pose_rejection_threshold: 5.0
+    odom0_twist_rejection_threshold: 1.0
+
+      ## ZED2 odometry input
+      #odom1: /zed/zed_node/odom
+      #odom1_config: [true, true, false,
+      #              false, false, false,
+      #              true, true, false,
+      #              false, false, false,
+      #              false, false, false]
+      #odom1_queue_size: 10
+      #odom1_pose_rejection_threshold: 5.0
+      #odom1_twist_rejection_threshold: 1.0
+      #
+      ## ZED2 IMU input
+      #imu0: /zed/zed_node/imu/data
+      #imu0_config: [false, false, false,
+      #             false, false, true,
+      #             false, false, false,
+      #             false, false, true,  # Use yaw
+      #             false, false, false]  # Use yaw rate
+      #imu0_queue_size: 10
+      #imu0_removal_threshold: 0.5
+    
+    # Additional parameters
+    use_control: false
+    smooth_lagged_data: true
+    history_length: 5.0
+
+    # Confiance plus élevée dans l'odométrie des roues pour la position
+    # odom0_pose_covariance_diagonal: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+    # odom0_twist_covariance_diagonal: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+
+      # Confiance plus élevée dans l'IMU pour l'orientation
+      # imu0_pose_covariance_diagonal: [0.1, 0.1, 0.1, 0.1, 0.1, 0.0005]  # Petite valeur pour yaw
+      # imu0_twist_covariance_diagonal: [0.1, 0.1, 0.1, 0.1, 0.1, 0.0005]  # Petite valeur pour yaw_rate
+

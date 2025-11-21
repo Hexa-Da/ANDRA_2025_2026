@@ -1,0 +1,198 @@
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_msgs.msg import Bool
+from cv_bridge import CvBridge
+from nav_msgs.msg import Odometry
+from ultralytics import YOLO
+import cv2
+import numpy as np
+import os
+import time
+from rclpy.serialization import serialize_message
+from rosbag2_py import SequentialWriter, StorageOptions, WriteOptions
+import threading
+
+class Noeud5(Node):
+    def __init__(self):
+        super().__init__('noeud_5')
+        self.position = None
+        self.last_image = None
+        self.lock = threading.Lock()
+        
+        # Abonnement au topic 'photo_topic' pour recevoir les images
+        self.subscription = self.create_subscription(
+            Image,
+            'photo_topic',
+            self.listener_callback,
+            10
+        )
+        
+        self.odom_subscription = self.create_subscription(
+            Odometry,
+            '/odometry/filtered',
+            self.odom_callback,
+            10
+        )
+        
+        self.bridge = CvBridge()
+        
+        # Charger le modèle YOLO
+        model_path = '/home/techlab/dossier_oriana/package1/models/tags_model.pt'
+        self.model = YOLO(model_path)
+        
+        # Création du dossier de stockage des images détectées
+        self.output_dir = "images_detectees"
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+            
+        # Configuration du rosbag
+        self.setup_rosbag()
+        
+        self.get_logger().info('Nœud 5 démarré et prêt à recevoir les images.')
+
+    def setup_rosbag(self):
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.bag_path = f"detection_data_{timestamp}"
+        
+        storage_options = StorageOptions(
+            uri=self.bag_path,
+            storage_id="sqlite3"
+        )
+        
+        write_options = WriteOptions(
+            all_topics=False,
+            max_cache_size=1073741824  # 1 Go de cache
+        )
+        
+        self.writer = SequentialWriter()
+        self.writer.open(storage_options, write_options)
+        
+        # Crée les descripteurs de topic pour le rosbag
+        self.writer.create_topic(
+            {
+                "name": "/detection/image",
+                "type": "sensor_msgs/msg/Image",
+                "serialization_format": "cdr"
+            }
+        )
+        
+        self.writer.create_topic(
+            {
+                "name": "/detection/position",
+                "type": "nav_msgs/msg/Odometry",
+                "serialization_format": "cdr"
+            }
+        )
+        
+        self.get_logger().info(f"Rosbag initialisé à {self.bag_path}")
+
+    def odom_callback(self, msg: Odometry):
+        with self.lock:
+            self.position = msg
+    
+    def listener_callback(self, msg):
+        """Récupère l'image, applique l'IA, publie si une étiquette est détectée"""
+        with self.lock:
+            self.last_image = msg
+            
+        try:
+            # Convertir l'image ROS en image OpenCV
+            img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except Exception as e:
+            self.get_logger().error(f"Erreur de conversion d'image : {e}")
+            return
+            
+        # Appliquer la détection
+        detected, img_with_boxes = self.detect_tags(img)
+        
+        # Afficher et enregistrer l'image si une détection est faite
+        if detected:
+            self.get_logger().info("✅ Étiquette détectée.")
+            
+            # Sauvegarde de l'image avec timestamp
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            image_path = os.path.join(self.output_dir, f"detection_{timestamp}.jpg")
+            cv2.imwrite(image_path, img_with_boxes)
+            self.get_logger().info(f"🖼️ Image sauvegardée : {image_path}")
+            
+            # Enregistrer dans le rosbag
+            with self.lock:
+                if self.position is not None and self.last_image is not None:
+                    self.save_to_rosbag(self.last_image, self.position)
+                    self.get_logger().info(f"📦 Données enregistrées dans le rosbag")
+                    self.get_logger().info(f"📍 Position du robot : x={self.position.pose.pose.position.x:.2f}, y={self.position.pose.pose.position.y:.2f}, z={self.position.pose.pose.position.z:.2f}")
+                else:
+                    self.get_logger().warn("⚠️ Impossible d'enregistrer dans le rosbag: données incomplètes")
+        else:
+            self.get_logger().info("❌ Aucune étiquette détectée.")
+
+    def save_to_rosbag(self, image_msg, odom_msg):
+        """Enregistre l'image et la position dans le rosbag"""
+        current_time_ns = self.get_clock().now().nanoseconds
+        
+        # Enregistrer l'image
+        self.writer.write(
+            "/detection/image",
+            serialize_message(image_msg),
+            current_time_ns
+        )
+        
+        # Enregistrer la position
+        self.writer.write(
+            "/detection/position",
+            serialize_message(odom_msg),
+            current_time_ns
+        )
+
+    def detect_tags(self, img):
+        """Applique le modèle YOLO et retourne l'image annotée"""
+        try:
+            results = self.model(img)
+            img_with_boxes = img.copy()
+            detected = False
+            
+            for result in results:
+                if result.boxes is not None and len(result.boxes) > 0:
+                    for detection in result.boxes:
+                        # Correction pour récupérer les valeurs correctement
+                        x1, y1, x2, y2 = map(int, detection.xyxy[0].cpu().numpy())
+                        conf = detection.conf[0].item()
+                        cls = int(detection.cls[0].item())
+                        label = f"Classe {cls}: {conf:.2f}"
+                        
+                        # Dessiner la bounding box
+                        cv2.rectangle(img_with_boxes, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(img_with_boxes, label, (x1, y1 - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                        detected = True  # Au moins une détection trouvée
+                        
+            return detected, img_with_boxes
+        except Exception as e:
+            self.get_logger().error(f"Erreur dans detect_tags : {e}")
+            return False, img
+            
+    def close_rosbag(self):
+        """Ferme proprement le rosbag"""
+        try:
+            self.writer.close()
+            self.get_logger().info(f"Rosbag fermé à {self.bag_path}")
+        except Exception as e:
+            self.get_logger().error(f"Erreur lors de la fermeture du rosbag : {e}")
+
+def main(args=None):
+    rclpy.init(args=args)
+    image_subscriber = Noeud5()
+    
+    try:
+        rclpy.spin(image_subscriber)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Fermer le rosbag avant de détruire le nœud
+        image_subscriber.close_rosbag()
+        image_subscriber.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()

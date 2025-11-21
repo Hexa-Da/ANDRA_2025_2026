@@ -1,0 +1,6 @@
+ros2 run tf2_ros static_transform_publisher 0.0 0.0 0.0 0.0 0.0 0.0 base_link zed_camera_link
+ros2 run tf2_ros static_transform_publisher 0.1 0.0 0.05 0.0 0.0 0.0 odom base_link
+
+// Save the map
+ros2 service call /slam_toolbox/save_map slam_toolbox/srv/SaveMap "name:
+  data: 'my_map'"
