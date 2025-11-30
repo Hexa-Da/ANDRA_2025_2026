@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-colcon-mixin \
     python3-rosdep \
     python3-vcstool \
+    python3-pip \
+    python3-opencv \
+    ffmpeg \
     ros-humble-rviz2 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,5 +31,14 @@ RUN colcon mixin add default \
 # install ros2 packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ros-base=0.10.0-1* \
+    ros-humble-cv-bridge \
+    ros-humble-image-geometry \
     && rm -rf /var/lib/apt/lists/*
 
+# Installer les dépendances Python pour le projet
+# IMPORTANT: numpy<2 pour compatibilité avec cv_bridge compilé avec NumPy 1.x
+RUN pip3 install --no-cache-dir \
+    "numpy<2" \
+    ultralytics \
+    pillow \
+    matplotlib

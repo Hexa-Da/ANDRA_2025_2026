@@ -2,24 +2,49 @@
 ros2_ws/build/
 ros2_ws/install/
 ros2_ws/log/
+ros2_ws/src/build/
+ros2_ws/src/install/
+ros2_ws/src/log/
+ros_launcher/build/
+ros_launcher/install/
+ros_launcher/log/
 
 # Python cache
 __pycache__/
 *.pyc
 *.pyo
+*.py[cod]
+*$py.class
 
 # Images générées (trop volumineuses)
 ros_launcher/images_detectees/
-*.pgm
-*.png
-*.jpg
+# Note: Les cartes .pgm sont importantes, on les garde
+# Si vous voulez les ignorer, décommentez la ligne suivante :
+# ros_launcher/*.pgm
+
+# Modèles YOLO (trop volumineux)
+*.pt
+*.pth
+*.onnx
+
+# Images générées par report_fissures
+map_with_point_*.png
+map_with_points_*.png
 
 # Fichiers temporaires
 *.swp
 *.swo
 *~
 .DS_Store
+*.bak
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+*.code-workspace
 
 # Docker images (trop volumineuses)
 *.tar
 ros-docker/*.tar
+*.dockerignore.bak
