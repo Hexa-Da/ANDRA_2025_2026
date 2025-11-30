@@ -10,7 +10,13 @@ docker run -it --rm \
     -v ./config.rviz:/tmp/config.rviz \
     -v $(pwd)/../ros2_ws:/workspace/ros2_ws \
     -v $(pwd)/../ros_launcher:/workspace/ros_launcher \
-    ros2-humble-custom /bin/bash
+    ros2-humble-custom /bin/bash -c "
+        source /opt/ros/humble/setup.bash && \
+        cd /workspace/ros2_ws && \
+        [ -f install/setup.bash ] && source install/setup.bash || echo 'Workspace non compilé, exécutez: colcon build' && \
+        echo 'ROS2 initialisé ! Workspace: /workspace/ros2_ws' && \
+        exec /bin/bash
+    "
     
 # a ajouter pour les ordis du techlab
 # NVIDIA_DRIVER_CAPABILITIES=all \
