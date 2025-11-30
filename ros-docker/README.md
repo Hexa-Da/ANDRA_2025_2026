@@ -121,12 +121,7 @@ Dans le package `image_transfer`, les exécutables sont :
 - `position_publisher`
 - `report_fissures`
 
-Pour lister tous les exécutables :
-```bash
-ros2 pkg executables image_transfer
-```
-
-## 🔍 À quoi sert RViz ?
+## À quoi sert RViz ?
 
 RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de :
 - **Voir la carte** générée par le SLAM en temps réel
@@ -135,32 +130,7 @@ RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de
 - **Définir des objectifs de navigation** (Set Goal)
 - **Déboguer visuellement** le système robotique
 
-C'est essentiel pour observer le robot en action et vérifier que tout fonctionne correctement.
-
-## 🐛 Dépannage
-
-### Erreur "No executable found"
-- Vérifiez que vous avez compilé le workspace : `colcon build`
-- Vérifiez que vous avez sourcé le workspace : `source install/setup.bash`
-- Vérifiez le nom de l'exécutable : `ros2 pkg executables <package_name>`
-
-### Erreur avec sudo
-- Retirez `sudo` du script `launch.sh`
-- Ajoutez votre utilisateur au groupe docker si nécessaire
-
-### RViz2 ne s'affiche pas
-- Vérifiez les permissions X11 : `xhost +local:`
-- Vérifiez que `$DISPLAY` est défini : `echo $DISPLAY`
-- Vérifiez que le volume X11 est monté dans `launch.sh`
-
-## 📝 Notes importantes
-
-- **Pas besoin d'installer ROS2 sur Debian 13** : tout fonctionne dans Docker
-- **Les volumes montés** permettent d'éditer les fichiers localement sans relancer le conteneur
-- **Le réseau hôte** (`--net=host`) permet la communication ROS2 directe avec le robot
-- **NumPy < 2** est requis pour la compatibilité avec cv_bridge compilé avec NumPy 1.x
-
-## 🔗 Liens utiles
+## Liens utiles
 
 - [Documentation ROS2 Humble](https://docs.ros.org/en/humble/)
 - [Documentation Docker](https://docs.docker.com/)
