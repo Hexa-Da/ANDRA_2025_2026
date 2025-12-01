@@ -35,7 +35,7 @@ class Noeud5(Node):
 
         # Charger le modèle YOLO
         # model_path = '/home/techlab/dossier_oriana/package1/models/tags_model.pt'
-        model_path = '/home/techlab/dossier_oriana/best.pt'
+        model_path = '/workspace/ros2_ws/models/best.pt' 
         self.model = YOLO(model_path)
 
         # Création du dossier de stockage des images détectées
