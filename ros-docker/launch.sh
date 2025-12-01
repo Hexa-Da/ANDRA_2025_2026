@@ -6,6 +6,7 @@ docker run -it --rm \
     --net=host \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \
+    -e ROS_DOMAIN_ID=0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v ./config.rviz:/tmp/config.rviz \
     -v $(pwd)/../ros2_ws:/workspace/ros2_ws \
@@ -13,8 +14,8 @@ docker run -it --rm \
     ros2-humble-custom /bin/bash -c "
         source /opt/ros/humble/setup.bash && \
         cd /workspace/ros2_ws && \
-        [ -f install/setup.bash ] && source install/setup.bash || echo 'Workspace non compilé, exécutez: colcon build' && \
-        echo 'ROS2 initialisé ! Workspace: /workspace/ros2_ws' && \
+        [ -f install/setup.bash ] && source install/setup.bash || echo 'Workspace non compilé: colcon build' && \
+        export ROS_DOMAIN_ID=0 && \
         exec /bin/bash
     "
     
