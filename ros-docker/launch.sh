@@ -1,4 +1,6 @@
-xhost +local:
+#!/bin/sh
+
+#xhost +local:
 sudo docker run -it --rm \
     --net=host \
     -e DISPLAY=$DISPLAY \
@@ -6,5 +8,7 @@ sudo docker run -it --rm \
     -e NVIDIA_DRIVER_CAPABILITIES=all \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v ./config.rviz:/tmp/config.rviz \
-    --gpus all \
     osrf/ros:humble-desktop rviz2
+
+# removed options:
+#     --gpus all \
