@@ -18,7 +18,7 @@ class Noeud5(Node):
         self.bridge = CvBridge()
 
         # Charger le modèle YOLO
-        model_path = '/home/techlab/dossier_oriana/package1/models/tags_model.pt'  # Chemin absolu vers le modèle
+        model_path = '/home/techlab/Documents/Projet\ ANDRA\ 2024-2025/ros2_ws/models/best.pt'  
         self.model = YOLO(model_path)  # Charger le modèle YOLO
         self.get_logger().info('Nœud 5 démarré et prêt à recevoir les images.')
 
