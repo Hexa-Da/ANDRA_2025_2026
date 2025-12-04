@@ -51,8 +51,15 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        noeud_3.destroy_node()
-        rclpy.shutdown()
+        try:
+            noeud_3.destroy_node()
+        except Exception:
+            pass
+        try:
+            rclpy.shutdown()
+        except Exception:
+            # Ignorer l'erreur si rclpy est déjà shutdown
+            pass
 
 if __name__ == '__main__':
     main()

@@ -35,7 +35,7 @@ class Noeud5(Node):
 
         # Charger le modèle YOLO
         # model_path = '/home/techlab/dossier_oriana/package1/models/tags_model.pt'
-        model_path = '/home/techlab/Documents/Projet\ ANDRA\ 2024-2025/ros2_ws/models/best.pt' 
+        model_path = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt' 
         self.model = YOLO(model_path)
 
         # Création du dossier de stockage des images détectées
@@ -118,8 +118,15 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        image_subscriber.destroy_node()
-        rclpy.shutdown()
+        try:
+            image_subscriber.destroy_node()
+        except Exception:
+            pass
+        try:
+            rclpy.shutdown()
+        except Exception:
+            # Ignorer l'erreur si rclpy est déjà shutdown
+            pass
 
 if __name__ == '__main__':
     main()
