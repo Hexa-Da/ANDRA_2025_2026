@@ -2,131 +2,100 @@
 
 Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout Mini.
 
-## Connexion au robot
+## Démarage rapide
+
+### 1. Connexion au robot
 
 ```bash
 ssh techlab@192.168.40.99
 ```
 
-## 1. Configuration préalable
-
-### 1.1. Initialiser ROS2
+### 2. Initialiser l'environnement
 
 ```bash
-source /opt/ros/humble/setup.bash
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
 ```
 
-### 1.2. Configurer l'interface CAN pour les roues
-
-**Important** : Cette commande doit être exécutée avant de lancer les nœuds du robot.
+### 3. Configurer CAN (une seule fois par session)
 
 ```bash
 sudo ip link set can0 up type can bitrate 500000
 ```
 
-### 1.3. Aller dans le workspace
+### 4. Lancer le système
 
+**Mode SLAM** (pour créer une carte) :
 ```bash
-cd ~/Documents/ANDRA_2025-2026/ros2_ws
+./scripts/launch.sh slam
 ```
 
-### 1.4. Compiler le workspace
-
+**Mode AMCL** (pour utiliser une carte existante) :
 ```bash
-colcon build
+./scripts/launch.sh amcl ros_launcher/wall_techlab.yaml
 ```
 
-Si vous avez modifié uniquement le package `image_transfer`, vous pouvez compiler uniquement ce package :
+## Structure du projet
 
-```bash
-colcon build --packages-select image_transfer
+```
+~/Documents/ANDRA_2025-2026/
+├── ros-doker/                  # Ce dossier contient l'environnement Docker ROS2 
+├── ros2_ws/                    # Workspace principal (code robot, navigation, etc)
+├── ros_launcher/               # Fichiers de lancement ROS2 (scripts .launch.py et cartes)
+├── dependencies/               # Dépendances externes
+│   ├── ydlidar_ros2_ws/        # Workspace ROS2 pour le lidar YDLidar
+│   └── YDLidar-sdk/            # SDK C++ officiel du lidar YDLidar
+├── script_video/               # Script d'enregistrement vidéo depuis la caméra du robot 
+└── scripts/                    # Scripts d'initialisation et gestion du projet
+    ├── setup.sh                # Préparation de tout l'environnement 
+    ├── build.sh                # Compilation des workspaces
+    └── launch.sh               # Lancement du système (navigation SLAM/AMCL)
 ```
 
-### 1.5. Sourcer le workspace compilé
+## Scripts disponibles
+
+### `scripts/setup.sh` - Initialisation de l'environnement
+
+Sourcer tous les workspaces nécessaires :
 
 ```bash
-source install/setup.bash
+source scripts/setup.sh
 ```
-les deux "not found" sont des warning (donc a regler plus tard)
 
-## 2. Démarrage des nœuds
+Ce script :
+- ✅ Initialise ROS2 Humble
+- ✅ Source le workspace YDLidar (si présent dans `dependencies/`)
+- ✅ Source le workspace ANDRA
+- ✅ Affiche les packages disponibles
 
-Le fichier `navigation_stack.launch.py` lance tous les nœuds nécessaires en une seule commande.
+### `scripts/build.sh` - Compilation des workspaces
+
+Compiler les workspaces :
 
 ```bash
-cd ~/Documents/ANDRA_2025-2026/ros_launcher
-ros2 launch navigation_stack.launch.py
+# Compiler tout
+./scripts/build.sh 
+
+# Compiler uniquement YDLidar
+./scripts/build.sh ydlidar
+
+# Compiler uniquement ANDRA
+./scripts/build.sh andra
 ```
 
-**Ce fichier lance automatiquement :**
-- Les drivers matériels (LIDAR, robot Scout, caméra ZED2)
-- Les nœuds de traitement d'images (`image_publisher`, `image_subscriber`, `position_publisher`, `report_fissures`)
-- Les transforms statiques (base_link → zed_camera_link, base_link → laser_frame)
-- Le filtre EKF pour la localisation
-- Le SLAM Toolbox (par défaut) ou AMCL (si spécifié)
+### `scripts/launch.sh` - Lancement du système
 
-**Paramètres disponibles :**
-- **SLAM** (par défaut) : `ros2 launch navigation_stack.launch.py use_slam:=true`
-- **AMCL avec carte** : `ros2 launch navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:=wall_techlab.yaml`
-
-### Option B : Lancement manuel des nœuds individuels
-
-Si vous souhaitez lancer les nœuds individuellement pour le débogage :
-
-#### Terminal 1 : LIDAR
-```bash
-source /opt/ros/humble/setup.bash
-cd ~/Documents/ANDRA_2025-2026/ros2_ws
-source install/setup.bash
-
-# Lancer le driver LIDAR
-ros2 launch ydlidar_ros2_driver ydlidar_launch.py
-
-# Dans un autre terminal : Rotation du LIDAR (si nécessaire)
-ros2 run tf2_ros static_transform_publisher 0 0 0 1.57 0 0 base_link laser_frame
-```
-
-#### Terminal 2 : Robot Scout
-```bash
-source /opt/ros/humble/setup.bash
-cd ~/Documents/ANDRA_2025-2026/ros2_ws
-source install/setup.bash
-
-ros2 launch scout_base scout_mini_base.launch.py
-```
-
-#### Terminal 3 : Caméra ZED2
-```bash
-source /opt/ros/humble/setup.bash
-cd ~/Documents/ANDRA_2025-2026/ros2_ws
-source install/setup.bash
-
-ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2
-```
-
-#### Terminal 4 : Nœuds de traitement d'images
+Lancer le système complet :
 
 ```bash
-source /opt/ros/humble/setup.bash
-cd ~/Documents/ANDRA_2025-2026/ros2_ws
-source install/setup.bash
+# Mode SLAM (cartographie)
+./scripts/launch.sh slam
 
-# Publisher d'images (capture depuis la caméra PTZ toutes les 20 secondes)
-ros2 run image_transfer image_publisher
-
-# Subscriber d'images (détection YOLO des fissures)
-ros2 run image_transfer image_subscriber
-
-# Publisher de position
-ros2 run image_transfer position_publisher
-
-# Rapport des fissures (trace les positions sur la carte)
-ros2 run image_transfer report_fissures
+# Mode AMCL (localisation sur carte existante)
+./scripts/launch.sh amcl ros_launcher/wall_techlab.yaml
 ```
 
-## 3. Vérification du système
-
-### Vérifier les topics actifs
+## Vérifier les topics actifs
 
 ```bash
 ros2 topic list
@@ -143,21 +112,92 @@ ros2 topic echo position_detectee
 
 # Odométrie filtrée
 ros2 topic echo /odometry/filtered
+
+# Position AMCL
+ros2 topic echo /amcl_pose
 ```
 
-### Vérifier les transforms TF
+## Vérifier les transforms TF
 
 ```bash
 ros2 run tf2_ros tf2_echo base_link laser_frame
 ros2 run tf2_ros tf2_echo base_link zed_camera_link
+ros2 run tf2_ros tf2_echo map odom
 ```
 
-## 4. Fichiers importants
+## Nœuds lancés automatiquement
 
-- **Modèle YOLO** : `/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt`
+Le fichier `navigation_stack.launch.py` lance automatiquement :
+
+### Drivers matériels
+- **LIDAR** : `ydlidar_ros2_driver` (scans laser) 
+- **Robot Scout** : `scout_base` (odométrie des roues) 
+- **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
+
+### Nœuds de traitement d'images
+- **`image_publisher`** : Capture des images depuis la caméra PTZ toutes les 20 secondes
+- **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
+- **`position_publisher`** : Affichage de la position du robot
+- **`report_fissures`** : Trace les positions détectées sur la carte
+
+### Localisation et cartographie
+- **EKF** : Filtre de Kalman étendu pour fusionner les données des capteurs
+- **SLAM Toolbox** : En mode SLAM, construit la carte
+- **AMCL** : En mode AMCL, localise le robot sur la carte
+
+### Transforms statiques
+- `base_link` → `zed_camera_link` (caméra ZED2)
+- `base_link` → `laser_frame` (LIDAR, rotation de 90°)
+
+## Lancement manuel des nœuds (débogage)
+
+### Terminal 1 : LIDAR [en cours de test]
+
+```bash
+source scripts/setup.sh
+ros2 launch ydlidar_ros2_driver ydlidar_launch.py
+```
+
+### Terminal 2 : Robot Scout [package manquant]
+
+```bash
+source scripts/setup.sh
+ros2 launch scout_base scout_mini_base.launch.py
+```
+
+### Terminal 3 : Caméra ZED2 [package manquant]
+
+```bash
+source scripts/setup.sh
+ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2
+```
+
+### Terminal 4 : Nœuds de traitement d'images [fonctionnel]
+
+```bash
+source scripts/setup.sh
+
+# Publisher d'images
+ros2 run image_transfer image_publisher
+
+# Subscriber d'images (détection YOLO)
+ros2 run image_transfer image_subscriber
+
+# Publisher de position
+ros2 run image_transfer position_publisher
+
+# Rapport des fissures
+ros2 run image_transfer report_fissures
+```
+
+
+## Fichiers importants
+
+- **Modèle YOLO** : `ros2_ws/models/best.pt`
 - **Images détectées** : Sauvegardées dans `ros2_ws/images_detectees/`
-- **Carte** : `ros_launcher/andra.yaml` (pour `report_fissures`)
-- **Configurations** : `ros_launcher/ekf_config.yaml`, `slam_config.yaml`, `amcl_config.yaml`
-
-
+- **Cartes** : `ros_launcher/*.yaml` et `ros_launcher/*.pgm`
+- **Configurations** :
+  - `ros_launcher/ekf_config.yaml` (filtre EKF)
+  - `ros_launcher/slam_config.yaml` (SLAM)
+  - `ros_launcher/amcl_config.yaml` (AMCL)
 
