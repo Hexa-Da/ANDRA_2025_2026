@@ -1,6 +1,21 @@
 # ROS2 Docker - Guide d'utilisation
 
-Ce dossier contient la configuration Docker pour exécuter ROS2 Humble dans un conteneur isolé, permettant de travailler avec ROS2 sur n'importe quelle distribution Linux (alors que ROS2 Humble est officiellement supporté uniquement sur Ubuntu 22.04).
+## Objectif
+
+Ce dossier (`ros-docker/`) permet de travailler et tester votre code ROS2 sans avoir accès au robot physique. 
+
+C'est l'environnement de développement local qui vous permet de :
+- **Développer et tester vos nœuds ROS2** sur votre machine personnelle
+- **Compiler votre code** avant de le déployer sur le robot
+- **Visualiser avec RViz2** les données du robot (si connecté au même réseau)
+- **Travailler sur n'importe quelle distribution Linux** (alors que ROS2 Humble est uniquement sur Ubuntu 22.04)
+
+### Workflow recommandé
+
+- **Développement local** (Docker) : Éditez et testez votre code dans Docker
+- **Déploiement sur robot** : Utilisez les scripts dans `scripts/` pour compiler et lancer sur le robot
+
+Pour lancer le système complet sur le robot (avec tous les drivers matériels), utilisez les scripts dans `scripts/` (voir [`DEMARRAGE_ROBOT.md`](../DEMARRAGE_ROBOT.md)).
 
 ## Prérequis
 
@@ -34,7 +49,7 @@ Crée une image Docker complète avec :
 ### `launch.sh`
 Script de lancement du conteneur Docker avec :
 - **Accès X11** : pour afficher RViz2 (`xhost +local:`)
-- **Réseau hôte** : `--net=host` pour communiquer directement avec le robot
+- **Réseau hôte** : `--net=host` pour communiquer avec le robot (si sur le même réseau)
 - **Volumes montés** :
   - `/tmp/.X11-unix` → accès à l'affichage graphique
   - `./config.rviz` → configuration RViz2
@@ -68,6 +83,8 @@ Cela va :
 
 ### Dans le conteneur
 
+**Workflow de développement :**
+
 ```bash
 # 1. Initialiser ROS2
 source /opt/ros/humble/setup.bash
@@ -76,16 +93,19 @@ source /opt/ros/humble/setup.bash
 cd /workspace/ros2_ws
 
 # 3. Compiler le workspace (si nécessaire)
+# Équivalent à ./scripts/build.sh andra sur le robot
 colcon build
 
 # 4. Sourcer le workspace compilé
 source install/setup.bash
 
-# 5. Lancer vos nodes ROS2
+# 5. Tester vos nodes ROS2 individuellement
 ros2 run image_transfer image_publisher
 ros2 run image_transfer image_subscriber
 # etc.
 ```
+
+**Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot (voir [`DEMARRAGE_ROBOT.md`](../DEMARRAGE_ROBOT.md) pour le workflow complet sur le robot).
 
 ### Lancer RViz2
 
@@ -109,7 +129,14 @@ rviz2 -d /tmp/config.rviz
 - Compiler le projet (`colcon build`)
 - Lancer des nodes ROS2 (`ros2 launch`, `ros2 run`)
 - Visualiser avec RViz2
-- Tester votre code
+- Tester votre code localement
+
+### Connexion au robot (optionnel)
+
+Si le robot est sur le même réseau et que vous voulez visualiser ses données :
+- Le conteneur utilise `--net=host` pour accéder au réseau
+- Vous pouvez lancer RViz2 et vous connecter aux topics du robot
+- Voir `DEMARRAGE_ROBOT.md` pour savoir comment lancer le système sur le robot
 
 ### Exécutables disponibles
 
@@ -135,4 +162,5 @@ RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de
 - [Documentation ROS2 Humble](https://docs.ros.org/en/humble/)
 - [Documentation Docker](https://docs.docker.com/)
 - [Documentation RViz2](https://github.com/ros2/rviz)
+- [Guide démarrage robot](../DEMARRAGE_ROBOT.md) 
 
