@@ -46,6 +46,3 @@ fi
 echo ""
 echo "✅ Initialisation terminée!"
 echo ""
-echo "Pour configurer CAN (à faire une fois par session), exécutez:"
-echo "sudo ip link set can0 up type can bitrate 500000"
-echo ""

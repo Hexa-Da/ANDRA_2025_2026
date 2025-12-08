@@ -17,7 +17,30 @@ cd ~/Documents/ANDRA_2025-2026
 source scripts/setup.sh
 ```
 
-### 3. Configurer CAN (une seule fois par session)
+### 3. Compiler les workspaces (si nécessaire)
+
+**Quand utiliser `build.sh` ?**
+- **Première utilisation** : Après avoir cloné le projet ou récupéré le code
+- **Après modification du code** : Si vous avez modifié des fichiers Python/C++ dans `ros2_ws/src/`
+- **Après ajout de packages** : Si vous avez ajouté de nouveaux packages ROS2
+- **Après mise à jour des dépendances** : Si les dépendances ont changé
+
+**Compilation :**
+```bash
+# Compiler tous les workspaces
+./scripts/build.sh
+
+# Ou compiler uniquement un workspace spécifique
+./scripts/build.sh ydlidar    # Uniquement YDLidar
+./scripts/build.sh andra      # Uniquement ANDRA
+```
+
+**Après compilation, re-sourcer l'environnement :**
+```bash
+source scripts/setup.sh
+```
+
+### 4. Configurer CAN (une seule fois par session)
 
 ```bash
 sudo ip link set can0 up type can bitrate 500000

@@ -1,13 +1,17 @@
-from PIL import Image
-import matplotlib.pyplot as plt
-import yaml
 import os
 from datetime import datetime
 
-def tracer_point(points):
+from PIL import Image
+import matplotlib.pyplot as plt
+import yaml
+
+def tracer_point(points, yaml_path):
+    """
+    Cette fonction trace la carte dans graphique matplotlib
+    """
+
     # Charger le fichier YAML
-    yaml_path = "wall_techlab.yaml"
-    with open(yaml_path, 'r') as f:
+    with open(yaml_path, 'r', encoding="utf8") as f:
         data = yaml.safe_load(f)
 
     # Extraire les infos nécessaires
@@ -50,13 +54,10 @@ def tracer_point(points):
 
     plt.show()
 
+if __name__ == "__main__":
 
+    # fichier à charger
+    fichier = os.path.join("map_results", "wall_techlab.yaml")
 
-
-
-
-
-
-
-
-
+    # affichage
+    tracer_point(1000, fichier)

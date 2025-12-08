@@ -1,0 +1,24 @@
+# amcl_config.yaml
+amcl:
+  ros__parameters:
+    use_sim_time: false
+    
+    # Frames
+    global_frame_id: map
+    odom_frame_id: odom
+    base_frame_id: base_link
+    
+    # Sensor parameters
+    laser_max_range: 20.0
+    laser_model_type: "likelihood_field"
+    laser_likelihood_max_dist: 2.0
+    
+    # Robot parameters
+    set_initial_pose: True
+    initial_pose_x: 0.0
+    initial_pose_y: 0.0
+    initial_pose_a: 0.0
+    
+    # Update parameters
+    update_min_d: 0.1
+    update_min_a: 0.2

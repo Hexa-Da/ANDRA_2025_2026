@@ -15,7 +15,7 @@ def generate_launch_description():
     
     # Config directory - replace 'your_package_name' with your actual package name
     # where you store your configuration files
-    config_dir = './'
+    config_dir = 'configs'
     
     # Full path to configuration files
     ekf_config = os.path.join(config_dir, 'ekf_config.yaml')
