@@ -64,12 +64,9 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [ ] **Statut** : En cours - étape actuelle
 
 ### Drivers manquants
-- [ ] **scout_base** : Package non trouvé (nécessaire pour l'odométrie des roues)
+- [x] **scout_base** : Package non trouvé (nécessaire pour l'odométrie des roues)
   - Repository probable : https://github.com/agilexrobotics/scout_ros2
   - Topic attendu : `/odom_robot`
-- [ ] **zed_wrapper** : Package non trouvé (nécessaire pour la caméra ZED2)
-  - Documentation : https://www.stereolabs.com/docs/ros2
-  - Nécessaire pour images et données de profondeur
 
 ### Problème LIDAR
 - [x] Connexion au port série réussie (`/dev/ttyTHS1`)
@@ -82,6 +79,18 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - Baudrates 115200 et 230400 testés
   - Port série `/dev/ttyTHS1` confirmé 
 - [ ] **Action** : Vérifier connexion matérielle (alimentation, câble) ou décider de continuer sans LIDAR
+
+### Problème Zed 2
+- [x] **zed_wrapper** : Package installé et fonctionnel
+  - ZED SDK installé dans /usr/local/zed
+  - zed_msgs installé via apt
+  - zed_wrapper compilé dans dependencies/zed-ros2-wrapper
+  - Caméra ZED2 détectée (S/N 32802052)
+  - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
+
+### Problèmes au lancement
+- le lidar ne parvient pas à démarrer
+- le processus de scout_base meurt à cause d'une erreur
 
 ---
 

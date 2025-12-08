@@ -29,8 +29,8 @@ else
     echo "❌ Workspace YDLidar non trouvé dans dependencies/"
 fi
 
-# 2. Workspace scout_base 
-SCOUT_WS="$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
+# 3. Workspace scout_base 
+SCOUT_WS="$PROJECT_DIR/dependencies/scout_base"
 if [ -f "$SCOUT_WS/install/setup.bash" ]; then
     source "$SCOUT_WS/install/setup.bash"
     echo "✅ Workspace scout_base sourcé"
@@ -38,7 +38,18 @@ else
     echo "❌ Workspace scout_base non trouvé dans dependencies/"
 fi
 
-# 3. Workspace principal ANDRA
+# 4. Worksapace ZED Wrapper
+ZED_WS="$PROJECT_DIR/dependencies/zed-ros2-wrapper"
+if [ -f "$ZED_WS/install/setup.bash" ]; then
+    source "$ZED_WS/install/setup.bash"
+    echo "✅ Workspace ZED Wrapper sourcé"
+elif [ -d "$ZED_WS" ]; then
+    echo "❌ Workspace ZED Wrapper trouvé mais non compilé (exécutez: scripts/build.sh zed)"
+else
+    echo "❌  Workspace ZED Wrapper non trouvé dans dependencies/"
+fi
+
+# 5. Workspace principal ANDRA
 ANDRA_WS="$PROJECT_DIR/ros2_ws"
 if [ -f "$ANDRA_WS/install/setup.bash" ]; then
     cd "$ANDRA_WS"

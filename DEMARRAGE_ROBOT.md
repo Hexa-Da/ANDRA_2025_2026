@@ -67,7 +67,8 @@ sudo ip link set can0 up type can bitrate 500000
 ├── ros_launcher/               # Fichiers de lancement ROS2 (scripts .launch.py et cartes)
 ├── dependencies/               # Dépendances externes
 │   ├── ydlidar_ros2_ws/        # Workspace ROS2 pour le lidar YDLidar
-│   └── YDLidar-sdk/            # SDK C++ officiel du lidar YDLidar
+│   ├── scout_base/             # Workspace ROS2 pour le robot Scout
+│   └── zed-ros2-wrapper/       # Workspace ROS2 pour la caméra ZED2
 ├── script_video/               # Script d'enregistrement vidéo depuis la caméra du robot 
 └── scripts/                    # Scripts d'initialisation et gestion du projet
     ├── setup.sh                # Préparation de tout l'environnement 
@@ -87,7 +88,9 @@ source scripts/setup.sh
 
 Ce script :
 - ✅ Initialise ROS2 Humble
-- ✅ Source le workspace YDLidar (si présent dans `dependencies/`)
+- ✅ Source le workspace YDLidar
+- ✅ Source le workspace scout_base 
+- ✅ Source le workspace ZED Wrapper 
 - ✅ Source le workspace ANDRA
 - ✅ Affiche les packages disponibles
 
@@ -101,6 +104,12 @@ Compiler les workspaces :
 
 # Compiler uniquement YDLidar
 ./scripts/build.sh ydlidar
+
+# Compiler uniquement scout_base
+./scripts/build.sh scout_base
+
+# Compiler uniquement ZED Wrapper
+./scripts/build.sh zed
 
 # Compiler uniquement ANDRA
 ./scripts/build.sh andra
@@ -174,28 +183,28 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 
 ## Lancement manuel des nœuds (débogage)
 
-### Terminal 1 : LIDAR [en cours de test]
+### Terminal 1 : LIDAR
 
 ```bash
 source scripts/setup.sh
 ros2 launch ydlidar_ros2_driver ydlidar_launch.py
 ```
 
-### Terminal 2 : Robot Scout [package manquant]
+### Terminal 2 : Robot Scout
 
 ```bash
 source scripts/setup.sh
 ros2 launch scout_base scout_mini_base.launch.py
 ```
 
-### Terminal 3 : Caméra ZED2 [package manquant]
+### Terminal 3 : Caméra ZED2 
 
 ```bash
 source scripts/setup.sh
-ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2
+ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
 ```
 
-### Terminal 4 : Nœuds de traitement d'images [fonctionnel]
+### Terminal 4 : Nœuds de traitement d'images
 
 ```bash
 source scripts/setup.sh
@@ -212,7 +221,6 @@ ros2 run image_transfer position_publisher
 # Rapport des fissures
 ros2 run image_transfer report_fissures
 ```
-
 
 ## Fichiers importants
 

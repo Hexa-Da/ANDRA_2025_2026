@@ -23,26 +23,26 @@ ekf_filter_node:
     odom0_pose_rejection_threshold: 5.0
     odom0_twist_rejection_threshold: 1.0
 
-      ## ZED2 odometry input
-      #odom1: /zed/zed_node/odom
-      #odom1_config: [true, true, false,
-      #              false, false, false,
-      #              true, true, false,
-      #              false, false, false,
-      #              false, false, false]
-      #odom1_queue_size: 10
-      #odom1_pose_rejection_threshold: 5.0
-      #odom1_twist_rejection_threshold: 1.0
-      #
-      ## ZED2 IMU input
-      #imu0: /zed/zed_node/imu/data
-      #imu0_config: [false, false, false,
-      #             false, false, true,
-      #             false, false, false,
-      #             false, false, true,  # Use yaw
-      #             false, false, false]  # Use yaw rate
-      #imu0_queue_size: 10
-      #imu0_removal_threshold: 0.5
+      # ZED2 odometry input
+      odom1: /zed/zed_node/odom
+      odom1_config: [true, true, false,
+                    false, false, false,
+                    true, true, false,
+                    false, false, false,
+                    false, false, false]
+      odom1_queue_size: 10
+      odom1_pose_rejection_threshold: 5.0
+      odom1_twist_rejection_threshold: 1.0
+      
+      # ZED2 IMU input
+      imu0: /zed/zed_node/imu/data
+      imu0_config: [false, false, false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, true,  # Use yaw
+                   false, false, false]  # Use yaw rate
+      imu0_queue_size: 10
+      imu0_removal_threshold: 0.5
     
     # Additional parameters
     use_control: false

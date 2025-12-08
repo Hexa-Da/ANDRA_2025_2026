@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de compilation des workspaces
-# Usage: ./scripts/build.sh [ydlidar|andra]
+# Usage: ./scripts/build.sh [ydlidar|andra|scout_base|zed]
 
 # Obtenir le répertoire du script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -30,6 +30,11 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR/dependencies/scout_base"
         colcon build
         ;;
+    zed)
+        echo "Compilation du workspace ZED Wrapper..."
+        cd "$PROJECT_DIR/dependencies/zed-ros2-wrapper"
+        colcon build
+        ;;
     all)
         echo "Compilation de tous les workspaces..."
         
@@ -41,6 +46,11 @@ case "$BUILD_TARGET" in
         # scout_base
         echo "scout base..."
         cd "$PROJECT_DIR/dependencies/scout_base"
+        colcon build
+
+        # Zed wrapper
+        echo "ZED Wrapper..."
+        cd "$PROJECT_DIR/dependencies/zed-ros2-wrapper"
         colcon build
         
         # ANDRA
