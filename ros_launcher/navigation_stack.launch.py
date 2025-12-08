@@ -22,6 +22,14 @@ def generate_launch_description():
     slam_config = os.path.join(config_dir, 'slam_config.yaml')
     amcl_config = os.path.join(config_dir, 'amcl_config.yaml')
     
+   # YDLidar configuration 
+    ydlidar_params_dir = os.path.join(
+        get_package_share_directory('ydlidar_ros2_driver'),
+        'params'
+    )
+    # Tester avec différents modèles : G2.yaml, G4.yaml, X4.yaml, etc.
+    ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml')  # Commencer par G2
+
     return LaunchDescription([
         # Launch arguments
         DeclareLaunchArgument('use_slam', default_value='true',
@@ -32,8 +40,11 @@ def generate_launch_description():
                              description='Full path to map yaml file'),
         
         # Hardware drivers
-        ExecuteProcess(
-            cmd=['ros2', 'launch', 'ydlidar_ros2_driver', 'ydlidar_launch.py'],
+        Node(
+    	    package='ydlidar_ros2_driver',
+    	    executable='ydlidar_ros2_driver_node',
+    	    name='ydlidar_ros2_driver_node',
+    	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
             output='screen',
         ),
         ExecuteProcess(

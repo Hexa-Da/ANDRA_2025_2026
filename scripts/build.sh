@@ -45,5 +45,6 @@ esac
 
 echo ""
 echo "✅ Compilation terminée!"
-echo "Réexecutez la commande: source scripts/setup.sh"
+echo ""
+echo "--> Réexecutez la commande: source scripts/setup.sh"
 echo ""

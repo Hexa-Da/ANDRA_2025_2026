@@ -15,8 +15,10 @@ case "$MODE" in
     slam)
         echo "Lancement en mode SLAM..."
         ros2 launch navigation_stack.launch.py use_slam:=true
-        echo "executé : ros2 run nav2_map_server map_saver  -f ~/Documents/ANDRA_2025-2026/ros_launcher/ma_carte
-        pour sauvegarder la carte créer"
+	echo ""
+        echo "--> executé : ros2 run nav2_map_server map_saver  -f ~/Documents/ANDRA_2025-2026/ros_launcher/ma_carte"
+        echo "pour sauvegarder la carte créer"
+	echo ""
         ;;
     amcl)
         echo "Lancement en mode AMCL..."
