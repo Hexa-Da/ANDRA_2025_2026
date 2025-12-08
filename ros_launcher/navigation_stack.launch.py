@@ -52,7 +52,7 @@ def generate_launch_description():
             output='screen',
         ),
         ExecuteProcess(
-            cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2'],
+            cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2i'],
             output='screen',
         ),
         

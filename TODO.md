@@ -85,8 +85,9 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - ZED SDK installé dans /usr/local/zed
   - zed_msgs installé via apt
   - zed_wrapper compilé dans dependencies/zed-ros2-wrapper
-  - Caméra ZED2 détectée (S/N 32802052)
+  - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
+  - Configuration EKF mise à jour pour utiliser les données ZED
 
 ### Problèmes au lancement
 - le lidar ne parvient pas à démarrer
@@ -99,7 +100,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
 - [ ] Installer/configurer le driver `scout_base`
-- [ ] Installer/configurer le driver `zed_wrapper`
+- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
 ### Reproduire les résultats de l'année dernière
