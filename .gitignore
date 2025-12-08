@@ -49,3 +49,11 @@ map_with_points_*.png
 *.tar
 ros-docker/*.tar
 *.dockerignore.bak
+
+# Dossiers de compilation
+/build
+/install
+/log
+
+# Dependance des capteurs
+/dependencies

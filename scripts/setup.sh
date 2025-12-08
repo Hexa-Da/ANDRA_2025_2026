@@ -29,6 +29,15 @@ else
     echo "❌ Workspace YDLidar non trouvé dans dependencies/"
 fi
 
+# 2. Workspace scout_base 
+SCOUT_WS="$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
+if [ -f "$SCOUT_WS/install/setup.bash" ]; then
+    source "$SCOUT_WS/install/setup.bash"
+    echo "✅ Workspace scout_base sourcé"
+else
+    echo "❌ Workspace scout_base non trouvé dans dependencies/"
+fi
+
 # 3. Workspace principal ANDRA
 ANDRA_WS="$PROJECT_DIR/ros2_ws"
 if [ -f "$ANDRA_WS/install/setup.bash" ]; then

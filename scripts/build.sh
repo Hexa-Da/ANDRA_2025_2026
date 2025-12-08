@@ -25,12 +25,22 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR/ros2_ws"
         colcon build
         ;;
+    scout_base)
+        echo "Compilation du workspace scout_base..."
+        cd "$PROJECT_DIR/dependencies/scout_base"
+        colcon build
+        ;;
     all)
         echo "Compilation de tous les workspaces..."
         
         # YDLidar
         echo "YDLidar..."
         cd "$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
+        colcon build
+
+        # scout_base
+        echo "scout base..."
+        cd "$PROJECT_DIR/dependencies/scout_base"
         colcon build
         
         # ANDRA
