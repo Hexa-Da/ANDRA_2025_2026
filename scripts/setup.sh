@@ -62,6 +62,15 @@ else
     return 1
 fi
 
+# 6. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
+if [ -z "$RMW_IMPLEMENTATION" ]; then
+    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    echo "✅ Middleware DDS configuré: $RMW_IMPLEMENTATION"
+fi
+
+# Retrour à la racine du projet
+cd ..
+
 # Vérification finale
 echo ""
 echo "✅ Initialisation terminée!"
