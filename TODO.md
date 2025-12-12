@@ -90,8 +90,12 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - Configuration EKF mise à jour pour utiliser les données ZED
 
 ### Problèmes au lancement
-- le lidar ne parvient pas à démarrer
-- le processus de scout_base meurt à cause d'une erreur
+- [x] **LIDAR** : Connexion OK mais scan ne démarre toujours pas (possiblement une erreurs matérielles)
+- [x] **scout_base** : Problème identifié 
+  - **État** : Le nœud se termine immédiatement après l'initialisation (exit code 0)
+  - **Symptôme** : "Robot initialized, start running ..." puis terminaison propre sans erreur
+  - **Cause probable** : Boucle principale qui se termine immédiatement
+  - **Action suivante** : Examiner le code source de scout_base_node pour comprendre pourquoi la boucle principale se termine
 
 ---
 
@@ -99,7 +103,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
-- [ ] Installer/configurer le driver `scout_base`
+- [x] Installer/configurer le driver `scout_base` (en cours)
 - [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
@@ -193,8 +197,10 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - Étendre l'entraînement de l'IA à tous les types de murs
 
 ### Configuration CAN
-- Interface CAN configurée sur `can0` (anciennement `can1`)
-- Commande : `sudo ip link set can0 up type can bitrate 500000`
+- [x] Interface CAN identifiée : `agilex` (configuration TechLab)
+- [x] Service systemd configuré : `agilex-handler.service`
+- Commande manuelle : `sudo ip link set agilex up type can bitrate 500000`
+- [x] Launch file mis à jour pour utiliser `port_name:=agilex`
 
 ### Modèle YOLO
 - Version utilisée : YOLOv11
@@ -203,5 +209,5 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 5 Décembre 2025
+**Dernière mise à jour** : 12 Décembre 2025
 

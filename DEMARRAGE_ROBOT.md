@@ -2,7 +2,7 @@
 
 Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout Mini.
 
-## Démarage rapide
+## Démarrage rapide
 
 ### 1. Connexion au robot
 
@@ -57,7 +57,9 @@ ip link show agilex
 candump agilex -n 5 -T 2000
 ```
 
-### 4. Lancer le système
+**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, scout_base ne pourra pas communiquer avec le robot.
+
+### 5. Lancer le système
 
 **Mode SLAM** (pour créer une carte) :
 ```bash
@@ -103,6 +105,7 @@ Ce script :
 - ✅ Source le workspace scout_base 
 - ✅ Source le workspace ZED Wrapper 
 - ✅ Source le workspace ANDRA
+- ✅ Configure automatiquement le middleware DDS
 - ✅ Affiche les packages disponibles
 
 ### `scripts/build.sh` - Compilation des workspaces
@@ -234,6 +237,27 @@ ros2 run image_transfer position_publisher
 ros2 run image_transfer report_fissures
 ```
 
+## Notes techniques
+
+### Configuration Middleware DDS
+
+**Qu'est-ce que le middleware DDS ?**
+
+Le middleware DDS (Data Distribution Service) est la couche de communication sous-jacente utilisée par ROS2 pour permettre aux nœuds de communiquer entre eux. C'est lui qui gère :
+- La publication et la souscription aux topics ROS2
+- La découverte automatique des nœuds sur le réseau
+- La transmission des messages entre les nœuds
+- La gestion de la qualité de service (QoS)
+
+### Configuration CAN TechLab
+
+L'interface CAN s'appelle `agilex` au TechLab (pas `can0` ou `can1`). Le service systemd `agilex-handler.service` configure automatiquement cette interface au démarrage.
+
+**Vérification de l'interface CAN :**
+- Vérifiez manuellement l'état avec `ip link show agilex`
+- Le launch file `navigation_stack.launch.py` utilise automatiquement `port_name:=agilex`
+- Si l'interface n'est pas active, scout_base ne pourra pas communiquer avec le robot
+
 ## Fichiers importants
 
 - **Modèle YOLO** : `ros2_ws/models/best.pt`
@@ -244,4 +268,8 @@ ros2 run image_transfer report_fissures
   - `ros_launcher/configs/slam_config.yaml` (SLAM)
   - `ros_launcher/configs/amcl_config.yaml` (AMCL)
   - `ros_launcher/navigation_stack.launch.py` (fichier de lancement principal)
+- **Scripts** :
+  - `scripts/setup.sh` (initialisation avec configuration automatique DDS et vérification CAN)
+  - `scripts/build.sh` (compilation des workspaces)
+  - `scripts/launch.sh` (lancement du système)
 
