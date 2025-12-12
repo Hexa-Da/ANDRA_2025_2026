@@ -47,9 +47,12 @@ def generate_launch_description():
     	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
             output='screen',
         ),
+        # Scout base driver avec interface CAN 'agilex' (configuration TechLab)
         ExecuteProcess(
-            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py'],
+            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 'port_name:=agilex'],
             output='screen',
+            respawn=True,  # Redémarrer automatiquement en cas de crash
+            respawn_delay=10.0,  # Attendre 10 secondes (CAN peut être lent)
         ),
         ExecuteProcess(
             cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2i'],

@@ -42,8 +42,19 @@ source scripts/setup.sh
 
 ### 4. Configurer CAN (une seule fois par session)
 
+Le TechLab utilise un service systemd pour configurer automatiquement l'interface CAN `agilex` :
+
 ```bash
-sudo ip link set can0 up type can bitrate 500000
+# Activer et démarrer le service (fait automatiquement au boot après activation)
+sudo systemctl enable agilex-handler.service
+sudo systemctl start agilex-handler.service
+
+# Vérifier que l'interface 'agilex' est UP
+ip link show agilex
+# Doit afficher : state UP
+
+# Vérifier la réception de messages CAN (si le robot est allumé)
+candump agilex -n 5 -T 2000
 ```
 
 ### 4. Lancer le système
@@ -194,7 +205,8 @@ ros2 launch ydlidar_ros2_driver ydlidar_launch.py
 
 ```bash
 source scripts/setup.sh
-ros2 launch scout_base scout_mini_base.launch.py
+# Utiliser l'interface CAN 'agilex' (configuration TechLab)
+ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex
 ```
 
 ### Terminal 3 : Caméra ZED2 
@@ -228,7 +240,8 @@ ros2 run image_transfer report_fissures
 - **Images détectées** : Sauvegardées dans `ros2_ws/images_detectees/`
 - **Cartes** : `ros_launcher/*.yaml` et `ros_launcher/*.pgm`
 - **Configurations** :
-  - `ros_launcher/ekf_config.yaml` (filtre EKF)
-  - `ros_launcher/slam_config.yaml` (SLAM)
-  - `ros_launcher/amcl_config.yaml` (AMCL)
+  - `ros_launcher/configs/ekf_config.yaml` (filtre EKF)
+  - `ros_launcher/configs/slam_config.yaml` (SLAM)
+  - `ros_launcher/configs/amcl_config.yaml` (AMCL)
+  - `ros_launcher/navigation_stack.launch.py` (fichier de lancement principal)
 
