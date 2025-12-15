@@ -12,6 +12,9 @@ def generate_launch_description():
     use_slam = LaunchConfiguration('use_slam', default='true')
     use_amcl = LaunchConfiguration('use_amcl', default='false')
     map_path = LaunchConfiguration('map_path', default='')
+    enable_lidar = LaunchConfiguration('enable_lidar', default='true') 
+    enable_scout = LaunchConfiguration('enable_scout', default='true')
+    enable_zed = LaunchConfiguration('enable_zed', default='true')
     
     # Config directory - replace 'your_package_name' with your actual package name
     # where you store your configuration files
@@ -38,25 +41,38 @@ def generate_launch_description():
                              description='Use AMCL for localization'),
         DeclareLaunchArgument('map_path', default_value='',
                              description='Full path to map yaml file'),
+        DeclareLaunchArgument('enable_lidar', default_value='true',
+                             description='Enable YDLIDAR driver'),
+        DeclareLaunchArgument('enable_scout', default_value='true',
+                             description='Enable Scout base driver'),
+        DeclareLaunchArgument('enable_zed', default_value='true',
+                             description='Enable ZED camera'),
         
         # Hardware drivers
+        # YDLIDAR - conditionnel
         Node(
     	    package='ydlidar_ros2_driver',
     	    executable='ydlidar_ros2_driver_node',
     	    name='ydlidar_ros2_driver_node',
     	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
             output='screen',
+            condition=IfCondition(enable_lidar),
         ),
+        
         # Scout base driver avec interface CAN 'agilex' (configuration TechLab)
+        # Utiliser le launch file officiel de scout_base pour éviter les deadlocks
         ExecuteProcess(
-            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 'port_name:=agilex'],
+            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 
+                 'port_name:=agilex', 'is_scout_mini:=True', 'odom_topic_name:=odom_robot'],
             output='screen',
-            respawn=True,  # Redémarrer automatiquement en cas de crash
-            respawn_delay=10.0,  # Attendre 10 secondes (CAN peut être lent)
+            condition=IfCondition(enable_scout),
         ),
+
+        # ZED Camera - conditionnel
         ExecuteProcess(
             cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2i'],
             output='screen',
+            condition=IfCondition(enable_zed),
         ),
         
         # Image transfer nodes

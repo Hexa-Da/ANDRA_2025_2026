@@ -64,6 +64,18 @@ candump agilex -n 5 -T 2000
 **Mode SLAM** (pour créer une carte) :
 ```bash
 ./scripts/launch.sh slam
+
+# Lancer sans LIDAR (si problème matériel)
+./scripts/launch.sh slam enable_lidar:=false
+
+# Lancer sans Scout Base (utilise uniquement l'odométrie de la ZED)
+./scripts/launch.sh slam enable_scout:=false
+
+# Lancer sans ZED (pour tests)
+./scripts/launch.sh slam enable_zed:=false
+
+# Combinaisons possibles
+./scripts/launch.sh slam enable_lidar:=false enable_scout:=false
 ```
 
 **Mode AMCL** (pour utiliser une carte existante) :

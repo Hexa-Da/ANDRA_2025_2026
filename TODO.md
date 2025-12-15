@@ -91,11 +91,19 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Problèmes au lancement
 - [x] **LIDAR** : Connexion OK mais scan ne démarre toujours pas (possiblement une erreurs matérielles)
-- [x] **scout_base** : Problème identifié 
-  - **État** : Le nœud se termine immédiatement après l'initialisation (exit code 0)
-  - **Symptôme** : "Robot initialized, start running ..." puis terminaison propre sans erreur
-  - **Cause probable** : Boucle principale qui se termine immédiatement
-  - **Action suivante** : Examiner le code source de scout_base_node pour comprendre pourquoi la boucle principale se termine
+- [x] **scout_base** : Problème persistant
+  - **Problème initial** : Deadlock "Resource deadlock avoided" lors du lancement direct du nœud
+  - **Solution** : Utilisation du launch file officiel `scout_mini_base.launch.py` via ExecuteProcess
+  - **Configuration** : Ajout du paramètre `odom_topic_name:=odom_robot` pour correspondre à la configuration EKF
+  - **État actuel** : Le nœud démarre correctement via le launch file. Mais s'arrete directement pour une raison encore inconnu
+  - **Note** : Le système peut fonctionner sans Scout Base en utilisant uniquement l'odométrie de la ZED
+
+### Améliorations du système de lancement
+- [x] **Options de configuration** : Ajout d'options pour désactiver des composants
+  - `enable_lidar:=false` : Désactiver le LIDAR
+  - `enable_scout:=false` : Désactiver Scout Base
+  - `enable_zed:=false` : Désactiver la caméra ZED
+  - Permet de tester le système même si un composant pose problème
 
 ---
 

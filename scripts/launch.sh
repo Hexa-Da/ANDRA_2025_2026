@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de lancement du système complet
-# Usage: ./scripts/launch.sh [slam|amcl] [chemin_carte.yaml]
+# Usage: ./scripts/launch.sh [slam|amcl] [options...]
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -14,12 +14,23 @@ MODE="${1:-slam}"
 case "$MODE" in
     slam)
         echo "Lancement en mode SLAM..."
-        ros2 launch navigation_stack.launch.py use_slam:=true
-	echo ""
+        echo ""
+        echo "Options disponibles:"
+        echo "  enable_lidar:=false      Désactiver le LIDAR"
+        echo "  enable_scout:=false      Désactiver Scout Base"
+        echo "  enable_zed:=false        Désactiver la caméra ZED"
+        echo ""
+        
+        # Passer les arguments supplémentaires à ros2 launch
+        shift  # Retirer le premier argument (slam)
+        ros2 launch navigation_stack.launch.py use_slam:=true "$@"
+
+        echo ""
         echo "--> executé : ros2 run nav2_map_server map_saver  -f ~/Documents/ANDRA_2025-2026/ros_launcher/ma_carte"
         echo "pour sauvegarder la carte créer"
-	echo ""
+        echo ""
         ;;
+
     amcl)
         echo "Lancement en mode AMCL..."
         # si pas de carte specifier, on affiche un message d'erreur et on quitte le script

@@ -38,7 +38,16 @@ else
     echo "❌ Workspace scout_base non trouvé dans dependencies/"
 fi
 
-# 4. Worksapace ZED Wrapper
+# 4. Workspace ugv_sdk
+UGV_WS="$PROJECT_DIR/dependencies/ugv_sdk"
+if [ -f "$UGV_WS/install/setup.bash" ]; then
+    source "$UGV_WS/install/setup.bash"
+    echo "✅ Workspace ugv_sdk sourcé"
+else
+    echo "❌ Workspace ugv_sdk non trouvé dans dependencies/"
+fi
+
+# 5. Worksapace ZED Wrapper
 ZED_WS="$PROJECT_DIR/dependencies/zed-ros2-wrapper"
 if [ -f "$ZED_WS/install/setup.bash" ]; then
     source "$ZED_WS/install/setup.bash"
@@ -49,7 +58,7 @@ else
     echo "❌  Workspace ZED Wrapper non trouvé dans dependencies/"
 fi
 
-# 5. Workspace principal ANDRA
+# 6. Workspace principal ANDRA
 ANDRA_WS="$PROJECT_DIR/ros2_ws"
 if [ -f "$ANDRA_WS/install/setup.bash" ]; then
     cd "$ANDRA_WS"
@@ -62,7 +71,7 @@ else
     return 1
 fi
 
-# 6. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
+# 7. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
 # L'erreur "Failed to delete datareader" est typique un problème avec FastRTPS
 # CycloneDDS est souvent plus stable pour scout_base
 if [ -z "$RMW_IMPLEMENTATION" ]; then
@@ -71,6 +80,9 @@ if [ -z "$RMW_IMPLEMENTATION" ]; then
         echo "✅ Middleware DDS configuré: $RMW_IMPLEMENTATION (CycloneDDS)"
     fi
 fi
+
+# Retour à la racine 
+cd "$PROJECT_DIR"
 
 # Vérification finale
 echo ""
