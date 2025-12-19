@@ -45,13 +45,13 @@ source scripts/setup.sh
 Le TechLab utilise un service systemd pour configurer automatiquement l'interface CAN `agilex` :
 
 ```bash
-# Activer et démarrer le service (fait automatiquement au boot après activation)
-sudo systemctl enable agilex-handler.service
-sudo systemctl start agilex-handler.service
-
 # Vérifier que l'interface 'agilex' est UP
 ip link show agilex
 # Doit afficher : state UP
+
+# Si DOWN, Activer et démarrer le service 
+sudo systemctl enable agilex-handler.service
+sudo systemctl start agilex-handler.service
 
 # Vérifier la réception de messages CAN (si le robot est allumé)
 candump agilex -n 5 -T 2000
@@ -65,13 +65,13 @@ candump agilex -n 5 -T 2000
 ```bash
 ./scripts/launch.sh slam
 
-# Lancer sans LIDAR (si problème matériel)
+# Lancer sans LIDAR
 ./scripts/launch.sh slam enable_lidar:=false
 
-# Lancer sans Scout Base (utilise uniquement l'odométrie de la ZED)
+# Lancer sans Scout Base 
 ./scripts/launch.sh slam enable_scout:=false
 
-# Lancer sans ZED (pour tests)
+# Lancer sans ZEDs
 ./scripts/launch.sh slam enable_zed:=false
 
 # Combinaisons possibles
@@ -118,7 +118,6 @@ Ce script :
 - ✅ Source le workspace ZED Wrapper 
 - ✅ Source le workspace ANDRA
 - ✅ Configure automatiquement le middleware DDS
-- ✅ Affiche les packages disponibles
 
 ### `scripts/build.sh` - Compilation des workspaces
 
@@ -221,7 +220,8 @@ ros2 launch ydlidar_ros2_driver ydlidar_launch.py
 ```bash
 source scripts/setup.sh
 # Utiliser l'interface CAN 'agilex' (configuration TechLab)
-ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex
+# Note : Le code source a été modifié pour accepter "agilex" comme nom de port CAN valide
+ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex is_scout_mini:=True odom_topic_name:=odom_robot
 ```
 
 ### Terminal 3 : Caméra ZED2 
@@ -260,15 +260,6 @@ Le middleware DDS (Data Distribution Service) est la couche de communication sou
 - La découverte automatique des nœuds sur le réseau
 - La transmission des messages entre les nœuds
 - La gestion de la qualité de service (QoS)
-
-### Configuration CAN TechLab
-
-L'interface CAN s'appelle `agilex` au TechLab (pas `can0` ou `can1`). Le service systemd `agilex-handler.service` configure automatiquement cette interface au démarrage.
-
-**Vérification de l'interface CAN :**
-- Vérifiez manuellement l'état avec `ip link show agilex`
-- Le launch file `navigation_stack.launch.py` utilise automatiquement `port_name:=agilex`
-- Si l'interface n'est pas active, scout_base ne pourra pas communiquer avec le robot
 
 ## Fichiers importants
 

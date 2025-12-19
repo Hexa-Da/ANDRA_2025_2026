@@ -35,12 +35,6 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR/dependencies/zed-ros2-wrapper"
         colcon build
         ;;
-    ugv_sdk)
-        echo "Compilation du workspace ugv_sdk..."
-        cd "$PROJECT_DIR/dependencies/ugv_sdk"
-        colcon build
-        ;;
-        
     all)
         echo "Compilation de tous les workspaces..."
         
@@ -62,11 +56,6 @@ case "$BUILD_TARGET" in
         # ANDRA
         echo "ANDRA..."
         cd "$PROJECT_DIR/ros2_ws"
-        colcon build
-        
-        # ugv_sdk
-        echo "ugv_sdk..."
-        cd "$PROJECT_DIR/dependencies/ugv_sdk"
         colcon build
         ;;
     *)

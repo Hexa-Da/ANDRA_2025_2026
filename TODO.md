@@ -91,12 +91,12 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Problèmes au lancement
 - [x] **LIDAR** : Connexion OK mais scan ne démarre toujours pas (possiblement une erreurs matérielles)
-- [x] **scout_base** : Problème persistant
-  - **Problème initial** : Deadlock "Resource deadlock avoided" lors du lancement direct du nœud
-  - **Solution** : Utilisation du launch file officiel `scout_mini_base.launch.py` via ExecuteProcess
+- [x] **scout_base** : ✅ **RÉSOLU**
+  - **Problème initial** : le noeud s'arrete immédiatement lors du lancement
   - **Configuration** : Ajout du paramètre `odom_topic_name:=odom_robot` pour correspondre à la configuration EKF
-  - **État actuel** : Le nœud démarre correctement via le launch file. Mais s'arrete directement pour une raison encore inconnu
-  - **Note** : Le système peut fonctionner sans Scout Base en utilisant uniquement l'odométrie de la ZED
+  - **Problème identifié** : Le driver `ugv_sdk` ne reconnaissait pas "agilex" comme un port CAN valide (vérification stricte du nom contenant "can")
+  - **Solution** : Modification du code source `scout_base_ros.cpp` pour accepter "agilex" en plus des noms contenant "can"
+  - **État actuel** : ✅ Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
@@ -111,7 +111,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
-- [x] Installer/configurer le driver `scout_base` (en cours)
+- [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
 - [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
@@ -217,5 +217,5 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 12 Décembre 2025
+**Dernière mise à jour** : 19 Décembre 2026
 
