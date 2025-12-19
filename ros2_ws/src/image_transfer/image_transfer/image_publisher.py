@@ -25,8 +25,9 @@ class Noeud3(Node):
             "-vframes", "1", "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"
         ]
 
-        process = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-
+        # Récupérer les erreurs de la commande FFmpeg
+        process = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        
         if process.returncode == 0:
             # Convertir le flux binaire en image OpenCV
             np_arr = np.frombuffer(process.stdout, np.uint8)

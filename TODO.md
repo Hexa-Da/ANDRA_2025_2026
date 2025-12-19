@@ -97,6 +97,10 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **Solution** : Modification du code source `scout_base_ros.cpp` pour accepter "agilex" en plus des noms contenant "can"
   - **État actuel** : ✅ Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
 
+### Problème Caméra PTZ
+- [ ] **Erreur** : Caméra PTZ inaccessible sur `192.168.5.163`
+- [ ] **Impact** : Le nœud `image_publisher` génère des erreurs répétées toutes les 20 secondes
+
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
   - `enable_lidar:=false` : Désactiver le LIDAR
