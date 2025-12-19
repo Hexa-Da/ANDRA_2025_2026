@@ -9,7 +9,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ## Échéances importantes
 
 - **Soutenance mi-parcouts** : 23 janvier 2026
-- **Première descente dans les tunnels** : fin janvier 2026
+- **Première descente dans les tunnels** : début février 2026
 - **Autres descente** : ?
 - **Soutenance fianle** : 12 juin 2026
 
@@ -61,7 +61,6 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Réinstallation complète du robot
 - [ ] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
 - [ ] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration
-- [ ] **Statut** : En cours - étape actuelle
 
 ### Drivers manquants
 - [x] **scout_base** : Package non trouvé (nécessaire pour l'odométrie des roues)
@@ -107,7 +106,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-## À faire - Court terme (avant première descente fin janvier)
+## À faire - Court terme (avant première descente debut février)
 
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
@@ -128,16 +127,16 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-## À faire - Moyen terme (avant soutenance 23 janvier)
+## À faire - Moyen terme (avant les autres descente)
 
 ### Amélioration du modèle de détection
 - [ ] **Lucas et Adrien** : Entraîner un modèle de détection sur image avec caméra 360
 - [ ] Améliorer l'efficacité du robot avec le nouveau modèle
 - [ ] Tester le nouveau modèle sur les images capturées
 
-### Amélioration du positionnement (propositions)
-- [ ] Utiliser les étiquettes au mur pour recalibration (comme mentionné dans le README)
-- [ ] Améliorer l'estimation de position relative (actuellement objectivement mauvaise)
+### Amélioration du positionnement (propositions Éliott)
+- [ ] Utiliser les étiquettes au mur pour recalibration
+- [ ] Améliorer l'estimation de position relative
 - [ ] Réduire les erreurs de divergence dues aux vibrations
 
 ### Amélioration de la cartographie
