@@ -74,6 +74,9 @@ candump agilex -n 5 -T 2000
 # Lancer sans ZEDs
 ./scripts/launch.sh slam enable_zed:=false
 
+# Lancer sans caméra PTZ
+./scripts/launch.sh slam enable_ptz:=false
+
 # Combinaisons possibles
 ./scripts/launch.sh slam enable_lidar:=false enable_scout:=false
 ```
@@ -192,8 +195,16 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
 
 ### Nœuds de traitement d'images
-- **`image_publisher`** : Capture des images depuis la caméra PTZ toutes les 20 secondes
+- **`image_publisher`** : Capture des images depuis la caméra PTZ
+  - Intervalle de capture configurable (défaut: 10 secondes)
+  - Ajustement automatique de luminosité/contraste/gamma
+  - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`
+  - Publication sur le topic `/photo_topic`
+  - Paramètres configurables : `brightness`, `contrast`, `gamma`, `capture_interval`
 - **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
+  - Reçoit les images depuis `/photo_topic`
+  - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
+  - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
 - **`position_publisher`** : Affichage de la position du robot
 - **`report_fissures`** : Trace les positions détectées sur la carte
 

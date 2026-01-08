@@ -39,9 +39,11 @@ class Noeud5(Node):
         self.model = YOLO(model_path)
 
         # Création du dossier de stockage des images détectées
-        self.output_dir = "images_detectees"
+        project_root = os.path.expanduser("~/Documents/ANDRA_2025-2026")
+        self.output_dir = os.path.join(project_root, "ros2_ws", "images_detectees")
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
+            self.get_logger().info(f'Dossier créé : {self.output_dir}')
 
         self.get_logger().info('Nœud 5 démarré et prêt à recevoir les images.')
     

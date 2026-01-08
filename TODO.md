@@ -98,16 +98,22 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **État actuel** : ✅ Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
 
 ### Problème Caméra PTZ
-- [ ] **Erreur** : Caméra PTZ inaccessible sur `192.168.5.163`
-- [ ] **Impact** : Le nœud `image_publisher` génère des erreurs répétées toutes les 20 secondes
+- [x] ✅ **RÉSOLU** : Caméra PTZ maintenant accessible et fonctionnelle
+  - **Problème initial** : Caméra PTZ inaccessible sur `192.168.5.163`
+  - **Cause** : La Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
+  - **Solution** : Configuration de l'adresse IP statique sur l'interface Ethernet `enP8p1s0`
+  - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
+  - **Résolution des conflits** : Suppression des routes conflictuelles avec le WiFi
+  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`, mais les images ne sont pas bien ajusté
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
   - `enable_lidar:=false` : Désactiver le LIDAR
   - `enable_scout:=false` : Désactiver Scout Base
   - `enable_zed:=false` : Désactiver la caméra ZED
+  - `enable_ptz:=false` : Désactiver la caméra PTZ
   - Permet de tester le système même si un composant pose problème
-
+  
 ---
 
 ## À faire - Court terme (avant première descente debut février)
@@ -116,6 +122,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [ ] Finaliser la réinstallation de l'image du robot
 - [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
 - [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
+- [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
 ### Reproduire les résultats de l'année dernière
@@ -218,7 +225,13 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - Fichier : `ros2_ws/models/best.pt`
 - Avantage : Pas besoin de s'embêter avec PyTorch ou CUDA, tout est géré par défaut
 
+### Configuration Caméra PTZ
+- [x] **Réseau** : Configuration de l'adresse IP statique sur `enP8p1s0` (192.168.5.100/24)
+- [x] **Accès RTSP** : Caméra accessible sur `rtsp://admin:admin@192.168.5.163:554/live/av0`
+- [x] **Nœud image_publisher** : Paramètres configurables (IP, port, ajustements d'image, sauvegarde)
+- [x] **Ajustement d'image** : Luminosité, contraste, gamma configurables via paramètres ROS2
+- [x] **Sauvegarde** : Deux dossiers distincts (toutes les images + images avec détection)
+
 ---
 
-**Dernière mise à jour** : 19 Décembre 2026
-
+**Dernière mise à jour** : 8 Janvier 2026
