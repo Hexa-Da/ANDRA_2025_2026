@@ -207,6 +207,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
 - **`position_publisher`** : Affichage de la position du robot
 - **`report_fissures`** : Trace les positions détectées sur la carte
+- **`ptz_controller`** : Contrôle PTZ de la caméra Marshall CV-605 via VISCA over IP
 
 ### Localisation et cartographie
 - **EKF** : Filtre de Kalman étendu pour fusionner les données des capteurs
@@ -258,6 +259,9 @@ ros2 run image_transfer position_publisher
 
 # Rapport des fissures
 ros2 run image_transfer report_fissures
+
+# Contrôleur PTZ
+ros2 run image_transfer ptz_controller
 ```
 
 ## Notes techniques

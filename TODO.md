@@ -40,6 +40,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde des images détectées
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
+- [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
 - [x] Correction des erreurs de shutdown dans les nœuds Python (gestion d'exception dans le finally)
 
 ### Configuration navigation
@@ -104,7 +105,20 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **Solution** : Configuration de l'adresse IP statique sur l'interface Ethernet `enP8p1s0`
   - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
   - **Résolution des conflits** : Suppression des routes conflictuelles avec le WiFi
-  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`, mais les images ne sont pas bien ajusté
+  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
+  
+- [x] ✅ **RÉSOLU** : Contrôle PTZ fonctionnel via VISCA over IP
+  - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
+  - **Protocole** : VISCA over IP sur le port 1259 (port par défaut selon documentation)
+  - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
+  - **Topics** :
+    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu
+    - `/ptz/preset` (std_msgs/Int32) : Appel de presets (0-127) ou commandes spéciales (-1: Home, -2: Reset)
+  - **Format VISCA** : Implémentation selon documentation Marshall CV-605
+    - Header : `0x80 + camera_address` (adresse 1 par défaut)
+    - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
+  - **Paramètres configurables** : `ptz_ip`, `visca_port`, `camera_address`
+  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
@@ -231,7 +245,8 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] **Nœud image_publisher** : Paramètres configurables (IP, port, ajustements d'image, sauvegarde)
 - [x] **Ajustement d'image** : Luminosité, contraste, gamma configurables via paramètres ROS2
 - [x] **Sauvegarde** : Deux dossiers distincts (toutes les images + images avec détection)
+- [x] **Contrôle PTZ** : Nœud `ptz_controller` fonctionnel via VISCA over IP
 
 ---
 
-**Dernière mise à jour** : 8 Janvier 2026
+**Dernière mise à jour** : 9 Janvier 2026
