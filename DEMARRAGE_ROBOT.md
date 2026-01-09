@@ -31,8 +31,10 @@ source scripts/setup.sh
 ./scripts/build.sh
 
 # Ou compiler uniquement un workspace spécifique
-./scripts/build.sh ydlidar    # Uniquement YDLidar
-./scripts/build.sh andra      # Uniquement ANDRA
+./scripts/build.sh ydlidar        # Uniquement YDLidar
+./scripts/build.sh ros2_ws        # Uniquement ros2_ws
+./scripts/build.sh scrout_base    # Uniquement scout_base
+./scripts/build.sh zed            # Uniquement scout_base
 ```
 
 **Après compilation, re-sourcer l'environnement :**
@@ -40,7 +42,29 @@ source scripts/setup.sh
 source scripts/setup.sh
 ```
 
-### 4. Configurer CAN (une seule fois par session)
+### 4. Configurer le réseau PTZ (une seule fois par session)
+
+**Important** : Après chaque redémarrage du robot, il faut reconfigurer le réseau pour accéder à la caméra PTZ.
+
+```bash
+# Configurer l'interface Ethernet pour la caméra PTZ
+sudo bash scripts/ptz-network-setup.sh
+
+# Vérifier la configuration
+ip addr show enP8p1s0
+# Doit afficher : inet 192.168.5.100/24
+
+# Vérifier que la route passe par Ethernet (pas WiFi)
+ip route show | grep 192.168.5
+# Doit afficher : 192.168.5.0/24 dev enP8p1s0 ...
+
+# Tester la connectivité
+ping -c 3 192.168.5.163
+```
+
+**Note** : Ce script configure l'interface Ethernet `enP8p1s0` avec l'adresse IP statique `192.168.5.100/24` et supprime les routes WiFi conflictuelles. 
+
+### 5. Configurer CAN (une seule fois par session)
 
 Le TechLab utilise un service systemd pour configurer automatiquement l'interface CAN `agilex` :
 
@@ -59,7 +83,7 @@ candump agilex -n 5 -T 2000
 
 **Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, scout_base ne pourra pas communiquer avec le robot.
 
-### 5. Lancer le système
+### 6. Lancer le système
 
 **Mode SLAM** (pour créer une carte) :
 ```bash
@@ -97,11 +121,15 @@ candump agilex -n 5 -T 2000
 │   ├── ydlidar_ros2_ws/        # Workspace ROS2 pour le lidar YDLidar
 │   ├── scout_base/             # Workspace ROS2 pour le robot Scout
 │   └── zed-ros2-wrapper/       # Workspace ROS2 pour la caméra ZED2
-├── script_video/               # Script d'enregistrement vidéo depuis la caméra du robot 
+├── video_launcher/             # Script d'enregistrement vidéo depuis la caméra PTZ
+│   ├── script.sh              # Script interactif d'enregistrement avec retouches d'image
+│   └── video_output/          # Dossier de sauvegarde des vidéos enregistrées
+├── script_video/              # Script d'enregistrement vidéo depuis la caméra du robot (ancien)
 └── scripts/                    # Scripts d'initialisation et gestion du projet
     ├── setup.sh                # Préparation de tout l'environnement 
     ├── build.sh                # Compilation des workspaces
-    └── launch.sh               # Lancement du système (navigation SLAM/AMCL)
+    ├── launch.sh               # Lancement du système (navigation SLAM/AMCL)
+    └── ptz-network-setup.sh    # Configuration réseau pour la caméra PTZ
 ```
 
 ## Scripts disponibles
@@ -154,6 +182,36 @@ Lancer le système complet :
 # Mode AMCL (localisation sur carte existante)
 ./scripts/launch.sh amcl ros_launcher/wall_techlab.yaml
 ```
+
+### `scripts/ptz-network-setup.sh` - Configuration réseau PTZ
+
+Configure automatiquement l'interface Ethernet pour accéder à la caméra PTZ :
+
+```bash
+# Exécuter le script (nécessite les droits sudo)
+sudo bash scripts/ptz-network-setup.sh
+```
+
+Ce script :
+- Configure l'adresse IP statique `192.168.5.100/24` sur `enP8p1s0`
+- Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
+- Vérifie que la route passe bien par Ethernet
+
+**Note** : À exécuter après chaque redémarrage du robot pour accéder à la caméra PTZ.
+
+### `video_launcher/script.sh` - Enregistrement vidéo depuis la caméra PTZ
+
+Script interactif pour enregistrer des vidéos depuis le flux RTSP de la caméra PTZ avec retouches d'image :
+
+```bash
+cd ~/Documents/ANDRA_2025-2026
+./video_launcher/script.sh
+```
+
+**Contrôles** :
+- `r` : Démarrer/arrêter l'enregistrement (toggle)
+- `s` : Arrêter l'enregistrement en cours
+- `q` : Quitter le script (arrête aussi l'enregistrement en cours)
 
 ## Vérifier les topics actifs
 
@@ -290,4 +348,6 @@ Le middleware DDS (Data Distribution Service) est la couche de communication sou
   - `scripts/setup.sh` (initialisation avec configuration automatique DDS et vérification CAN)
   - `scripts/build.sh` (compilation des workspaces)
   - `scripts/launch.sh` (lancement du système)
+  - `scripts/ptz-network-setup.sh` (configuration réseau pour la caméra PTZ)
+  - `video_launcher/script.sh` (enregistrement vidéo avec retouches d'image)
 

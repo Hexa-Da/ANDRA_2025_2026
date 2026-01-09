@@ -106,6 +106,15 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
   - **Résolution des conflits** : Suppression des routes conflictuelles avec le WiFi
   - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
+- [x] ✅ **RÉSOLU** : Conflit d'adresse IP entre Ethernet et WiFi après redémarrage
+  - **Problème** : Après redémarrage du robot, la configuration réseau n'était plus active
+  - **Cause** : Le WiFi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
+  - **Symptôme** : Les paquets vers `192.168.5.163` partaient via WiFi au lieu d'Ethernet
+  - **Solution** : Création du script `scripts/ptz-network-setup.sh` qui :
+    - Configure automatiquement l'IP sur `enP8p1s0`
+    - Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
+    - Vérifie que la route passe bien par Ethernet
+  - **État actuel** : ✅ Script créé, peut être intégré dans un service systemd pour configuration automatique
   
 - [x] ✅ **RÉSOLU** : Contrôle PTZ fonctionnel via VISCA over IP
   - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
@@ -246,6 +255,8 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] **Ajustement d'image** : Luminosité, contraste, gamma configurables via paramètres ROS2
 - [x] **Sauvegarde** : Deux dossiers distincts (toutes les images + images avec détection)
 - [x] **Contrôle PTZ** : Nœud `ptz_controller` fonctionnel via VISCA over IP
+- [x] **Script de configuration réseau automatique** : `scripts/ptz-network-setup.sh` (Conflit adresse IP) 
+- [x] **Script d'enregistrement vidéo** : `video_launcher/script.sh`
 
 ---
 
