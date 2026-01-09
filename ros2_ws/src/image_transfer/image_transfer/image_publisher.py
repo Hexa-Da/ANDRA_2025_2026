@@ -15,17 +15,12 @@ class Noeud3(Node):
         self.bridge = CvBridge()
 
         # Paramètres configurables pour la caméra PTZ
-        self.declare_parameter('ptz_ip', '192.168.5.163')
-        self.declare_parameter('ptz_port', 554)
-        self.declare_parameter('ptz_username', 'admin')
-        self.declare_parameter('ptz_password', 'admin')
-        self.declare_parameter('ptz_stream_path', 'live/av0')
         self.declare_parameter('capture_interval', 10.0)  # secondes
         self.declare_parameter('enable_ptz', True)
         
         # Paramètres d'ajustement d'image
-        self.declare_parameter('brightness', 1.5)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
-        self.declare_parameter('contrast', 1.25)  # Multiplicateur de contraste (1.0 = normal, >1.0 = plus de contraste)
+        self.declare_parameter('brightness', 3.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
+        self.declare_parameter('contrast', 1.0)  # Multiplicateur de contraste (1.0 = normal, >1.0 = plus de contraste)
         self.declare_parameter('gamma', 1.0)  # Correction gamma (1.0 = normal, <1.0 = plus clair)
         self.declare_parameter('enable_image_adjustment', True)  # Activer/désactiver l'ajustement
         
@@ -34,11 +29,6 @@ class Noeud3(Node):
         self.declare_parameter('images_output_dir', 'ros2_ws/images_capturees')  # Dossier de sauvegarde
 
         # Récupérer les paramètres
-        ptz_ip = self.get_parameter('ptz_ip').get_parameter_value().string_value
-        ptz_port = self.get_parameter('ptz_port').get_parameter_value().integer_value
-        ptz_username = self.get_parameter('ptz_username').get_parameter_value().string_value
-        ptz_password = self.get_parameter('ptz_password').get_parameter_value().string_value
-        ptz_stream_path = self.get_parameter('ptz_stream_path').get_parameter_value().string_value
         capture_interval = self.get_parameter('capture_interval').get_parameter_value().double_value
         enable_ptz = self.get_parameter('enable_ptz').get_parameter_value().bool_value
         
@@ -68,10 +58,10 @@ class Noeud3(Node):
         self.image_count = 0
 
         # Construire l'URL RTSP
-        self.rtsp_url = f"rtsp://{ptz_username}:{ptz_password}@{ptz_ip}:{ptz_port}/{ptz_stream_path}"
+        self.rtsp_url = f"rtsp://admin:admin@192.168.5.163:554/live/av0"
         
-        self.get_logger().info(f"Configuration PTZ : {ptz_ip}:{ptz_port}")
-        self.get_logger().info(f"URL RTSP : rtsp://{ptz_username}:***@{ptz_ip}:{ptz_port}/{ptz_stream_path}")
+        self.get_logger().info(f"Configuration PTZ : 192.168.5.163:554")
+        self.get_logger().info(f"URL RTSP : rtsp://admin:admin@192.168.5.163:554/live/av0")
         self.get_logger().info(f"PTZ activée : {enable_ptz}, Intervalle de capture : {capture_interval}s")
         if self.enable_adjustment:
             self.get_logger().info(f"Ajustement d'image : Luminosité={self.brightness}, Contraste={self.contrast}, Gamma={self.gamma}")
@@ -120,10 +110,29 @@ class Noeud3(Node):
         """
         Ajuste la luminosité, le contraste et le gamma d'une image
         """
-        img = cv2.convertScaleAbs(img, alpha=self.contrast, beta=self.brightness)
+        # Convertir en float pour éviter les problèmes de saturation
+        img_float = img.astype(np.float32)
+        
+        # 1. Appliquer la luminosité (multiplication)
+        img_adjusted = img_float * self.brightness
+        
+        # 2. Appliquer le contraste (centré sur 128)
+        # Formule : output = (input - 128) * contrast + 128
+        img_adjusted = (img_adjusted - 128.0) * self.contrast + 128.0
+        
+        # 3. Appliquer gamma si nécessaire
         if self.gamma != 1.0:
-            img = cv2.convertScaleAbs(img, alpha=self.gamma, beta=0)
-        return img  
+            # Normaliser
+            img_norm = np.clip(img_adjusted / 255.0, 0.0, 1.0)
+            # Appliquer gamma
+            img_gamma = np.power(img_norm, 1.0 / self.gamma)
+            # Reconvertir
+            img_adjusted = img_gamma * 255.0
+        
+        # Saturation et conversion
+        img_adjusted = np.clip(img_adjusted, 0, 255).astype(np.uint8)
+        
+        return img_adjusted
 
     def save_image(self, img):
         """

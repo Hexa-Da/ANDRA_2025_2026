@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script de compilation des workspaces
-# Usage: ./scripts/build.sh [ydlidar|andra|scout_base|zed]
+# Usage: ./scripts/build.sh [ydlidar|ros2_ws|scout_base|zed]
 
 # Obtenir le répertoire du script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -10,7 +10,7 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 source /opt/ros/humble/setup.bash
 
 # Définir la cible de compilation
-# 1 correspond au premier argument passé au script ($1) donc ici ydlidar ou andra 
+# 1 correspond au premier argument passé au script ($1) donc ici ydlidar ou ros2_ws 
 # sinon on prend par default all
 BUILD_TARGET="${1:-all}" 
 
@@ -20,8 +20,8 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
         colcon build
         ;;
-    andra)
-        echo "Compilation du workspace ANDRA..."
+    ros2_ws)
+        echo "Compilation du workspace ros2_ws..."
         cd "$PROJECT_DIR/ros2_ws"
         colcon build
         ;;
@@ -53,8 +53,8 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR/dependencies/zed-ros2-wrapper"
         colcon build
         
-        # ANDRA
-        echo "ANDRA..."
+        # ros2_ws
+        echo "ros2_ws..."
         cd "$PROJECT_DIR/ros2_ws"
         colcon build
         ;;

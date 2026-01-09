@@ -16,8 +16,6 @@ def generate_launch_description():
     enable_scout = LaunchConfiguration('enable_scout', default='true')
     enable_zed = LaunchConfiguration('enable_zed', default='true')
     enable_ptz = LaunchConfiguration('enable_ptz', default='true')
-    ptz_ip = LaunchConfiguration('ptz_ip', default='192.168.5.163')
-    ptz_port = LaunchConfiguration('ptz_port', default='554')
     ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.5')
     ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.25')
     ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
@@ -55,10 +53,6 @@ def generate_launch_description():
                              description='Enable ZED camera'),
         DeclareLaunchArgument('enable_ptz', default_value='true',
                              description='Enable PTZ camera'),
-        DeclareLaunchArgument('ptz_ip', default_value='192.168.5.163',
-                             description='IP address of PTZ camera'),
-        DeclareLaunchArgument('ptz_port', default_value='554',
-                             description='RTSP port of PTZ camera'),
         DeclareLaunchArgument('ptz_brightness', default_value='1.5',
                              description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)'),
         DeclareLaunchArgument('ptz_contrast', default_value='1.25',
@@ -104,14 +98,9 @@ def generate_launch_description():
             executable='image_publisher',
             name='image_publisher',
             parameters=[{
-                'enable_ptz': PythonExpression(["'", enable_ptz, "' == 'true'"]),
-                'ptz_ip': ptz_ip,
-                'ptz_port': PythonExpression(['int(', ptz_port, ')']),
                 'brightness': PythonExpression(['float(', ptz_brightness, ')']),
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
-                'enable_image_adjustment': PythonExpression(["'", enable_ptz, "' == 'true'"]),
-                'save_all_images': PythonExpression(["'", enable_ptz, "' == 'true'"]),
                 'images_output_dir': 'ros2_ws/images_capturees',
             }],
             output='screen',
