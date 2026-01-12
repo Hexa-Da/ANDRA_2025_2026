@@ -18,6 +18,7 @@ __pycache__/
 
 # Images générées (trop volumineuses)
 ros_launcher/images_detectees/
+ros2_ws/images_capturees/
 # Note: Les cartes .pgm sont importantes, on les garde
 # Si vous voulez les ignorer, décommentez la ligne suivante :
 # ros_launcher/*.pgm

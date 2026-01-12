@@ -247,16 +247,6 @@ ros2 topic echo /odom_robot
 # Publié par : EKF
 # Souscrit par : image_subscriber, position_publisher
 ros2 topic echo /odometry/filtered
-
-# Odométrie visuelle de la caméra ZED2 (nav_msgs/Odometry)
-# Publié par : zed_wrapper
-# Utilisé par : EKF
-ros2 topic echo /zed/zed_node/odom
-
-# Données IMU de la caméra ZED2 (sensor_msgs/Imu)
-# Publié par : zed_wrapper
-# Utilisé par : EKF
-ros2 topic echo /zed/zed_node/imu/data
 ```
 
 #### Topics de contrôle PTZ
@@ -269,43 +259,6 @@ ros2 topic echo /ptz/cmd_vel
 # Commande de preset pour la caméra PTZ (std_msgs/Int32)
 # Souscrit par : ptz_controller
 ros2 topic echo /ptz/preset
-```
-
-#### Topics système ROS2 (toujours présents)
-
-```bash
-# Transforms dynamiques (tf2_msgs/TFMessage)
-ros2 topic echo /tf
-
-# Transforms statiques (tf2_msgs/TFMessage)
-ros2 topic echo /tf_static
-
-# Messages de diagnostic du système (diagnostic_msgs/DiagnosticArray)
-ros2 topic echo /diagnostics
-
-# Logs ROS2 (rcl_interfaces/msg/Log)
-ros2 topic echo /rosout
-
-# Événements de changement de paramètres (rcl_interfaces/ParameterEvent)
-ros2 topic echo /parameter_events
-```
-
-### Informations sur les topics
-
-Pour obtenir des informations détaillées sur un topic (type de message, fréquence, etc.) :
-
-```bash
-# Informations sur un topic spécifique
-ros2 topic info /photo_topic
-
-# Type de message publié
-ros2 topic type /photo_topic
-
-# Fréquence de publication
-ros2 topic hz /photo_topic
-
-# Bande passante utilisée
-ros2 topic bw /photo_topic
 ```
 
 ## Vérifier les transforms TF
@@ -327,6 +280,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 
 ### Nœuds de traitement d'images
 - **`image_publisher`** : Capture des images depuis la caméra PTZ
+  - active le mode auto exposure au démarrage
   - Intervalle de capture configurable (défaut: 10 secondes)
   - Ajustement automatique de luminosité/contraste/gamma
   - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`
