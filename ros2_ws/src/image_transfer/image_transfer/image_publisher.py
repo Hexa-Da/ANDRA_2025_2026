@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 import subprocess
 import time
+import socket
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import cv2
@@ -19,7 +20,7 @@ class Noeud3(Node):
         self.declare_parameter('enable_ptz', True)
         
         # Paramètres d'ajustement d'image
-        self.declare_parameter('brightness', 3.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
+        self.declare_parameter('brightness', 1.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
         self.declare_parameter('contrast', 1.0)  # Multiplicateur de contraste (1.0 = normal, >1.0 = plus de contraste)
         self.declare_parameter('gamma', 1.0)  # Correction gamma (1.0 = normal, <1.0 = plus clair)
         self.declare_parameter('enable_image_adjustment', True)  # Activer/désactiver l'ajustement
@@ -71,9 +72,36 @@ class Noeud3(Node):
             else:
                 self.get_logger().info(f"Ajustement d'image : Mode MANUEL - Luminosité={self.brightness}, Contraste={self.contrast}, Gamma={self.gamma}")
 
+        self.set_auto_exposure()
+
         # Capture une image toutes les X secondes (configurable)
         if enable_ptz:
             self.timer = self.create_timer(capture_interval, self.capture_and_publish)
+
+    def set_auto_exposure(self):
+            """Active le mode Full Auto via une connexion VISCA temporaire"""
+            cam_ip = '192.168.5.163'
+            cam_port = 1259  # Port VISCA Marshall
+            
+            try:
+                # 1. Création d'une connexion temporaire
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_sock:
+                    temp_sock.settimeout(2.0)
+                    temp_sock.connect((cam_ip, cam_port))
+                    
+                    # 2. Commande VISCA Full Auto: 81 01 04 39 00 FF
+                    # 0x81 (Header), 0x01 0x04 0x39 0x00 (Cmd), 0xFF (Terminator)
+                    command = bytes([0x81, 0x01, 0x04, 0x39, 0x00, 0xFF])
+                    
+                    temp_sock.sendall(command)
+                    
+                    # Optionnel: Lire la réponse de la caméra (ACK)
+                    response = temp_sock.recv(1024)
+                    
+                    self.get_logger().info('HARDWARE: Mode Auto-Exposure activé avec succès sur la caméra.')
+                    
+            except Exception as e:
+                self.get_logger().error(f'Impossible d\'activer l\'auto-exposure matériel : {e}')
 
     def capture_and_publish(self):
         self.get_logger().info("Capture d'une image depuis la caméra PTZ...")

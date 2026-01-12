@@ -34,7 +34,7 @@ source scripts/setup.sh
 ./scripts/build.sh ydlidar        # Uniquement YDLidar
 ./scripts/build.sh ros2_ws        # Uniquement ros2_ws
 ./scripts/build.sh scrout_base    # Uniquement scout_base
-./scripts/build.sh zed            # Uniquement scout_base
+./scripts/build.sh zed            # Uniquement zed
 ```
 
 **Après compilation, re-sourcer l'environnement :**
@@ -81,7 +81,7 @@ sudo systemctl start agilex-handler.service
 candump agilex -n 5 -T 2000
 ```
 
-**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, scout_base ne pourra pas communiquer avec le robot.
+**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, le neoud s'arrête.
 
 ### 6. Lancer le système
 
@@ -101,16 +101,13 @@ candump agilex -n 5 -T 2000
 # Lancer sans caméra PTZ
 ./scripts/launch.sh slam enable_ptz:=false
 
-# Lancer avec mode automatique pour la correction d'image PTZ
-./scripts/launch.sh slam ptz_auto_adjustment:=true
-
 # Combinaisons possibles
 ./scripts/launch.sh slam enable_lidar:=false enable_scout:=false
 ```
 
 **Mode AMCL** (pour utiliser une carte existante) :
 ```bash
-./scripts/launch.sh amcl ros_launcher/wall_techlab.yaml
+./scripts/launch.sh amcl ros_launcher/andra.yaml
 ```
 
 ## Structure du projet
@@ -125,9 +122,9 @@ candump agilex -n 5 -T 2000
 │   ├── scout_base/             # Workspace ROS2 pour le robot Scout
 │   └── zed-ros2-wrapper/       # Workspace ROS2 pour la caméra ZED2
 ├── video_launcher/             # Script d'enregistrement vidéo depuis la caméra PTZ
-│   ├── script.sh              # Script interactif d'enregistrement avec retouches d'image
-│   └── video_output/          # Dossier de sauvegarde des vidéos enregistrées
-├── script_video/              # Script d'enregistrement vidéo depuis la caméra du robot (ancien)
+│   ├── script.sh               # Script interactif d'enregistrement avec retouches d'image
+│   └── video_output/           # Dossier de sauvegarde des vidéos enregistrées
+├── script_video/               # Script d'enregistrement vidéo depuis la caméra du robot (ancien)
 └── scripts/                    # Scripts d'initialisation et gestion du projet
     ├── setup.sh                # Préparation de tout l'environnement 
     ├── build.sh                # Compilation des workspaces
@@ -170,8 +167,8 @@ Compiler les workspaces :
 # Compiler uniquement ZED Wrapper
 ./scripts/build.sh zed
 
-# Compiler uniquement ANDRA
-./scripts/build.sh andra
+# Compiler uniquement ros2_ws
+./scripts/build.sh ros2_ws
 ```
 
 ### `scripts/launch.sh` - Lancement du système
@@ -183,7 +180,7 @@ Lancer le système complet :
 ./scripts/launch.sh slam
 
 # Mode AMCL (localisation sur carte existante)
-./scripts/launch.sh amcl ros_launcher/wall_techlab.yaml
+./scripts/launch.sh amcl ros_launcher/andra.yaml
 ```
 
 ### `scripts/ptz-network-setup.sh` - Configuration réseau PTZ
@@ -224,18 +221,91 @@ ros2 topic list
 
 ### Vérifier les messages publiés
 
+#### Topics de détection et traitement d'images
+
 ```bash
-# Images publiées
-ros2 topic echo photo_topic
+# Images capturées depuis la caméra PTZ (sensor_msgs/Image)
+# Publié par : image_publisher
+# Souscrit par : image_subscriber
+ros2 topic echo /photo_topic
 
-# Positions détectées
-ros2 topic echo position_detectee
+# Positions où des fissures ont été détectées (geometry_msgs/Point)
+# Publié par : image_subscriber
+# Souscrit par : report_fissures
+ros2 topic echo /position_detectee
+```
 
-# Odométrie filtrée
+#### Topics d'odométrie et localisation
+
+```bash
+# Odométrie brute du robot Scout (nav_msgs/Odometry)
+# Publié par : scout_base
+# Utilisé par : EKF (filtre de Kalman étendu)
+ros2 topic echo /odom_robot
+
+# Odométrie filtrée par le filtre EKF (nav_msgs/Odometry)
+# Publié par : EKF
+# Souscrit par : image_subscriber, position_publisher
 ros2 topic echo /odometry/filtered
 
-# Position AMCL
-ros2 topic echo /amcl_pose
+# Odométrie visuelle de la caméra ZED2 (nav_msgs/Odometry)
+# Publié par : zed_wrapper
+# Utilisé par : EKF
+ros2 topic echo /zed/zed_node/odom
+
+# Données IMU de la caméra ZED2 (sensor_msgs/Imu)
+# Publié par : zed_wrapper
+# Utilisé par : EKF
+ros2 topic echo /zed/zed_node/imu/data
+```
+
+#### Topics de contrôle PTZ
+
+```bash
+# Commande de vitesse pour la caméra PTZ (geometry_msgs/Twist)
+# Souscrit par : ptz_controller
+ros2 topic echo /ptz/cmd_vel
+
+# Commande de preset pour la caméra PTZ (std_msgs/Int32)
+# Souscrit par : ptz_controller
+ros2 topic echo /ptz/preset
+```
+
+#### Topics système ROS2 (toujours présents)
+
+```bash
+# Transforms dynamiques (tf2_msgs/TFMessage)
+ros2 topic echo /tf
+
+# Transforms statiques (tf2_msgs/TFMessage)
+ros2 topic echo /tf_static
+
+# Messages de diagnostic du système (diagnostic_msgs/DiagnosticArray)
+ros2 topic echo /diagnostics
+
+# Logs ROS2 (rcl_interfaces/msg/Log)
+ros2 topic echo /rosout
+
+# Événements de changement de paramètres (rcl_interfaces/ParameterEvent)
+ros2 topic echo /parameter_events
+```
+
+### Informations sur les topics
+
+Pour obtenir des informations détaillées sur un topic (type de message, fréquence, etc.) :
+
+```bash
+# Informations sur un topic spécifique
+ros2 topic info /photo_topic
+
+# Type de message publié
+ros2 topic type /photo_topic
+
+# Fréquence de publication
+ros2 topic hz /photo_topic
+
+# Bande passante utilisée
+ros2 topic bw /photo_topic
 ```
 
 ## Vérifier les transforms TF
