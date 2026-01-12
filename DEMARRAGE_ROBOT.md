@@ -101,6 +101,9 @@ candump agilex -n 5 -T 2000
 # Lancer sans caméra PTZ
 ./scripts/launch.sh slam enable_ptz:=false
 
+# Lancer avec mode automatique pour la correction d'image PTZ
+./scripts/launch.sh slam ptz_auto_adjustment:=true
+
 # Combinaisons possibles
 ./scripts/launch.sh slam enable_lidar:=false enable_scout:=false
 ```
@@ -258,13 +261,17 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Ajustement automatique de luminosité/contraste/gamma
   - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`
   - Publication sur le topic `/photo_topic`
-  - Paramètres configurables : `brightness`, `contrast`, `gamma`, `capture_interval`
+  - Paramètres configurables : `brightness`, `contrast`, `gamma`, `capture_interval`, `auto_adjustment_mode`
 - **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
   - Reçoit les images depuis `/photo_topic`
   - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
   - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
 - **`position_publisher`** : Affichage de la position du robot
 - **`report_fissures`** : Trace les positions détectées sur la carte
+  - Reçoit les positions depuis le topic `/position_detectee`
+  - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
+  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
+  - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
 - **`ptz_controller`** : Contrôle PTZ de la caméra Marshall CV-605 via VISCA over IP
 
 ### Localisation et cartographie

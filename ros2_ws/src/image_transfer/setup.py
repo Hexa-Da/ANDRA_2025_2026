@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'numpy<2'], # numpy<2 sinon conflits avec cv-bridge (ajustement image))
     zip_safe=True,
     maintainer='techlab',
     maintainer_email='antoine.richard@depinfonancy.net',

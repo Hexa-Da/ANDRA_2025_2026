@@ -253,6 +253,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] **Accès RTSP** : Caméra accessible sur `rtsp://admin:admin@192.168.5.163:554/live/av0`
 - [x] **Nœud image_publisher** : Paramètres configurables (IP, port, ajustements d'image, sauvegarde)
 - [x] **Ajustement d'image** : Luminosité, contraste, gamma configurables via paramètres ROS2
+- [x] **Mode automatique d'ajustement** : Implémentation du mode auto avec CLAHE pour ajustement automatique 
 - [x] **Sauvegarde** : Deux dossiers distincts (toutes les images + images avec détection)
 - [x] **Contrôle PTZ** : Nœud `ptz_controller` fonctionnel via VISCA over IP
 - [x] **Script de configuration réseau automatique** : `scripts/ptz-network-setup.sh` (Conflit adresse IP) 
@@ -260,4 +261,4 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 9 Janvier 2026
+**Dernière mise à jour** : 12 Janvier 2026

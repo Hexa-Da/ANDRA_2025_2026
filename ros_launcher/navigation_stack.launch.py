@@ -19,6 +19,7 @@ def generate_launch_description():
     ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.5')
     ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.25')
     ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
+    ptz_auto_adjustment = LaunchConfiguration('ptz_auto_adjustment', default='false')
     
     # Config directory - replace 'your_package_name' with your actual package name
     # where you store your configuration files
@@ -59,6 +60,8 @@ def generate_launch_description():
                              description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)'),
         DeclareLaunchArgument('ptz_gamma', default_value='1.0',
                              description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
+        DeclareLaunchArgument('ptz_auto_adjustment', default_value='false',
+                             description='Enable automatic image adjustment using CLAHE (true=auto, false=manual)'),
         
         # Hardware drivers
         # YDLIDAR - conditionnel
@@ -101,6 +104,7 @@ def generate_launch_description():
                 'brightness': PythonExpression(['float(', ptz_brightness, ')']),
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
+                'auto_adjustment_mode': PythonExpression(['bool(', ptz_auto_adjustment, ')']),
                 'images_output_dir': 'ros2_ws/images_capturees',
             }],
             output='screen',
