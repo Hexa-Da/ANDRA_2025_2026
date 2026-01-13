@@ -1,3 +1,0 @@
-ros2 launch ydlidar_nav2_slam full_system.launch.py
-
-rviz2  + Afficher Map
