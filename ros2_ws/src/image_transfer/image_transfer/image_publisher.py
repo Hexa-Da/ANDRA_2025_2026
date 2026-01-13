@@ -9,9 +9,9 @@ import cv2
 import numpy as np
 import os
 
-class Noeud3(Node):
+class ImagePublisher(Node):
     def __init__(self):
-        super().__init__('noeud_3')
+        super().__init__('image_publisher')
         self.publisher = self.create_publisher(Image, 'photo_topic', 10)
         self.bridge = CvBridge()
 
@@ -215,15 +215,15 @@ class Noeud3(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    noeud_3 = Noeud3()
+    image_publisher = ImagePublisher()
 
     try:
-        rclpy.spin(noeud_3)
+        rclpy.spin(image_publisher)
     except KeyboardInterrupt:
         pass
     finally:
         try:
-            noeud_3.destroy_node()
+            image_publisher.destroy_node()
         except Exception:
             pass
         try:

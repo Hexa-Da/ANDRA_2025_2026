@@ -14,7 +14,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
 │   ├── scout_base/              # Workspace ROS2 pour le robot Scout
 │   └── zed-ros2-wrapper/        # Workspace ROS2 pour la caméra ZED2
-├── video_launcher/              # Script d'enregistrement vidéo depuis la caméra PTZ
+├── video/                       # Script d'enregistrement vidéo depuis la caméra PTZ
 └── scripts/                     # Scripts d'initialisation et gestion du projet
 ```
 
@@ -98,7 +98,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 ---
 
-### `video_launcher/`
+### `video/`
 **Rôle** : Script d'enregistrement vidéo depuis la caméra PTZ
 
 **Contenu** :

@@ -20,28 +20,33 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Accès et ressources
 - [x] Accès au dépôt GitHub 
 - [x] Accès au drive hébergeant le modèle YOLO11 
-- [x] Accès au robot Agilex Scout Mini qui est au TechLab 
+- [x] Accès au robot Agilex Scout Mini du TechLab 
 
 ### Infrastructure et scripts
-- [x] Analyse et compréhension de l'indrastructure et des scripts
+- [x] Analyse et compréhension de l'infrastructure et des scripts
 - [x] Etablir un worflow simple pour toute l'équipe
 - [x] Création d'un script d'initialisation (`scripts/setup.sh`)
 - [x] Création d'un script de compilation (`scripts/build.sh`)
 - [x] Création d'un script de lancement (`scripts/launch.sh`)
-- [x] Organisation de la structure du projet (workspaces, dépendances, configurations)
+- [x] Création d'un script de mise en réseau de la PTZ (`scripts/ptz-network-setup.sh`)
+- [x] Réecriture du script video, avec sauvegarde dans `video_output/` (`video/script.sh`)
+- [x] Organisation de la structure du projet (workspaces, dépendances, configurations/launcher)
+- [x] Nettoyage du code, fichier non utilisés ou dépréciés
 
 ### Documentation
 - [x] Documentation complète du démarrage (`DEMARRAGE_ROBOT.md`)
-- [x] Guide d'utilisation des scripts
+- [x] Explication de la structure du projet (`STRUCTURE.md`)
+- [x] Guide d'utilisation des scripts (`SCRIPTS.md`)
+- [x] Guide de debogage (`DEBUG.md`)
 - [x] Documentation des nœuds ROS2
 
-### Nœuds ROS2 fonctionnels (les neouds tournent mais les données renvoyées n'ont pas été verifiées)
-- [x] `image_publisher` : Capture des images depuis la caméra PTZ
-- [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde des images détectées
+### Verification des nœuds ROS2  
+- [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
+- [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
-- [x] Correction des erreurs de shutdown dans les nœuds Python (gestion d'exception dans le finally)
+- [x] Correction des erreurs de shutdown dans les nœuds Python 
 
 ### Configuration navigation
 - [x] Configuration SLAM Toolbox (`ros_launcher/slam_config.yaml`)
@@ -50,26 +55,17 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] Launch file principal (`ros_launcher/navigation_stack.launch.py`)
 - [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame)
 
-### Configuration LIDAR
-- [x] Connexion au port série `/dev/ttyTHS1` fonctionnelle
-- [x] Configuration avec fichiers de modèle (G2.yaml, G4.yaml testés)
-- [x] Intégration dans le launch file avec paramètres configurables
-
 ---
 
 ## En cours / Problèmes rencontrés
 
 ### Réinstallation complète du robot
 - [ ] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
-- [ ] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration
-
-### Drivers manquants
-- [x] **scout_base** : Package non trouvé (nécessaire pour l'odométrie des roues)
-  - Repository probable : https://github.com/agilexrobotics/scout_ros2
-  - Topic attendu : `/odom_robot`
+- [ ] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
+- [ ] **Objectif** : Atteindre les résultats finaux de l'année dernière
 
 ### Problème LIDAR
-- [x] Connexion au port série réussie (`/dev/ttyTHS1`)
+- [x] Connexion au port série (`/dev/ttyTHS1`)
 - [ ] **Erreur** : `Error, cannot retrieve Lidar health code -1`
 - [ ] **Erreur** : `Fail to get baseplate device information!`
 - [ ] **Erreur** : `Failed to start scan mode -1`
@@ -81,7 +77,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [ ] **Action** : Vérifier connexion matérielle (alimentation, câble) ou décider de continuer sans LIDAR
 
 ### Problème Zed 2
-- [x] **zed_wrapper** : Package installé et fonctionnel
+- [ ] **zed_wrapper** : Package installé et fonctionnel
   - ZED SDK installé dans /usr/local/zed
   - zed_msgs installé via apt
   - zed_wrapper compilé dans dependencies/zed-ros2-wrapper
@@ -89,34 +85,28 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
   - Configuration EKF mise à jour pour utiliser les données ZED
 
-### Problèmes au lancement
-- [x] **LIDAR** : Connexion OK mais scan ne démarre toujours pas (possiblement une erreurs matérielles)
-- [x] **scout_base** : ✅ **RÉSOLU**
-  - **Problème initial** : le noeud s'arrete immédiatement lors du lancement
+### Problèmes scout_base
+- [x] **Package** : Package non trouvé (nécessaire pour l'odométrie des roues)
+  - Repository probable : https://github.com/agilexrobotics/scout_ros2
+  - Topic attendu : `/odom_robot`
+- [x] **Arret du neoud** :
   - **Configuration** : Ajout du paramètre `odom_topic_name:=odom_robot` pour correspondre à la configuration EKF
   - **Problème identifié** : Le driver `ugv_sdk` ne reconnaissait pas "agilex" comme un port CAN valide (vérification stricte du nom contenant "can")
   - **Solution** : Modification du code source `scout_base_ros.cpp` pour accepter "agilex" en plus des noms contenant "can"
   - **État actuel** : ✅ Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
 
 ### Problème Caméra PTZ
-- [x] ✅ **RÉSOLU** : Caméra PTZ maintenant accessible et fonctionnelle
-  - **Problème initial** : Caméra PTZ inaccessible sur `192.168.5.163`
-  - **Cause** : La Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
+- [x] **Adresse statique introuvable** : Caméra PTZ inaccessible sur `192.168.5.163`
+  - **Cause** : La connection ethernet de la Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
   - **Solution** : Configuration de l'adresse IP statique sur l'interface Ethernet `enP8p1s0`
   - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
-  - **Résolution des conflits** : Suppression des routes conflictuelles avec le WiFi
-  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
-- [x] ✅ **RÉSOLU** : Conflit d'adresse IP entre Ethernet et WiFi après redémarrage
-  - **Problème** : Après redémarrage du robot, la configuration réseau n'était plus active
-  - **Cause** : Le WiFi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
-  - **Symptôme** : Les paquets vers `192.168.5.163` partaient via WiFi au lieu d'Ethernet
+- [x] **Conflits** : Le WiFi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
   - **Solution** : Création du script `scripts/ptz-network-setup.sh` qui :
     - Configure automatiquement l'IP sur `enP8p1s0`
     - Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
     - Vérifie que la route passe bien par Ethernet
-  - **État actuel** : ✅ Script créé, peut être intégré dans un service systemd pour configuration automatique
-  
-- [x] ✅ **RÉSOLU** : Contrôle PTZ fonctionnel via VISCA over IP
+  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
+- [x] **Controle PTZ** : Contrôle PTZ fonctionnel via VISCA over IP
   - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
   - **Protocole** : VISCA over IP sur le port 1259 (port par défaut selon documentation)
   - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
@@ -144,13 +134,21 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
 - [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
+- [ ] Installer/configurer le driver `zed_wrapper`
 - [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
+### Test et compréhension du projet
+- [ ] Tester la configuration de la navigation
+- [ ] Crée une map de test
+- [ ] Tester les noeuds de position du cette map
+- [ ] Tests de bout en bout du système complet
+- [ ] Validation des transformations TF (vérifier toutes les transformations)
+- [ ] Tests de performance des nœuds (fréquence de publication, latence)
+
 ### Reproduire les résultats de l'année dernière
-- [ ] Robot capable d'avancer en ligne droite pendant 1 mètre
-- [ ] Robot capable de s'arrêter pour prendre une image
+- [x] Robot capable d'avancer en ligne droite pendant 1 mètre
+- [x] Robot capable de s'arrêter pour prendre une image
 - [ ] Robot capable de recommencer le cycle
 - [ ] Robot capable de prendre une carte en entrée et d'estimer sa position (AMCL)
 
@@ -236,28 +234,6 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - Utiliser les étiquettes au sein de l'ANDRA pour se recalibrer
 - Améliorer le positionnement (nombreux robots ont déjà résolu ce problème : Spot, Unitree GO2)
 - Étendre l'entraînement de l'IA à tous les types de murs
-
-### Configuration CAN
-- [x] Interface CAN identifiée : `agilex` (configuration TechLab)
-- [x] Service systemd configuré : `agilex-handler.service`
-- Commande manuelle : `sudo ip link set agilex up type can bitrate 500000`
-- [x] Launch file mis à jour pour utiliser `port_name:=agilex`
-
-### Modèle YOLO
-- Version utilisée : YOLOv11
-- Fichier : `ros2_ws/models/best.pt`
-- Avantage : Pas besoin de s'embêter avec PyTorch ou CUDA, tout est géré par défaut
-
-### Configuration Caméra PTZ
-- [x] **Réseau** : Configuration de l'adresse IP statique sur `enP8p1s0` (192.168.5.100/24)
-- [x] **Accès RTSP** : Caméra accessible sur `rtsp://admin:admin@192.168.5.163:554/live/av0`
-- [x] **Nœud image_publisher** : Paramètres configurables (IP, port, ajustements d'image, sauvegarde)
-- [x] **Ajustement d'image** : Luminosité, contraste, gamma configurables via paramètres ROS2
-- [x] **Mode automatique d'ajustement** : Implémentation du mode auto avec CLAHE pour ajustement automatique 
-- [x] **Sauvegarde** : Deux dossiers distincts (toutes les images + images avec détection)
-- [x] **Contrôle PTZ** : Nœud `ptz_controller` fonctionnel via VISCA over IP
-- [x] **Script de configuration réseau automatique** : `scripts/ptz-network-setup.sh` (Conflit adresse IP) 
-- [x] **Script d'enregistrement vidéo** : `video_launcher/script.sh`
 
 ---
 

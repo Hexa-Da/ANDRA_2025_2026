@@ -11,9 +11,9 @@ import numpy as np
 import os
 import time
 
-class Noeud5(Node):
+class ImageSubscriber(Node):
     def __init__(self):
-        super().__init__('noeud_5')
+        super().__init__('image_subscriber')
         self.position_pub = self.create_publisher(Point, 'position_detectee', 10)
         self.position = None
         # Abonnement au topic 'photo_topic' pour recevoir les images
@@ -114,7 +114,7 @@ class Noeud5(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    image_subscriber = Noeud5()
+    image_subscriber = ImageSubscriber()
     try:
         rclpy.spin(image_subscriber)
     except KeyboardInterrupt:

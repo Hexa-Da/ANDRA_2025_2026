@@ -82,13 +82,13 @@ Ce script :
 
 **Note** : À exécuter après chaque redémarrage du robot pour accéder à la caméra PTZ.
 
-### `video_launcher/script.sh` - Enregistrement vidéo depuis la caméra PTZ
+### `video/script.sh` - Enregistrement vidéo depuis la caméra PTZ
 
 Script interactif pour enregistrer des vidéos depuis le flux RTSP de la caméra PTZ avec retouches d'image :
 
 ```bash
 cd ~/Documents/ANDRA_2025-2026
-./video_launcher/script.sh
+./video/script.sh
 ```
 
 **Contrôles** :
