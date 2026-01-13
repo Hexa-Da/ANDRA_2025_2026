@@ -1,4 +1,4 @@
-# Structure du projet
+# Decription du projetription
 
 Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
@@ -55,6 +55,11 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `position_publisher` : Affichage de la position du robot
   - `report_fissures` : Traçage des positions détectées sur la carte
   - `ptz_controller` : Contrôle de la caméra PTZ
+  - `resource/` : Fichier de marqueur requis par ament_index
+  - `test/` : Tests de qualité de code (linting, copyright, PEP257) - standards ROS2
+  - `package.xml` : Métadonnées du package ROS2 (dépendances, version, description) 
+  - `setup.py` : Configuration Python setuptools (entry points, dépendances Python) 
+  - `setup.cfg` : Configuration additionnelle setuptools (emplacement des scripts) 
 - `src/slam_andra_package/` : Package de configuration SLAM
 - `src/ydlidar_nav2_slam/` : Configuration SLAM pour le LIDAR
 - `images_capturees/` : Images brutes capturées par la caméra PTZ
