@@ -8,7 +8,6 @@ docker run -it --rm \
     -e QT_X11_NO_MITSHM=1 \
     -e ROS_DOMAIN_ID=0 \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v ./config.rviz:/tmp/config.rviz \
     -v $(pwd)/../ros2_ws:/workspace/ros2_ws \
     -v $(pwd)/../ros_launcher:/workspace/ros_launcher \
     ros2-humble-custom /bin/bash -c "

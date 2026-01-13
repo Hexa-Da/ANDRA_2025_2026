@@ -27,7 +27,8 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `DEMARRAGE_ROBOT.md` : Guide de démarrage des nœuds sur le robot
 - `DEBUG.md` : Commandes de débogage et vérification du système
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
-- `DESCRIPTION.md` : Ce fichier (structure du projet)
+- `STRUCTURE.md` : Ce fichier (structure du projet)
+- `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
 
 **Intérêt** : Centralise toute la documentation pour faciliter la compréhension et la maintenance du projet.
 
@@ -38,7 +39,6 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 **Contenu** :
 - `Dockerfile` : Image Docker avec ROS2 et RViz2
-- `config.rviz` : Configuration RViz2 pour visualiser le robot et la carte
 - `launch.sh` : Script de lancement du conteneur Docker
 
 **Intérêt** : Permet de visualiser le robot et la carte depuis un PC distant sans installer ROS2 localement.
@@ -81,8 +81,9 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `amcl_config.yaml` : Configuration AMCL (localisation)
 - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
 - `ydlidar_config.yaml` : Configuration du LIDAR
+- `config.rviz` : Configuration pré-définie pour RViz2 
 
-**Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL.
+**Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL. Le fichier `config.rviz` peut être utilisé avec ou sans Docker pour visualiser le robot et la carte.
 
 ---
 

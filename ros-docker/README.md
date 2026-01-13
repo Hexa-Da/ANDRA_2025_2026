@@ -5,17 +5,11 @@
 Ce dossier (`ros-docker/`) permet de travailler et tester votre code ROS2 sans avoir accès au robot physique. 
 
 C'est l'environnement de développement local qui vous permet de :
-- **Développer et tester vos nœuds ROS2** sur votre machine personnelle
-- **Compiler votre code** avant de le déployer sur le robot
+- **Développer et tester vos nœuds ROS2** sur votre machine personnelle 
+- **Verifier que votre code compile** avant de le déployer sur le robot
 - **Visualiser avec RViz2** les données du robot (si connecté au même réseau)
 - **Travailler sur n'importe quelle distribution Linux** (alors que ROS2 Humble est uniquement sur Ubuntu 22.04)
 
-### Workflow recommandé
-
-- **Développement local** (Docker) : Éditez et testez votre code dans Docker
-- **Déploiement sur robot** : Utilisez les scripts dans `scripts/` pour compiler et lancer sur le robot
-
-Pour lancer le système complet sur le robot (avec tous les drivers matériels), utilisez les scripts dans `scripts/` (voir [`DEMARRAGE_ROBOT.md`](../DEMARRAGE_ROBOT.md)).
 
 ## Prérequis
 
@@ -52,20 +46,8 @@ Script de lancement du conteneur Docker avec :
 - **Réseau hôte** : `--net=host` pour communiquer avec le robot (si sur le même réseau)
 - **Volumes montés** :
   - `/tmp/.X11-unix` → accès à l'affichage graphique
-  - `./config.rviz` → configuration RViz2
   - `../ros2_ws` → workspace ROS2 (monté en `/workspace/ros2_ws`)
   - `../ros_launcher` → fichiers de lancement (monté en `/workspace/ros_launcher`)
-
-### `config.rviz`
-Configuration pré-définie pour RViz2 qui affiche :
-- **Grille** : référence visuelle
-- **TF (Transform)** : arbre de coordonnées (map, odom, base_link, laser_frame, zed_camera_link)
-- **Carte** : `/map` - carte générée par le SLAM
-- **LaserScan** : `/scan` - données du LIDAR
-- **PoseArray** : `/particlecloud` - particules de localisation (AMCL)
-- **Polygon** : `/local_costmap/published_footprint` - empreinte du robot
-- **Pose** : `/amcl_pose` - position estimée du robot
-- **Outils de navigation** : SetInitialPose, SetGoal
 
 ## Utilisation
 
@@ -107,13 +89,6 @@ ros2 run image_transfer image_subscriber
 
 **Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot (voir [`DEMARRAGE_ROBOT.md`](../DEMARRAGE_ROBOT.md) pour le workflow complet sur le robot).
 
-### Lancer RViz2
-
-```bash
-# Lancer directement avec la config
-rviz2 -d /tmp/config.rviz
-```
-
 ## Workflow de développement
 
 ### Édition des fichiers
@@ -138,29 +113,12 @@ Si le robot est sur le même réseau et que vous voulez visualiser ses données 
 - Vous pouvez lancer RViz2 et vous connecter aux topics du robot
 - Voir `DEMARRAGE_ROBOT.md` pour savoir comment lancer le système sur le robot
 
-### Exécutables disponibles
+## Note technique
 
-Dans le package `image_transfer`, les exécutables sont :
-- `image_publisher` (pas `publisher`)
-- `image_subscriber`
-- `test`
-- `show_pos`
-- `position_publisher`
-- `report_fissures`
-
-## À quoi sert RViz ?
-
-RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de :
-- **Voir la carte** générée par le SLAM en temps réel
-- **Visualiser les données des capteurs** (LIDAR, caméras)
-- **Observer la position du robot** sur la carte
-- **Définir des objectifs de navigation** (Set Goal)
-- **Déboguer visuellement** le système robotique
+Développer dans un conteneur Docker offre des possibilités limitées par rapport à un accès direct au robot via SSH. N’utilisez cette méthode que si l’accès physique ou distant au robot n’est vraiment pas possible. Il est fortement recommandé de faire le développement directement sur le robot pour bénéficier de toutes les fonctionnalités et simplifier le processus.
 
 ## Liens utiles
 
 - [Documentation ROS2 Humble](https://docs.ros.org/en/humble/)
 - [Documentation Docker](https://docs.docker.com/)
-- [Documentation RViz2](https://github.com/ros2/rviz)
-- [Guide démarrage robot](../DEMARRAGE_ROBOT.md) 
 
