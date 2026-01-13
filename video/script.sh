@@ -2,6 +2,8 @@
 
 # Configuration
 RTSP_URL='rtsp://admin:admin@192.168.5.163:554/live/av0'
+CAM_IP='192.168.5.163'
+CAM_PORT_VISCA=1259  # Port VISCA Marshall
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/video_output"
 FFMPEG_PATH=$(which ffmpeg)
@@ -15,6 +17,33 @@ ENABLE_ADJUSTMENT=true  # Activer/désactiver les retouches
 
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
+
+# Fonction pour activer l'auto-exposure matériel via VISCA
+set_auto_exposure() {
+    # Commande VISCA Full Auto: 81 01 04 39 00 FF
+    # 0x81 (Header), 0x01 0x04 0x39 0x00 (Cmd), 0xFF (Terminator)
+    
+    if command -v python3 &> /dev/null; then
+        python3 -c "
+        import socket
+        import sys
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_sock:
+            temp_sock.settimeout(2.0) 
+            temp_sock.connect(('$CAM_IP', $CAM_PORT_VISCA))
+            command = bytes([0x81, 0x01, 0x04, 0x39, 0x00, 0xFF])
+            temp_sock.sendall(command)
+            print('HARDWARE: Mode Auto-Exposure activé avec succès sur la caméra.')
+            sys.exit(0)
+        except Exception as e:
+            print(f'Erreur lors de l\'activation de l\'auto-exposure: {e}', file=sys.stderr)
+            sys.exit(1)
+        " && return 0
+    fi
+    
+    echo "ATTENTION: Impossible d'activer l'auto-exposure matériel (nc/python3 non disponible)." >&2
+    return 1
+}
 
 # Fonction pour construire le filtre vidéo FFmpeg
 build_video_filter() {
@@ -33,6 +62,9 @@ build_video_filter() {
     fi
 }
 
+# Activer l'auto-exposure matériel au démarrage
+set_auto_exposure
+
 echo "Press 'r' to start recording, 's' to stop, and 'q' to quit."
 if [[ "$ENABLE_ADJUSTMENT" == "true" ]]; then
     echo "Image adjustment enabled: Brightness=$BRIGHTNESS, Contrast=$CONTRAST, Gamma=$GAMMA"
@@ -50,6 +82,9 @@ while true; do
             OUTPUT_FILE="$OUTPUT_DIR/record_$TIMESTAMP.mp4"
 
             echo "Starting recording: $OUTPUT_FILE"
+            
+            # S'assurer que l'auto-exposure est activé avant l'enregistrement
+            set_auto_exposure > /dev/null 2>&1
             
             # Construire la commande FFmpeg avec filtres vidéo si nécessaire
             if [[ "$ENABLE_ADJUSTMENT" == "true" ]]; then

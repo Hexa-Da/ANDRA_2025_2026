@@ -23,8 +23,7 @@ class ImagePublisher(Node):
         self.declare_parameter('brightness', 1.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
         self.declare_parameter('contrast', 1.0)  # Multiplicateur de contraste (1.0 = normal, >1.0 = plus de contraste)
         self.declare_parameter('gamma', 1.0)  # Correction gamma (1.0 = normal, <1.0 = plus clair)
-        self.declare_parameter('enable_image_adjustment', True)  # Activer/désactiver l'ajustement
-        self.declare_parameter('auto_adjustment_mode', False)  # Mode auto (CLAHE) ou manuel (valeurs fixes)
+        self.declare_parameter('enable_image_adjustment', False)  # Activer/désactiver l'ajustement
         
         # Paramètres de sauvegarde
         self.declare_parameter('save_all_images', True)  # Sauvegarder toutes les images capturées
@@ -39,7 +38,6 @@ class ImagePublisher(Node):
         self.contrast = self.get_parameter('contrast').get_parameter_value().double_value
         self.gamma = self.get_parameter('gamma').get_parameter_value().double_value
         self.enable_adjustment = self.get_parameter('enable_image_adjustment').get_parameter_value().bool_value
-        self.auto_mode = self.get_parameter('auto_adjustment_mode').get_parameter_value().bool_value
         
         # Paramètres de sauvegarde
         self.save_all_images = self.get_parameter('save_all_images').get_parameter_value().bool_value
@@ -67,10 +65,7 @@ class ImagePublisher(Node):
         self.get_logger().info(f"URL RTSP : rtsp://admin:admin@192.168.5.163:554/live/av0")
         self.get_logger().info(f"PTZ activée : {enable_ptz}, Intervalle de capture : {capture_interval}s")
         if self.enable_adjustment:
-            if self.auto_mode:
-                self.get_logger().info(f"Ajustement d'image : Mode AUTO (CLAHE)")
-            else:
-                self.get_logger().info(f"Ajustement d'image : Mode MANUEL - Luminosité={self.brightness}, Contraste={self.contrast}, Gamma={self.gamma}")
+            self.get_logger().info(f"Ajustement d'image : Mode MANUEL - Luminosité={self.brightness}, Contraste={self.contrast}, Gamma={self.gamma}")
 
         self.set_auto_exposure()
 
@@ -94,9 +89,6 @@ class ImagePublisher(Node):
                     command = bytes([0x81, 0x01, 0x04, 0x39, 0x00, 0xFF])
                     
                     temp_sock.sendall(command)
-                    
-                    # Optionnel: Lire la réponse de la caméra (ACK)
-                    response = temp_sock.recv(1024)
                     
                     self.get_logger().info('HARDWARE: Mode Auto-Exposure activé avec succès sur la caméra.')
                     
@@ -138,40 +130,8 @@ class ImagePublisher(Node):
             error_msg = process.stderr.decode('utf-8') if process.stderr else "Erreur inconnue"
             self.get_logger().error(f"Erreur lors de la capture avec FFmpeg : {error_msg}")
             self.get_logger().error(f"Vérifiez la connexion réseau et l'accessibilité de la caméra PTZ")
-
+  
     def adjust_image(self, img):
-        """
-        Ajuste la luminosité, le contraste et le gamma d'une image
-        Mode auto : utilise CLAHE pour ajustement automatique
-        Mode manuel : utilise les valeurs brightness/contrast/gamma
-        """
-        if self.auto_mode:
-            return self.auto_adjust_image(img)
-        else:
-            return self.manual_adjust_image(img)
-    
-    def auto_adjust_image(self, img):
-        """
-        Ajustement automatique avec CLAHE (Contrast Limited Adaptive Histogram Equalization)
-        Améliore automatiquement le contraste et la luminosité de l'image
-        """
-        # Convertir en LAB pour travailler sur la luminosité uniquement
-        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
-        
-        # Appliquer CLAHE sur le canal L (luminosité)
-        # clipLimit: limite de contraste (2.0 = modéré, 3.0+ = plus agressif)
-        # tileGridSize: taille des tuiles pour l'adaptation locale (8x8 = bon compromis)
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-        l = clahe.apply(l)
-        
-        # Recombiner les canaux
-        lab = cv2.merge([l, a, b])
-        img_adjusted = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-        
-        return img_adjusted
-    
-    def manual_adjust_image(self, img):
         """
         Ajustement manuel avec valeurs fixes (brightness, contrast, gamma)
         """
