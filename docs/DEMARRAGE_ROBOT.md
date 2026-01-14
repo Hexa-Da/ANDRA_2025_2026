@@ -81,7 +81,7 @@ sudo systemctl start agilex-handler.service
 candump agilex -n 5 -T 2000
 ```
 
-**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, le neoud s'arrête.
+**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, le neoud s'arrête sans faire d'erreur.
 
 ### 6. Lancer le système
 
