@@ -3,7 +3,7 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction
 from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -16,13 +16,12 @@ def generate_launch_description():
     enable_scout = LaunchConfiguration('enable_scout', default='true')
     enable_zed = LaunchConfiguration('enable_zed', default='true')
     enable_ptz = LaunchConfiguration('enable_ptz', default='true')
-    ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.5')
-    ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.25')
+    enable_image_transfer = LaunchConfiguration('enable_image_transfer', default='true')
+    ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.0')
+    ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.0')
     ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
-    ptz_auto_adjustment = LaunchConfiguration('ptz_auto_adjustment', default='false')
     
-    # Config directory - replace 'your_package_name' with your actual package name
-    # where you store your configuration files
+    # Config directory
     config_dir = 'configs'
     
     # Full path to configuration files
@@ -30,13 +29,13 @@ def generate_launch_description():
     slam_config = os.path.join(config_dir, 'slam_config.yaml')
     amcl_config = os.path.join(config_dir, 'amcl_config.yaml')
     
-   # YDLidar configuration 
+   # YDLidar configuration (DEBUG) 
     ydlidar_params_dir = os.path.join(
         get_package_share_directory('ydlidar_ros2_driver'),
         'params'
     )
     # Tester avec différents modèles : G2.yaml, G4.yaml, X4.yaml, etc.
-    ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml')  # Commencer par G2
+    ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml') 
 
     return LaunchDescription([
         # Launch arguments
@@ -54,16 +53,16 @@ def generate_launch_description():
                              description='Enable ZED camera'),
         DeclareLaunchArgument('enable_ptz', default_value='true',
                              description='Enable PTZ camera'),
-        DeclareLaunchArgument('ptz_brightness', default_value='1.5',
+        DeclareLaunchArgument('enable_image_transfer', default_value='true',
+                             description='Enable image transfer nodes (image_subscriber, position_publisher, report_fissures)'),
+        DeclareLaunchArgument('ptz_brightness', default_value='1.0',
                              description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)'),
-        DeclareLaunchArgument('ptz_contrast', default_value='1.25',
+        DeclareLaunchArgument('ptz_contrast', default_value='1.0',
                              description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)'),
         DeclareLaunchArgument('ptz_gamma', default_value='1.0',
                              description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
-        DeclareLaunchArgument('ptz_auto_adjustment', default_value='false',
-                             description='Enable automatic image adjustment using CLAHE (true=auto, false=manual)'),
+     
         
-        # Hardware drivers
         # YDLIDAR - conditionnel
         Node(
     	    package='ydlidar_ros2_driver',
@@ -74,8 +73,7 @@ def generate_launch_description():
             condition=IfCondition(enable_lidar),
         ),
         
-        # Scout base driver avec interface CAN 'agilex' (configuration TechLab)
-        # Utiliser le launch file officiel de scout_base pour éviter les deadlocks
+        # Scout base - conditionnel
         ExecuteProcess(
             cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 
                  'port_name:=agilex', 'is_scout_mini:=True', 'odom_topic_name:=odom_robot'],
@@ -90,9 +88,18 @@ def generate_launch_description():
             condition=IfCondition(enable_zed),
         ),
         
-        # Image transfer nodes
+        # Image transfer nodes - conditionnel
         ExecuteProcess(
             cmd=['ros2', 'run', 'image_transfer', 'image_subscriber'],
+            output='screen',
+            condition=IfCondition(enable_image_transfer),
+        ),
+        ExecuteProcess(
+            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
+            output='screen',
+        ),
+        ExecuteProcess(
+            cmd=['ros2', 'run', 'image_transfer', 'report_fissures'],
             output='screen',
         ),
         # PTZ camera publisher - conditionnel et configurable
@@ -104,20 +111,10 @@ def generate_launch_description():
                 'brightness': PythonExpression(['float(', ptz_brightness, ')']),
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
-                'auto_adjustment_mode': PythonExpression(['bool(', ptz_auto_adjustment, ')']),
                 'images_output_dir': 'ros2_ws/images_capturees',
             }],
             output='screen',
             condition=IfCondition(enable_ptz),
-        ),
-        ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
-            output='screen',
-        ),
-
-        ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'report_fissures'],
-            output='screen',
         ),
         
         # Static transform publishers

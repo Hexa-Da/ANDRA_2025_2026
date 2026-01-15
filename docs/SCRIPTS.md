@@ -57,6 +57,9 @@ Lancer le système complet :
 # Lancer sans caméra PTZ
 ./scripts/launch.sh slam enable_ptz:=false
 
+# Désactiver les nœuds de capture et de traitement d'images
+./scripts/launch.sh slam enable_image_transfer:=false
+
 # Combinaisons possibles
 ./scripts/launch.sh slam enable_lidar:=false enable_scout:=false
 ```

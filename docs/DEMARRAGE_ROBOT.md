@@ -96,7 +96,7 @@ Il existe deux façons de lancer le système :
 - Gestion automatique du répertoire de travail
 
 ```bash
-# Mode SLAM simple
+# Mode SLAM simple (par défault)
 ./scripts/launch.sh slam
 
 # Mode SLAM avec options
@@ -124,14 +124,13 @@ ros2 launch navigation_stack.launch.py \
   ptz_brightness:=2.0 \
   ptz_contrast:=1.5 \
   ptz_gamma:=0.8 \
-  ptz_auto_adjustment:=true
+  enable_image_transfer:=true
 
 # Mode AMCL avec configuration personnalisée
 ros2 launch navigation_stack.launch.py \
   use_slam:=false \
   use_amcl:=true \
-  map_path:=ros_launcher/andra.yaml \
-  enable_ptz:=false
+  map_path:=ros_launcher/andra.yaml 
 ```
 
 ## Nœuds lancés automatiquement
