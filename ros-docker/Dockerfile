@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3-opencv \
     ffmpeg \
     ros-humble-rviz2 \
+    mesa-utils \
+    libgl1-mesa-glx \
+    libgl1-mesa-dri \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # bootstrap rosdep

@@ -2,21 +2,21 @@
 
 ## Objectif
 
-Ce dossier (`ros-docker/`) permet de travailler et tester votre code ROS2 sans avoir accès au robot physique. 
+**Avantage principal de ce dossier : Utiliser RViz2 et ROS2 sans installation native !**
 
 C'est l'environnement de développement local qui vous permet de :
+- **Visualiser avec RViz2** les cartes SLAM et les données du robot **sans installer ROS2** sur votre système
 - **Développer et tester vos nœuds ROS2** sur votre machine personnelle 
-- **Verifier que votre code compile** avant de le déployer sur le robot
-- **Visualiser avec RViz2** les données du robot (si connecté au même réseau)
-- **Travailler sur n'importe quelle distribution Linux** (alors que ROS2 Humble est uniquement sur Ubuntu 22.04)
-
+- **Vérifier que votre code compile** avant de le déployer sur le robot
+- **Travailler sur macOS, Windows ou Linux** (alors que ROS2 Humble n'est disponible nativement que sur Ubuntu 22.04)
 
 ## Prérequis
 
 - **Docker** installé et fonctionnel
 - **Environnement X11** (pour RViz2)
   - **Linux** : X11 natif (déjà installé)
-  - **macOS** : **XQuartz** doit être installé et démarré (voir section macOS ci-dessous)
+  - **macOS** : XQuartz (voir section macOS ci-dessous)
+  - **Windows** : VcXsrv ou X410 (voir section Windows ci-dessous)
 - **Pas besoin d'installer ROS2 nativement** sur votre système
 
 ## Installation (une seule fois)
@@ -42,7 +42,9 @@ Crée une image Docker complète avec :
 - **Dépendances Python** : numpy<2 (compatibilité cv_bridge), ultralytics (YOLOv11), pillow, matplotlib
 - **Outils multimédias** : opencv, ffmpeg
 
-### `launch.sh` (Linux)
+### Scripts de lancement
+
+#### `launch.sh` (Linux)
 Script de lancement du conteneur Docker pour Linux avec :
 - **Accès X11** : pour afficher RViz2 (`xhost +local:`)
 - **Réseau hôte** : `--net=host` pour communiquer avec le robot (si sur le même réseau)
@@ -51,54 +53,68 @@ Script de lancement du conteneur Docker pour Linux avec :
   - `../ros2_ws` → workspace ROS2 (monté en `/workspace/ros2_ws`)
   - `../ros_launcher` → fichiers de lancement (monté en `/workspace/ros_launcher`)
 
-### `launch-macos.sh` (macOS)
-Script de lancement du conteneur Docker pour macOS avec :
-- **Accès XQuartz** : configuration automatique pour l'affichage graphique
-- **Détection automatique** : vérifie que XQuartz est démarré
+#### `launch-macos.sh` (macOS)
+Script adapté pour macOS avec :
+- **Configuration XQuartz** : configure automatiquement l'accès X11 pour macOS
+- **Même configuration réseau et volumes** que `launch.sh`
+
+#### `launch-windows.sh` (Windows)
+Script adapté pour Windows (WSL ou Git Bash) avec :
+- **Configuration X11** : détecte automatiquement WSL et configure l'affichage
+- **Support VcXsrv et X410** : configuration interactive pour le serveur X11
 - **Même configuration réseau et volumes** que `launch.sh`
 
 ## Utilisation
 
-### macOS - Configuration spéciale
+### macOS
 
-**Sur macOS, vous devez utiliser XQuartz pour l'affichage graphique :**
+**Configuration requise :**
 
-1. **Installer XQuartz** (si ce n'est pas déjà fait) :
+1. **Installer Docker Desktop** : [Télécharger Docker Desktop pour Mac](https://www.docker.com/products/docker-desktop/)
+2. **Installer XQuartz** :
    ```bash
-   # Via Homebrew
    brew install --cask xquartz
-   
    # Ou télécharger depuis: https://www.xquartz.org/
    ```
-
-2. **Démarrer XQuartz** :
+3. **Configurer XQuartz** :
    - Ouvrir **Applications > Utilitaires > XQuartz**
-   - Ou depuis le terminal : `open -a XQuartz`
+   - **Préférences > Sécurité** → Cocher **"Autoriser les connexions depuis le réseau"**
+   - Redémarrer XQuartz
 
-3. **Configurer XQuartz** pour accepter les connexions réseau :
-   - Dans XQuartz : **Préférences > Sécurité**
-   - Cocher **"Autoriser les connexions depuis le réseau"**
-   - Redémarrer XQuartz si nécessaire
+**Lancer le conteneur :**
+```bash
+cd ros-docker
+./launch-macos.sh
+```
 
-4. **Lancer le conteneur avec le script macOS** :
-   ```bash
-   cd ros-docker
-   ./launch-macos.sh
-   ```
+### Windows
 
-### Linux - Utilisation standard
+**Configuration requise :**
 
+1. **Installer Docker Desktop** : [Télécharger Docker Desktop pour Windows](https://www.docker.com/products/docker-desktop/)
+2. **Installer un serveur X11** (choisir l'un des deux) :
+   - **VcXsrv** : [Télécharger VcXsrv](https://sourceforge.net/projects/vcxsrv/)
+   - **X410** : Disponible sur le Microsoft Store (payant mais plus stable)
+3. **Configurer le serveur X11** :
+   - **VcXsrv** : Lors du lancement, cocher "Disable access control"
+   - **X410** : Suivre les instructions de configuration réseau
+
+**Lancer le conteneur :**
+```bash
+# Dans WSL ou Git Bash
+cd ros-docker
+./launch-windows.sh
+```
+
+Le script détecte automatiquement si vous êtes dans WSL et configure l'affichage X11 en conséquence.
+
+### Linux
+
+**Lancer le conteneur :**
 ```bash
 cd ros-docker
 ./launch.sh
 ```
-
-### Ce qui se passe lors du lancement
-
-1. Vérification de l'environnement X11 (XQuartz sur macOS)
-2. Autorisation de l'accès X11
-3. Lancement d'un conteneur interactif avec bash
-4. Montage des workspaces en volumes
 
 ### Dans le conteneur
 
@@ -118,7 +134,7 @@ colcon build
 # 4. Sourcer le workspace compilé
 source install/setup.bash
 
-# 5. Lancer RViz2 avec votre configuration pour visualiser les cartes SLAM
+# 5. Lancer RViz2 pour visualiser les cartes SLAM
 rviz2 -d /workspace/ros_launcher/config.rviz
 
 # 6. Tester vos nodes ROS2 individuellement
@@ -127,48 +143,33 @@ ros2 run image_transfer image_subscriber
 # etc.
 ```
 
-**💡 Pour visualiser les cartes créées par SLAM :**
-```bash
-# Dans le conteneur, une fois le système lancé sur le robot
-rviz2 -d /workspace/ros_launcher/config.rviz
-```
+**Utilisation principale : Visualiser les cartes SLAM avec RViz2**
 
 Le fichier `config.rviz` est automatiquement monté depuis `ros_launcher/config.rviz` et contient toute la configuration nécessaire pour visualiser :
-- La carte (`/map`)
+- La carte (`/map`) générée par SLAM
 - Les scans LIDAR (`/scan`)
 - Les transformations TF
 - La position du robot
 - Les particules AMCL (en mode localisation)
 
-**Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot (voir [`DEMARRAGE_ROBOT.md`](../DEMARRAGE_ROBOT.md) pour le workflow complet sur le robot).
+**Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Car les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot.
 
-## Workflow de développement
+## Cas d'utilisation
 
-### Édition des fichiers
+### Utilisation recommandée
 
-**Vous pouvez éditer vos fichiers SANS lancer le conteneur** :
-- Modifier les fichiers Python dans `ros2_ws/src/`
-- Modifier les fichiers YAML dans `ros_launcher/`
-- Les changements sont immédiatement visibles dans le conteneur (grâce aux volumes montés)
+- **Visualiser les cartes SLAM** créées par le robot depuis votre Mac/PC Windows
+- **Déboguer visuellement** le système robotique avec RViz2
+- **Tester la compilation** de votre code avant de le déployer sur le robot
+- **Développer sur macOS/Windows** sans installer ROS2 nativement
 
-### Compilation et exécution
+### Limitations
 
-**Lancez le conteneur uniquement pour** :
-- Compiler le projet (`colcon build`)
-- Lancer des nodes ROS2 (`ros2 launch`, `ros2 run`)
-- Visualiser avec RViz2
-- Tester votre code localement
+- Développer dans un conteneur Docker offre des possibilités limitées par rapport à un accès direct au robot via SSH
+- Pour le développement complet, il est recommandé d'utiliser SSH directement sur le robot
+- Certaines fonctionnalités matérielles (accès direct aux périphériques) ne sont pas disponibles dans Docker
 
-### Connexion au robot (optionnel)
-
-Si le robot est sur le même réseau et que vous voulez visualiser ses données :
-- Le conteneur utilise `--net=host` pour accéder au réseau
-- Vous pouvez lancer RViz2 et vous connecter aux topics du robot
-- Voir `DEMARRAGE_ROBOT.md` pour savoir comment lancer le système sur le robot
-
-## Note technique
-
-Développer dans un conteneur Docker offre des possibilités limitées par rapport à un accès direct au robot via SSH. N’utilisez cette méthode que si l’accès physique ou distant au robot n’est vraiment pas possible. Il est fortement recommandé de faire le développement directement sur le robot pour bénéficier de toutes les fonctionnalités et simplifier le processus.
+**Recommandation** : Utilisez ce conteneur principalement pour la **visualisation avec RViz2**. Pour le développement complet, connectez-vous directement au robot via SSH.
 
 ## Liens utiles
 
