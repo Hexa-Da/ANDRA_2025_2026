@@ -86,11 +86,57 @@ Le fichier `ros_launcher/config.rviz` contient une configuration pré-définie q
 
 ## Utilisation
 
-```bash
-# Sur le robot, lancer RViz2 avec la configuration
-cd ~/Documents/ANDRA_2025-2026
-rviz2 -d ros_launcher/config.rviz
-```
+### Premiers pas : Lancer RViz2
+
+Une fois RViz2 lancé, vous verrez :
+
+#### Panneau de gauche : Displays
+- Liste de tous les éléments affichés (Map, LaserScan, TF, etc.)
+- Cochez/décochez pour afficher/masquer un élément
+- Cliquez sur un élément pour modifier ses propriétés (couleur, taille, topic, etc.)
+
+#### Panneau central : Vue 3D
+- **Navigation** :
+  - **Clic gauche + glisser** : Rotation de la vue
+  - **Clic molette + glisser** : Translation de la vue
+  - **Molette** : Zoom avant/arrière
+- **Outils** (barre d'outils en haut) :
+  - **Interact** : Mode interactif par défaut
+  - **2D Pose Estimate** : Définir la pose initiale du robot
+  - **2D Goal Pose** : Définir un objectif de navigation
+
+#### Panneau de droite : Propriétés
+- Affiche les propriétés de l'élément sélectionné dans Displays
+- Permet de modifier les paramètres (couleurs, topics, etc.)
+
+#### Barre d'outils en bas
+- **Time** : Affiche le temps ROS2
+- **Frame** : Frame de référence actuelle (généralement `map`)
+
+### Workflow complet : Visualiser le robot en action
+
+1. **Démarrer les nœuds ROS2 sur le robot** :
+   ```bash
+   # Sur le robot
+   ssh techlab@192.168.40.99
+   cd ~/Documents/ANDRA_2025-2026
+   source scripts/setup.sh
+   ./scripts/launch.sh slam  # Mode SLAM pour créer une carte
+   ```
+
+2. **Lancer RViz2 sur votre PC** :
+   ```bash
+   rviz2 -d ros_launcher/config.rviz
+   ```
+
+3. **Observer la visualisation** :
+   - La carte se construit progressivement (mode SLAM)
+   - Les scans LIDAR apparaissent en temps réel
+   - Le robot est représenté par une flèche sur la carte
+
+4. **Interagir avec le robot** :
+   - Utiliser "2D Goal Pose" pour envoyer le robot à un endroit précis
+   - Utiliser "2D Pose Estimate" pour corriger la position estimée (mode AMCL)
 
 ### Sans fichier de configuration
 
@@ -101,11 +147,14 @@ Si vous préférez configurer RViz2 manuellement :
 rviz2
 
 # Puis ajouter manuellement les displays :
-# 1. Add → Map → Topic: /map
-# 2. Add → LaserScan → Topic: /scan
-# 3. Add → TF
-# etc.
+# 1. Cliquez sur "Add" (en bas à gauche)
+# 2. Sélectionnez "Map" → OK → Topic: /map
+# 3. Cliquez sur "Add" → "LaserScan" → OK → Topic: /scan
+# 4. Cliquez sur "Add" → "TF" → OK
+# 5. Répétez pour les autres displays nécessaires
 ```
+
+**Conseil** : Une fois configuré, sauvegardez votre configuration via **File → Save Config As** pour la réutiliser plus tard.
 
 ## Interprétation des cartes SLAM
 
@@ -164,6 +213,105 @@ Vous pouvez modifier `ros_launcher/config.rviz` pour :
 - Ajuster les paramètres de visualisation
 
 **Note** : Sauvegardez une copie avant de modifier si vous voulez revenir à la configuration par défaut.
+
+### Modifier un display
+
+1. Dans le panneau de gauche, cliquez sur le display à modifier
+2. Dans le panneau de droite, modifiez les propriétés :
+   - **Topic** : Changez le topic ROS2 (ex: `/scan` → `/scan_filtered`)
+   - **Color** : Changez la couleur d'affichage
+   - **Size** : Ajustez la taille des éléments
+   - **Alpha** : Ajustez la transparence
+
+### Ajouter un nouveau display
+
+1. Cliquez sur le bouton **"Add"** (en bas du panneau Displays)
+2. Sélectionnez le type de display (ex: "Image", "Marker", "Path", etc.)
+3. Cliquez sur **"OK"**
+4. Configurez le display dans le panneau de droite (topic, couleur, etc.)
+
+### Exemples de displays utiles à ajouter
+
+- **Path** : Visualiser le chemin planifié (`/plan` ou `/global_plan`)
+- **Marker** : Visualiser des marqueurs personnalisés
+- **Image** : Visualiser les images de la caméra (`/zed/zed_node/left/image_rect_color`)
+- **PointCloud2** : Visualiser les nuages de points de la ZED2 (`/zed/zed_node/point_cloud/cloud_registered`)
+
+## Dépannage
+
+### RViz2 ne s'affiche pas / Fenêtre vide
+
+**Problème** : RViz2 se lance mais la vue est vide.
+
+**Solutions** :
+1. Vérifier que les nœuds ROS2 sont lancés sur le robot :
+   ```bash
+   ros2 topic list
+   # Vous devriez voir /map, /scan, etc.
+   ```
+
+2. Vérifier que vous êtes sur le même réseau WiFi que le robot
+
+3. Vérifier le ROS_DOMAIN_ID :
+   ```bash
+   echo $ROS_DOMAIN_ID
+   # Doit être identique sur le robot et votre machine
+   ```
+
+4. Vérifier que les topics sont publiés :
+   ```bash
+   ros2 topic echo /map --once
+   ros2 topic echo /scan --once
+   ```
+
+### La carte ne s'affiche pas
+
+**Problème** : Le display "Map" est activé mais rien n'apparaît.
+
+**Solutions** :
+1. Vérifier que le topic `/map` est publié :
+   ```bash
+   ros2 topic info /map
+   ros2 topic echo /map --once
+   ```
+
+2. Vérifier que le frame "map" existe dans TF :
+   ```bash
+   ros2 run tf2_ros tf2_echo map base_link
+   ```
+
+3. Dans RViz2, vérifier que le **Fixed Frame** est bien défini sur `map` :
+   - Panneau de gauche → **Global Options** → **Fixed Frame** : `map`
+
+### Les scans LIDAR ne s'affichent pas
+
+**Problème** : Le display "LaserScan" est activé mais aucun point n'apparaît.
+
+**Solutions** :
+1. Vérifier que le topic `/scan` est publié :
+   ```bash
+   ros2 topic echo /scan --once
+   ```
+
+2. Vérifier que le frame `laser_frame` existe dans TF :
+   ```bash
+   ros2 run tf2_ros tf2_echo base_link laser_frame
+   ```
+
+3. Dans RViz2, vérifier les propriétés du LaserScan :
+   - **Topic** : `/scan`
+   - **Size (m)** : 0.05 (taille des points)
+   - **Color** : Vérifier que la couleur n'est pas transparente
+
+### RViz2 est lent / Lag
+
+**Problème** : RViz2 met du temps à répondre ou est saccadé.
+
+**Solutions** :
+1. Réduire la fréquence d'affichage dans les propriétés des displays
+2. Désactiver temporairement les displays non essentiels
+3. Réduire la taille des points (LaserScan) ou la résolution de la carte
+4. Si sur Docker, vérifier les ressources allouées à Docker
 
 ## Liens utiles
 

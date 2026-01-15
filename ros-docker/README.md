@@ -15,6 +15,7 @@ C'est l'environnement de développement local qui vous permet de :
 - **Linux** avec environnement X11 (pour RViz2)
 - **Git** installé
 - **Pas besoin d'installer ROS2 nativement** sur votre système
+- **Même réseau WiFi** : Votre ordinateur doit être connecté au même réseau que le robot pour que RViz2 puisse recevoir les données du robot
 
 ## Installation (une seule fois)
 
@@ -63,23 +64,17 @@ cd ros-docker
 **Workflow de développement :**
 
 ```bash
-# 1. Initialiser ROS2 (déjà fait automatiquement par le script)
-source /opt/ros/humble/setup.bash
-
-# 2. Aller dans le workspace
-cd /workspace/ros2_ws
-
-# 3. Compiler le workspace (si nécessaire)
+# Compiler le workspace (si nécessaire)
 # Équivalent à ./scripts/build.sh andra sur le robot
 colcon build
 
-# 4. Sourcer le workspace compilé
+# Sourcer le workspace compilé
 source install/setup.bash
 
-# 5. Lancer RViz2 pour visualiser les cartes SLAM
+# Lancer RViz2 pour visualiser les cartes SLAM
 rviz2 -d /workspace/ros_launcher/config.rviz
 
-# 6. Tester vos nodes ROS2 individuellement
+# Ou ester vos nodes ROS2 individuellement
 ros2 run image_transfer image_publisher
 ros2 run image_transfer image_subscriber
 # etc.
