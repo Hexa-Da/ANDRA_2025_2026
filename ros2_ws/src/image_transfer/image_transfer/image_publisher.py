@@ -5,6 +5,7 @@ import time
 import socket
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+from std_msgs.msg import Bool
 import cv2
 import numpy as np
 import os
@@ -28,6 +29,12 @@ class ImagePublisher(Node):
         # Paramètres de sauvegarde
         self.declare_parameter('save_all_images', True)  # Sauvegarder toutes les images capturées
         self.declare_parameter('images_output_dir', 'ros2_ws/images_capturees')  # Dossier de sauvegarde
+
+        # Mode de capture
+        # False = Prend des photos tout seul (Timer)
+        # True  = Attend qu'on lui dise "trigger" (Scan)
+        self.declare_parameter('mode_manuel', False) 
+        self.mode_manuel = self.get_parameter('mode_manuel').get_parameter_value().bool_value
 
         # Récupérer les paramètres
         capture_interval = self.get_parameter('capture_interval').get_parameter_value().double_value
@@ -69,9 +76,28 @@ class ImagePublisher(Node):
 
         self.set_auto_exposure()
 
-        # Capture une image toutes les X secondes (configurable)
+        # Capture une image en manuel via un topic ou en automatique via un timer
         if enable_ptz:
-            self.timer = self.create_timer(capture_interval, self.capture_and_publish)
+            if self.mode_manuel:
+                # CAS 1 : MODE SCAN (Manuel)
+                self.get_logger().info("--- MODE MANUEL ACTIVÉ : En attente d'ordre sur /trigger_capture ---")
+                self.trigger_sub = self.create_subscription(
+                    Bool, 
+                    'trigger_capture', 
+                    self.trigger_callback, 
+                    10
+                )
+                self.timer = None # On s'assure qu'il n'y a pas de timer
+            else:
+                # CAS 2 : MODE AUTO (Classique)
+                self.get_logger().info(f"--- MODE AUTOMATIQUE : Capture toutes les {capture_interval}s ---")
+                self.timer = self.create_timer(capture_interval, self.capture_and_publish)
+
+    def trigger_callback(self, msg):
+            """Appelée uniquement quand scan_manager envoie un ordre"""
+            if msg.data:
+                self.get_logger().info(">> SIGNAL TRIGGER REÇU : Capture en cours...")
+                self.capture_and_publish()
 
     def set_auto_exposure(self):
             """Active le mode Full Auto via une connexion VISCA temporaire"""
