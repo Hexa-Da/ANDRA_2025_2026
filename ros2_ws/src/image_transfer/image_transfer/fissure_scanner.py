@@ -47,22 +47,50 @@ class FissureScanner(Node):
         
         # 1. Arrêter le robot
         self.stop_robot()
-        time.sleep(1.0) # Petite pause pour l'inertie du robot
+        time.sleep(2.0) # Petite pause pour l'inertie du robot
 
         # 2. Inspection GAUCHE
-        self.move_cam_and_wait(1) # Supposons Preset 1 = Gauche
+        self.move_cam_and_wait(1, wait_time=1.0) # Supposons Preset 1 = Gauche
         self.trigger_photo()
-        time.sleep(1.0)
+        time.sleep(15.0)
+
+
+        stop_msg = Twist() 
+        self.cmd_vel_pub.publish(stop_msg)
+        self.get_logger().info("🛑 Arrêt forcé des moteurs PTZ")
+
+        time.sleep(5.0)
+
 
         # 3. Inspection HAUT
-        self.move_cam_and_wait(2) # Supposons Preset 2 = Haut
+        self.move_cam_and_wait(2, wait_time=1.0) # Supposons Preset 2 = Haut
         self.trigger_photo()
-        time.sleep(1.0)
+        time.sleep(15.0)
+
+
+        stop_msg = Twist() 
+        self.cmd_vel_pub.publish(stop_msg)
+        self.get_logger().info("🛑 Arrêt forcé des moteurs PTZ")
+
+        time.sleep(5.0)
+
+
+
+
 
         # 4. Inspection DROITE
-        self.move_cam_and_wait(3) # Supposons Preset 3 = Droite
+        self.move_cam_and_wait(3, wait_time=1.0) # Supposons Preset 3 = Droite
         self.trigger_photo()
-        time.sleep(1.0)
+        time.sleep(15.0)
+
+
+        stop_msg = Twist() 
+        self.cmd_vel_pub.publish(stop_msg)
+        self.get_logger().info("🛑 Arrêt forcé des moteurs PTZ")
+
+        time.sleep(5.0)
+
+
 
         # 5. Retour au centre
         self.move_cam_and_wait(-1, wait_time=1.0) # -1 = Home dans ton ptz_controller

@@ -134,7 +134,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Configuration et installation
 - [ ] Finaliser la réinstallation de l'image du robot
 - [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [ ] Installer/configurer le driver `zed_wrapper`
+- [x] Installer/configurer le driver `zed_wrapper`
 - [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 

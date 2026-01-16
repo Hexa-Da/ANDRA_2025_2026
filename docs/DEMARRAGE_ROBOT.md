@@ -145,13 +145,15 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
 
 ### Nœuds de traitement d'images (image_transfer)
-- **`image_publisher`** : Capture des images depuis la caméra PTZ (à revoir)
-  - active le mode auto exposure au démarrage
-  - Intervalle de capture configurable (défaut: 10 secondes)
-  - Ajustement automatique de luminosité/contraste/gamma
-  - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`
-  - Publication sur le topic `/photo_topic`
-  - Paramètres configurables : `brightness`, `contrast`, `gamma`, `capture_interval`, `auto_adjustment_mode`
+- **`image_publisher`** : Capture des images depuis la caméra PTZ (flux RTSP)
+  - **Deux modes de fonctionnement** :
+    - Mode **Automatique** (`mode_manuel:=False`) : Capture cyclique selon l'intervalle défini par `capture_interval` (défaut).
+    - Mode **Manuel/Scan** (`mode_manuel:=True`) : N'agit pas seul, attend un signal sur le topic `/trigger_capture` pour prendre une photo.
+  - Active le mode *Auto Exposure* (hardware) au démarrage.
+  - Ajustement d'image optionnel (Luminosité, Contraste, Gamma).
+  - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`.
+  - Publication sur le topic `/photo_topic`.
+  - Paramètres configurables : `mode_manuel`, `capture_interval`, `brightness`, `contrast`, `gamma`, `enable_image_adjustment`, `save_all_images`.
 - **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
   - Reçoit les images depuis `/photo_topic`
   - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
@@ -226,8 +228,11 @@ ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
 ```bash
 source scripts/setup.sh
 
-# Publisher d'images
+# Publisher d'images mode automatique (défault)
 ros2 run image_transfer image_publisher
+
+# Publisher d'images mode manuel (scan)
+ros2 run image_transfer image_publisher --ros-args -p mode_manuel:=True
 
 # Subscriber d'images (détection YOLO)
 ros2 run image_transfer image_subscriber

@@ -14,6 +14,22 @@ class PTZControllerVISCA(Node):
         self.sock = None
         self._connect_visca()
         
+
+        # Définition des positions fixes (Valeurs à ajuster selon tes tests)
+        # Format : [P1, P2, P3, P4, T1, T2, T3, T4] en hexadécimal
+        self.FIXED_PRESETS = {
+            # GAUCHE : On tente une valeur négative intermédiaire
+            # 0x0F 0x0C correspond à environ -1000 steps
+            1: [0x0F, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], 
+            
+            # HAUT : Reste à 0x0005 car il fonctionne
+            2: [0x00, 0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00], 
+            
+            # DROITE : On tente une valeur positive intermédiaire
+            # 0x00 0x04 correspond à environ +1000 steps
+            3: [0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], 
+        }
+
         # Subscribers
         self.create_subscription(Twist, '/ptz/cmd_vel', self.cmd_vel_callback, 10)
         self.create_subscription(Int32, '/ptz/preset', self.preset_callback, 10)
@@ -132,6 +148,17 @@ class PTZControllerVISCA(Node):
             command = bytes([0x01, 0x06, 0x05])
             self.send_visca_command(command)
             self.get_logger().info('PTZ: Reset')
+
+        elif preset in self.FIXED_PRESETS:
+            # Commande Absolute Position : 01 06 02 VV WW OY OY OY OY OZ OZ OZ OZ
+            # VV = Pan Speed, WW = Tilt Speed
+            speed = [0x10, 0x10] 
+            coords = self.FIXED_PRESETS[preset]
+            command = bytes([0x01, 0x06, 0x02] + speed + coords)
+            self.send_visca_command(command)
+            self.get_logger().info(f'PTZ: Déplacement vers position fixe {preset}')
+
+
         elif 0 <= preset <= 127:
             # Preset VISCA standard
             command = bytes([0x01, 0x04, 0x3F, 0x02, preset])
