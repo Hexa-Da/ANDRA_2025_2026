@@ -62,17 +62,7 @@ else
     return 1
 fi
 
-# 6. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
-# L'erreur "Failed to delete datareader" est typique un problème avec FastRTPS
-# CycloneDDS est souvent plus stable pour scout_base
-if [ -z "$RMW_IMPLEMENTATION" ]; then
-    if [ -f /opt/ros/humble/lib/librmw_cyclonedds_cpp.so ] || dpkg -l | grep -q "ros-humble-rmw-cyclonedds-cpp"; then
-        export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-        echo "✅ Middleware DDS configuré: $RMW_IMPLEMENTATION (CycloneDDS)"
-    fi
-fi
-
-# 7. Configuration ROS_DOMAIN_ID (pour communication avec conteneur Docker)
+# 6. Configuration ROS_DOMAIN_ID (pour communication avec conteneur Docker)
 if [ -z "$ROS_DOMAIN_ID" ]; then
     export ROS_DOMAIN_ID=0
     echo "✅ ROS_DOMAIN_ID configuré: $ROS_DOMAIN_ID"

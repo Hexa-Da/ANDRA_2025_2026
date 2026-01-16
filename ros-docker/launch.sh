@@ -2,12 +2,14 @@
 xhost +local:
 
 # lancer le conteneur avec montage du workspace
+# ajouter/retirer NVIDIA_DRIVER_CAPABILITIES=all et --gpus all si vous avez un GPU
 docker run -it --rm \
     --net=host \
     -e DISPLAY=$DISPLAY \
     -e QT_X11_NO_MITSHM=1 \
     -e ROS_DOMAIN_ID=0 \
-    -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    -e NVIDIA_DRIVER_CAPABILITIES=all \
+    --gpus all \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v $(pwd)/../ros2_ws:/workspace/ros2_ws \
     -v $(pwd)/../ros_launcher:/workspace/ros_launcher \
@@ -15,11 +17,7 @@ docker run -it --rm \
         source /opt/ros/humble/setup.bash && \
         cd /workspace/ros2_ws && \
         [ -f install/setup.bash ] && source install/setup.bash || echo 'Workspace non compilé: colcon build' && \
+        cd /workspace/ && \
         export ROS_DOMAIN_ID=0 && \
-        export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && \
         exec /bin/bash
     "
-    
-# a ajouter pour les ordis du techlab
-# NVIDIA_DRIVER_CAPABILITIES=all \
-# --gpus all \
