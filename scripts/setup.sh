@@ -72,6 +72,12 @@ if [ -z "$RMW_IMPLEMENTATION" ]; then
     fi
 fi
 
+# 7. Configuration ROS_DOMAIN_ID (pour communication avec conteneur Docker)
+if [ -z "$ROS_DOMAIN_ID" ]; then
+    export ROS_DOMAIN_ID=0
+    echo "✅ ROS_DOMAIN_ID configuré: $ROS_DOMAIN_ID"
+fi
+
 # Retour à la racine 
 cd "$PROJECT_DIR"
 

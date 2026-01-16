@@ -126,6 +126,9 @@ Une fois RViz2 lancé, vous verrez :
 
 2. **Lancer RViz2 sur votre PC** :
    ```bash
+   # Avec l'image Docker
+   cd ros-docker
+   ./launch
    rviz2 -d ros_launcher/config.rviz
    ```
 

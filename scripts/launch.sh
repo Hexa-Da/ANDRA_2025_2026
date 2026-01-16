@@ -48,6 +48,7 @@ case "$MODE" in
         ros2 launch navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:="$2"
         ;;
     *)
+        echo "Option non reconnue. Choisissez slam ou amcl. Par défaut : slam"
         exit 1
         ;;
 esac
