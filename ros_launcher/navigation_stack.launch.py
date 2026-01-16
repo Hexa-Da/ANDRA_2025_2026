@@ -102,6 +102,13 @@ def generate_launch_description():
             cmd=['ros2', 'run', 'image_transfer', 'report_fissures'],
             output='screen',
         ),
+        # --- TEST : Conversion odométrie vers Path ---
+        Node(
+            package='image_transfer',
+            executable='odom_to_path',
+            name='odom_to_path',
+            output='screen',
+        ),
         # PTZ camera publisher - conditionnel et configurable
         Node(
             package='image_transfer',
