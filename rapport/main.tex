@@ -1,0 +1,298 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{csquotes}
+\usepackage{graphbox}
+\usepackage{biblatex} 
+\addbibresource{bibliography.bib}
+\usepackage[a4paper, top=2.5cm, bottom=3.5cm, left=2.5cm, right=2.5cm, footskip=1cm]{geometry}
+
+% Format des sections principales numérotées
+\titleformat{\section}[hang]{\normalfont\huge\bfseries}{\thesection.}{1em}{}
+\titleformat{\subsection}[hang]{\normalfont\Large\bfseries}{\thesubsection}{1em}{}
+
+% En-tête personnalisée
+\setlength{\headheight}{60pt}
+\fancyhead[R]{%
+    \includegraphics[align=c, height=1.2cm]{images/logo_andra.png}%
+    \hspace{0.5cm}% Espace entre les logos
+    \includegraphics[align=c, height=2.1cm]{images/logo_mines_nancy.png}%
+}
+\fancyhead[L]{%
+    \begin{minipage}[c]{10cm}
+        \textbf{GUICHARD Vincent,} \textbf{LEFEBVRE Adrien} \\
+        \textbf{DAME Lucas,} \textbf{PARIS Paul-Antoine}
+    \end{minipage}
+}
+
+% Pied de page
+\fancyfoot[C]{\thepage}
+
+\begin{document}
+
+% % --- Page de garde ---
+% \begin{titlepage}
+%     % 1. On supprime les marges juste pour cette page
+%     \newgeometry{left=0cm, right=0cm, top=0cm, bottom=0cm}
+    
+%     % 2. On insère l'image pour qu'elle prenne toute la largeur et hauteur du papier
+%     \noindent
+%     \includegraphics[width=\paperwidth, height=\paperheight]{images/FirstPage.png}
+    
+%     % 3. On rétablit les marges normales pour la suite du rapport
+%     \restoregeometry
+% \end{titlepage}
+
+% --- Avant-Propos sans en-tête ---
+\thispagestyle{empty}
+\section*{Avant-Propos et Remerciements}
+\addcontentsline{toc}{section}{Avant-Propos et Remerciements}
+
+Ce rapport a été rédigé à la suite du projet industrie de l'École des Mines de Nancy, en partenariat avec l'ANDRA, durant l'année scolaire 2025-2026. Il a été réalisé par les auteurs avec l'aide des ingénieurs du Techlab, de nos tuteurs ainsi que de l'intervenant de l'ANDRA.
+Nous tenons à remercier chaleureusement l'ensemble des personnes qui ont pu nous aider et conseiller tout au long de ce projet. L'ensemble de notre projet se trouve à l'adresse github suivante : \nolinkurl{https://github.com/Hexa-Da/ANDRA_2025_2026}
+
+\newpage
+
+% --- Table des matières avec en-tête ---
+\pagestyle{fancy}
+\tableofcontents
+
+\newpage
+
+% --- Introduction --- 
+\section{Introduction}
+
+Ce projet industrie est réalisé en collaboration avec l'ANDRA (Agence nationale pour la gestion des déchets radioactifs), une institution publique chargée du stockage des déchets nucléaires sur le moyen et long terme. Dans un premier temps, l’ANDRA a été chargée de développer un système de stockage en surface pour les déchets de faible et moyenne activité, en reprenant la gestion du Centre de stockage de la Manche et en établissant rapidement des règles pour encadrer et sécuriser ce stockage. Par la suite, l’agence a ouvert plusieurs sites dédiés à ce type de déchets, atteignant en 2020 un volume total de 1,3 million de mètres cubes stockés. 
+
+En parallèle, l’ANDRA a conduit plus de deux décennies de recherches sur le stockage géologique en profondeur. Ces travaux ont abouti au projet CIGEO, un site de stockage en profondeur, à environ 500 mètres sous terre, dans une couche géologique aux propriétés intéressantes, située dans la région de Bure, à cheval entre la Meuse et la Haute-Marne. 
+
+Cette infrastructure d’envergure comprendra plus de 270 kilomètres de galeries et d’alvéoles, avec une capacité de stockage d’environ 80 000 mètres cubes de déchets à haute activité et à longue durée de vie.
+
+Cependant, en raison du cisaillement entre les jointures de la galerie, des fissures peuvent apparaître et se développer. Les galeries s'étendant sur plusieurs kilomètres, suivre l'évolution des fissures est une tâche répétitive et chronophage. 
+
+C'est dans ce contexte qu'est né le projet de ce parcours industrie, porté sur le thème suivant : “ Robotique et IA en environnements complexes : exploration de la galerie souterraine de l’ANDRA avec le robot et détection avancée de fissures.”
+
+\vspace{0.7cm}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.95\linewidth]{images/cigeo.jpg}
+    \caption{Projet Cigéo, vue du laboratoire à Bure (Meuse)}
+\end{figure}
+
+% --- Etat de l'art ---
+\section{État de l'art et du projet}
+
+\subsection{Détection de fissures}
+
+Les technologies classiques de détection de fissures reposent majoritairement sur la segmentation par IA. Toutefois, la variabilité des environnements (crépi, béton lisse, luminosité) rend l'usage de bases de données « universelles » inefficace pour le site spécifique de l'ANDRA.
+
+Jusqu'en 2024, les tentatives d'utilisation de modèles open data (comme \textit{crack Dataset}) se sont soldées par des échecs en production : les câbles, tuyaux et interstices des galeries étaient systématiquement confondus avec des fissures (voir figures \ref{fig:exemple1} et \ref{fig:exemple2}).
+
+\textbf{Avancées 2024-2025 :}
+Pour pallier ce problème, un jeu de données spécifique à l'environnement de Bure a été constitué, comportant près de 300 images annotées manuellement issues des caméras du robot. L'entraînement d'un modèle YOLOv11 sur cette base a permis d'obtenir des performances satisfaisantes, éliminant la majorité des faux positifs liés aux infrastructures (câbles, barrières).
+
+Les limitations actuelles de ce système sont :
+\begin{itemize}
+    \item La nécessité pour le robot d'être à l'arrêt lors de la prise de vue (sensibilité aux vibrations de l'auto-focus).
+    \item Une distance au mur qui doit être inférieure à deux mètres pour garantir la résolution nécessaire à la détection.
+\end{itemize}
+
+\vspace{1cm}
+
+\begin{figure}[ht]
+  \centering
+  \begin{minipage}[b]{0.3\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/example_mauvaise_detection_fissure.png}
+    \captionof{figure}{Un interstice}
+    \label{fig:exemple1}
+  \end{minipage}
+  \hspace{0.06\textwidth}
+  \begin{minipage}[b]{0.295\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/example_mauvaise_detection_fissure_2.png}
+    \captionof{figure}{Une barrière}
+    \label{fig:exemple2}
+  \end{minipage}
+\end{figure}
+
+\newpage
+
+\subsection{Positionnement et navigation}
+
+Le positionnement en milieu souterrain (sans GPS) reste le défi majeur. Si les modèles haut de gamme utilisent des solutions onéreuses combinant LiDAR 3D et centrales inertielles de précision pour éviter le dérapage (« drift »), notre plateforme repose sur un Agilex Scout Mini équipé d'un LiDAR 2D et d'une caméra stéréoscopique ZED2.
+
+Depuis 2025, l'architecture logicielle est entièrement portée sur le framework \textbf{ROS2 (Humble)}, standard industriel actuel, abandonnant les API propriétaires précédentes pour gagner en modularité.
+
+\textbf{Limites du SLAM et solution AMCL :}
+Les travaux récents ont démontré que l'approche par SLAM (Simultaneous Localization and Mapping) via un filtre de Kalman étendu (EKF) entraînait une dérive trop importante avec les capteurs actuels, rendant la cartographie autonome inexploitable sur de longues distances.
+
+L'état actuel de la solution de navigation repose donc sur l'algorithme AMCL (Adaptive Monte Carlo Localization). Cette méthode, validée lors des tests sur site en mai 2025, utilise une carte statique préétablie de la galerie (fichiers `.pgm`). Elle permet de recaler la position du robot grâce aux données du LiDAR 2D, compensant ainsi les erreurs d'odométrie et offrant une localisation fiable pour le placement des fissures détectées sur la carte.
+
+% --- Travail Semestre 1 ---
+\section{Semestre 1}
+
+\subsection{Assemblage du robot}
+
+\subsubsection{Présentation des parties indépendantes}
+Notre robot autonome est constitué de 5 parties indépendantes que nous allons détailler ci-dessous. 
+
+\paragraph{Caméra PTZ}
+Une caméra PTZ (Pan-Tilt-Zoom) capable de pivoter sur 360° et d'ajuster son angle et son zoom de manière dynamique. Il s'agit du même modèle utilisé les années précédentes, offrant une résolution de 1080p à 60 fps, mais elle ne dispose pas de stabilisateur d'image intégré. Il est donc crucial de minimiser les vibrations pendant son utilisation pour garantir la netteté de l'image. Autrement dit, le robot devra se déplacer à une vitesse modérée, ce qui ne pose pas de problème en soi, mais doit être pris en compte pour assurer des prises de vue claires et précises.
+
+\paragraph{LiDAR}
+Un LiDAR (Light Detection and Ranging) qui utilise des impulsions laser pour mesurer des distances avec une grande précision. En émettant des faisceaux lumineux et en calculant le temps qu'ils mettent à revenir après avoir réfléchi sur des objets, un LiDAR est capable de reconstituer en deux ou trois dimensions (ici notre LiDAR est 2D) l’environnement, même dans des conditions de faible luminosité. 
+
+\paragraph{ZED2}
+La caméra ZED2 est une caméra de profondeur, ce qui lui permet d'estimer si le robot se déplace en avant, en arrière ou s'il effectue une rotation. Ces informations seront essentielles lors de la phase de localisation. De plus, cette caméra possède une unité de mesure inertielle (IMU), un capteur capable de mesurer les accélérations linéaires et les vitesses angulaires grâce à des accéléromètres et des gyroscopes. L'IMU permet ainsi d'estimer la position, l'orientation et les mouvements du robot dans l'espace.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.28\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/ptz.jpg}
+    \captionof{figure}\\{PTZ Marshall CV-605}
+    \label{fig:ptz}
+  \end{minipage}
+  \hspace*{\fill}
+  \begin{minipage}[b]{0.28\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/lidar.jpg}
+    \captionof{figure}\\{Ydlidar G4}
+    \label{fig:lidar}
+  \end{minipage}
+  \hspace*{\fill}
+  \begin{minipage}[b]{0.28\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/zed2.jpg}
+    \captionof{figure}\\{Stereolabs ZED2}
+    \label{fig:zed2}
+  \end{minipage}
+\end{figure}
+
+\vspace{1cm}
+
+\paragraph{Jetson Orin Nano}
+La Jetson Nano est un microcontrôleur équipé d'un GPU intégré, offrant ainsi une capacité de traitement suffisamment puissante pour exécuter des tâches complexes, telles que la reconnaissance basée sur l'intelligence artificielle, directement sur le robot. Cette architecture permet d'éviter le recours à des solutions de edge ou cloud computing, qui pourraient introduire des latences.
+
+\paragraph{Agilex Scout Mini}
+Enfin, la base de notre robot est un Agilex Scout Mini. Ce dernier peut se contrôler à l'aide d'une télécommande ou à partir d'un microcontroleur connecté à un convertisseur analogique numérique (CAN).
+
+\begin{figure}[H]
+  \centering
+  \hspace*{0.05\textwidth}
+  \begin{minipage}[b]{0.4\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/jetson_nano.jpg}
+    \captionof{figure}{Jetson Orin Nano}
+    \label{fig:jetson_nano}
+  \end{minipage}
+  \hspace*{\fill}
+  \begin{minipage}[b]{0.4\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{images/agilex_scout_mini.png}
+    \captionof{figure}{Agilex Scout Mini}
+    \label{fig:agilex_scout_mini}
+  \end{minipage}
+  \hspace*{0.05\textwidth}
+\end{figure}
+
+\subsubsection{Remise en service et configuration matérielle}
+
+Contrairement à l'année dernière, l'équipe 2025-2026 ne s'est pas concentrée sur la construction mécanique de la tourelle, mais sur la reconstitution complète de l'architecture logicielle suite à la perte de l'image système du robot. La priorité a donc été de rétablir la communication entre l'unité de calcul (\textbf{Jetson Orin Nano}) et les différents actionneurs et capteurs.
+
+Premièrement, la connexion avec la base mobile \textbf{Agilex Scout Mini} a nécessité une reconfiguration de l'interface CAN. Une modification du code source a été nécessaire pour permettre la reconnaissance de l'interface nommée agilex (au lieu des interfaces standards can0) utilisée par le système conseillé par les ingénieurs du Techlab, assurant désormais un pilotage fluide et la remontée des données odométriques sur le topic odom\_robot.
+
+Par la suite, l'intégration des capteurs a présenté des résultats contrastés : 
+\begin{itemize} 
+    \item \textbf{Caméra ZED 2i :} La caméra est fonctionnelle et publie correctement les données visuelles et inertielles (IMU), qui ont été intégrées à la configuration du filtre de Kalman étendu (EKF). Le package est installé et la caméra est détectée, mais les tests ne sont pour l'instant pas concluant.
+    \item \textbf{LiDAR 2D :} Bien que la connexion série soit établie et validée sur le port /dev/ttyTHS1, le capteur rencontre actuellement des erreurs d'initialisation empêchant le démarrage du scan. Des tests avec différents fichiers de configuration et différents baudrates ont été effectués sans succès, laissant penser qu'il s'agit d'une panne matérielle ou d'un problème de connexion physique. 
+    \item \textbf{Caméra PTZ :} La caméra était dans un premier temps inaccessible sur le réseau. Mais elle est désormais accessible via son adresse IP statique grâce à la configuration réseau et à la création d'un script d'automatisation. Les images sont capturées et publiées correctement, et le contrôle PTZ est fonctionnel via le protocole VISCA over IP, permettant le contrôle continu de l'orientation de la caméra ainsi que l'appel de presets.
+\end{itemize}
+
+Cette phase de remise en service a permis de valider une architecture modulaire, où chaque capteur peut être activé ou désactivé via des arguments de lancement (enable\_lidar, enable\_zed, etc), garantissant la continuité des développements malgré les maintenances matérielles en cours.
+
+\subsubsection{Projet parallèle : Vision à 360 degrés}
+
+En marge de la remise en état fonctionnelle du robot, un axe de développement parallèle a été initié pour l'année 2025-2026 : l'intégration d'une caméra 360°. Cette initiative vise à pallier les limitations de la caméra PTZ actuelle, qui nécessite des arrêts fréquents et un ciblage précis pour obtenir des images nettes des parois.
+
+L'objectif de ce projet est de permettre une analyse plus fluide et exhaustive des galeries :
+\begin{itemize}
+    \item \textbf{Acquisition globale :} Contrairement aux caméras classiques, la technologie 360° permet de capturer l'ensemble de la voûte et des murs en une seule prise.
+    \item \textbf{Détection continue :} Ce matériel est destiné à être couplé avec un nouveau modèle d'intelligence artificielle (entraîné spécifiquement sur ces images panoramiques) pour effectuer une détection de fissures en continu pendant les rondes, sans interrompre la navigation du robot.
+\end{itemize}
+
+Ce module constitue une évolution majeure par rapport aux années précédentes et fait l'objet d'un développement spécifique (entraînement IA et tests d'acquisition) mené conjointement à la restauration du robot.
+
+\vspace{2cm}
+
+\subsection{Reprise des travaux de l'année 2024-2025}
+
+Bien que ce projet industriel avec l’ANDRA soit mené pour la cinquième année consécutive, la continuité entre les équipes reste le défi majeur. Contrairement aux années précédentes où la documentation faisait défaut, nous avons pu bénéficier cette année d'un accès complet aux ressources numériques produites par l'équipe 2024-2025 : le dépôt GitHub contenant l'architecture ROS2 et le Drive hébergeant le modèle d'intelligence artificielle YOLOv11 adapté à la caméra PTZ accompagné de ces photos d'entrainement.
+
+Cependant, la reprise a été fortement ralentie par un incident technique critique : l'image système du robot, contenant l'ensemble de l'environnement configuré, a été supprimée sans sauvegarde. Cette perte nous a contraints à ne pas simplement « utiliser » le travail précédent, mais à devoir le comprendre en profondeur pour le reconstruire (réinstallation des drivers, configuration des espaces de travail, créer les scripts de compilation).
+
+\paragraph{Critique de l'architecture historique :} L'analyse menée par l'équipe 2024-2025 a mis en évidence les limites méthodologiques des approches antérieures. La stratégie employée en 2023-2024 reposait sur la détection conjointe des fissures et d'étiquettes calibrées présentes dans les tunnels, utilisant ces dernières comme référentiel pour dimensionner la taille des fissures. Cette méthode par comparaison s'est avérée peu viable en raison d'une incertitude trop importante ($\pm4$ cm) et d'un manque de robustesse, l'algorithme confondant fréquemment les fissures avec des câbles ou des interstices comme le montre les figures 2 et 3 (pour plus de détails, cf. section "Reprise du code de l'année dernière" du rapport 2024-2025).
+
+L'équipe 2024-2025 avait donc pris la décision d'abandonner ce protocole et ce modèle contraignant au profit d'un nouveau modèle de détection par réseaux de neurones. Nous validons et poursuivons cette stratégie technologique pour l'année 2025-2026 :
+\begin{itemize}
+    \item \textbf{Conservation de YOLO :} Les tests préliminaires montrent que ce modèle est robuste aux faux positifs (câbles, barrières). Nous avons ainsi récupéré le fichier de poids \texttt{best.pt} pour l'intégrer à notre nouvelle stack logicielle.
+    \item \textbf{Transition vers la vision 360° :} Si l'algorithme de détection est conservé, nous prévoyons de le réentraîner pour qu'il s'adapte aux images grand angle de la nouvelle caméra 360°, afin de s'affranchir définitivement des contraintes de mouvement de la caméra PTZ.
+\end{itemize}
+
+\subsection{Préparation de la première descente}
+
+Notre première descente au laboratoire de Bure, prévue pour le début du mois de février 2026, s'inscrit dans la continuité de la phase de reconstruction technique menée tout au long du premier semestre. Suite à la suppression accidentelle de l'image système du robot de l'année précédente, nous avons dû redéfinir nos priorités. L'objectif premier étant de rétablir une base de travail saine en recréant intégralement l'infrastructure logicielle (scripts d'installation, configuration ROS2) et en validant les pilotes des capteurs (Scout Base pour l'odométrie des roues, ZED Wrapper pour les données IMU, et ydlidar\_ros2\_driver pour la cartographie et la détection d'obstacles).
+
+L'objectif principal de cette échéance de février est double :
+\begin{enumerate}
+    \item \textbf{Validation système :} Essayer de reproduire les test réalisé par l'équipe 2024-2025 en conditions réelles avec le robot fraîchement reconfiguré, notamment sa capacité à effectuer des cycles simples (avancer, s'arrêter, prendre une photo) malgré les instabilités matérielles identifiées (problèmes de connexion LIDAR et caméra PTZ).
+    \item \textbf{Acquisition de données 360° :} Contrairement aux approches précédentes, nous profiterons de cette descente pour capturer un nouveau jeu de données à l'aide d'une caméra 360°. Cette acquisition est indispensable pour entraîner notre nouveau modèle de détection afin qu'il puisse, à terme, analyser l'ensemble de la voûte et non plus uniquement les murs verticaux.
+\end{enumerate}
+
+Cette descente permettra ainsi de vérifier la cohérence entre l'environnement de simulation du TechLab et la réalité des tunnels, tout en fournissant à l'équipe IA les données nécessaires à l'amélioration du modèle de détection.
+
+\paragraph{Contraintes et limitations actuelles :} Malgré la définition de ces objectifs, plusieurs défis techniques et logistiques subsistent à l'approche de cette première descente :
+
+\begin{itemize}
+    \item \textbf{Disponibilité du matériel 360° :} L'équipe ne dispose pas encore de sa propre caméra 360° intégrée au robot. Pour cette session d'acquisition, nous nous appuierons sur un équipement fourni ponctuellement par l'ANDRA, ce qui nous permet de réaliser les prises de vues mais repousse l'intégration matérielle définitive.
+    \item \textbf{Communication en tunnel :} La problématique de la connexion sans fil au robot au sein des galeries n'a pas encore été traitée. L'absence de solution validée pour le monitoring et le contrôle à distance dans cet environnement confiné reste une inconnue technique pour cette première intervention.
+    \item \textbf{Maturité du système :} En raison de la perte des données de l'année précédente et du temps consacré à la reconstruction de l'infrastructure, l'état actuel du robot reste en retrait par rapport au système final de 2024-2025. Nous ne serons donc pas en mesure de tester l'architecture complète en conditions réelles comme nous l'aurions souhaité, nous limitant pour l'instant à la validation des briques logicielles restaurées.
+\end{itemize}
+
+% --- Travail Smestre 2 ---
+\section{Semestre 2}
+
+% --- Gestion de projet ---
+\section{Gestion de projet}
+
+\subsection{Démarrage et contexte initial}
+
+En raison d'aléas administratifs liés à l'affectation des sujets, le projet n'a débuté officiellement que fin novembre. Cette période de latence a toutefois été mise à profit pour nous auto-former, en autonomie, à la prise en main du modèle de détection YOLO. Anticipant une problématique centrée sur l'analyse d'image, cette montée en compétence nous étant conseillée par nos encadrants.
+
+Une fois affecté, le sujet a révélé une composante robotique majeure que nous ne pouvions pas anticiper. Ne disposant pas de connaissances spécifiques dans ce domaine, la prise en main de l'aspect navigation et matériel a constitué le premier défi technique majeur de ce semestre.
+
+Dans ce contexte, la priorité a été donnée à l'appropriation technique plutôt qu'à la mise en place de processus de gestion de projet complexes. Nous avons rapidement établi le contact avec l'équipe précédente pour récupérer l'historique des travaux (dépôt GitHub et Drive). Si l'accès aux ressources logicielles s'est fait sans encombre, l'accès physique au robot, situé au TechLab, a nécessité davantage de coordination logistique.
+
+\subsection{}
+
+
+% --- Résultats ---
+\section{Résultats}
+
+% --- Conclusion et Ouvertures ---
+\section{Conclusion et Ouvertures}
+
+\end{document}

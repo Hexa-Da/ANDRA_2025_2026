@@ -1,0 +1,281 @@
+\documentclass[aspectratio=169]{beamer}
+
+% --- PAQUETS ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{graphbox}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usepackage{caption}
+
+% --- THÈME ---
+\usetheme{Madrid} 
+\usecolortheme{whale} 
+
+% --- CONFIGURATION DES IMAGES ---
+\graphicspath{{images/}} 
+
+% --- INFORMATIONS ---
+\title[Robotique \& IA - ANDRA]{Robotique et IA en environnements complexes}
+\subtitle{Exploration de la galerie souterraine de l'ANDRA}
+\author[Guichard, Lefebvre, Dame, Paris]{Vincent GUICHARD, Adrien LEFEBVRE\\Lucas DAME, Paul-Antoine PARIS}
+\institute[Mines Nancy]{École des Mines de Nancy \\ Partenaire : ANDRA}
+\date{Mi-Soutenance - Janvier 2026}
+
+% --- LOGOS PAGE DE TITRE ---
+\titlegraphic{
+    \vspace{-0.5cm}
+    \includegraphics[align=c, height=1.5cm]{images/logo_andra.png}%
+    \includegraphics[align=c, height=3cm]{images/logo_mines_nancy.png}%
+}
+
+\begin{document}
+
+% --- SLIDE 1 : TITRE ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- SLIDE 2 : SOMMAIRE ---
+\begin{frame}{Sommaire}
+    \tableofcontents
+\end{frame}
+
+% --- SECTION 1 ---
+\section{Contexte et Enjeux}
+
+% --- SLIDE 3 : CONTEXTE ---
+\begin{frame}{Contexte du Projet}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Le Projet CIGEO :}
+        \begin{itemize}
+            \item Stockage géologique à \textbf{500m de profondeur} (Bure).
+            \item Infrastructure : Plus de \textbf{270 km de galeries}.
+        \end{itemize}
+        
+        \vspace{0.5cm}
+        
+        \textbf{La Problématique :}
+        \begin{itemize}
+            \item Apparition de fissures (cisaillement géologique).
+            \item Inspection manuelle répétitive et chronophage.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.9\textwidth]{cigeo.jpg}
+            \caption{Vue du laboratoire à Bure}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
+% --- SECTION 2 ---
+\section{État de l'Art et Architecture}
+
+% --- SLIDE 4 : DÉTECTION ---
+\begin{frame}{État de l'Art : Détection par IA}
+    \begin{columns}[t]
+        \column{0.6\textwidth}
+        \begin{block}{Limites historiques (avant 2024)}
+            Les modèles "universels" confondaient fissures, câbles et tuyaux (taux élevé de faux positifs).
+        \end{block}
+
+        \vspace{0.3cm}
+
+        \textbf{Avancées 2024-2025 :}
+        \begin{itemize}
+            \item Création d'un \textbf{dataset spécifique} ($\approx$ 300 images).
+            \item Utilisation du modèle \textbf{YOLOv11}.
+            \item \textbf{Résultat :} Distinction efficace fissures.
+        \end{itemize}
+
+        \column{0.27\textwidth}
+        \vspace*{-0.7cm}
+        \begin{figure}
+            \centering
+            \includegraphics[width=0.9\textwidth]{example_mauvaise_detection_fissure_2.png}
+            \caption{Exemple confusion}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
+% --- SLIDE 5 : NAVIGATION ---
+\begin{frame}{État de l'Art : Navigation \& Positionnement}
+    \textbf{Architecture Logicielle :}
+    \begin{itemize}
+        \item Migration complète vers \textbf{ROS2 (Humble)}.
+        \item Abandon des API propriétaires $\rightarrow$ Modularité accrue.
+    \end{itemize}
+
+    \vspace{0.5cm}
+
+    \textbf{Stratégie de Localisation :}
+    \begin{itemize}
+        \item \textbf{Problème :} Le SLAM (cartographie simultanée) dérive trop en tunnel ("Drift").
+        \item \textbf{Solution retenue : AMCL} (Adaptive Monte Carlo Localization).
+        \item \textit{Principe :} Se recaler sur une carte statique connue via le LiDAR 2D.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Architecture Matérielle}
+    \begin{columns}[t] 
+        % --- COLONNE 1 : TEXTE ---
+        \column{0.30\textwidth}
+        \vspace{-0.5cm} 
+        
+        \textbf{Le Cerveau :}
+        \begin{itemize}
+            \item Jetson Orin Nano
+        \end{itemize}
+        
+        \textbf{La Base :}
+        \begin{itemize}
+            \item Agilex Scout Mini
+            \item Contrôle CAN
+        \end{itemize}
+
+        \textbf{La Caméra :}
+        \begin{itemize}
+            \item Caméra PTZ
+        \end{itemize}
+        
+        \textbf{Les Capteurs :}
+        \begin{itemize}
+            \item LiDAR 2D
+            \item ZED2 (IMU)
+        \end{itemize}
+
+        % --- COLONNE 2 : IMAGE AVANT ---
+        \column{0.35\textwidth}
+        \vspace{0pt} 
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth, height=5.5cm, keepaspectratio]{images/avant_robot.jpg}
+            \caption{Vue Avant}
+        \end{figure}
+
+        % --- COLONNE 3 : IMAGE ARRIERE ---
+        \column{0.35\textwidth}
+        \vspace{0pt}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth, height=5.5cm, keepaspectratio]{images/arriere_robot.jpg}
+            \caption{Vue Arrière}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
+% --- SECTION 3 ---
+\section{Travaux Semestre 1}
+
+% --- SLIDE 7 : RECONSTRUCTION ---
+\begin{frame}{Reconstruction Système}
+    \begin{block}{Incident Critique}
+        Perte totale de l'image système de l'année précédente sans sauvegarde.
+    \end{block}
+
+    \vspace{0.3cm}
+
+    \textbf{Actions correctives réalisées :}
+    \begin{itemize}
+        \item Reconstruction intégrale de l'environnement ROS2 (Workspaces, dépendances).
+        \item \textbf{Interface CAN :} Patch du driver \texttt{scout\_base} pour reconnaissance matérielle spécifique.
+        \item \textbf{Caméra PTZ :} Rétablissement IP et création de scripts d'automatisation.
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \textbf{État des capteurs :}
+    \begin{itemize}
+        \item[\textcolor{green}{\checkmark}] Caméra ZED2, PTZ, Odométrie Base.
+        \item[\textcolor{red}{\textbf{!}}] \textbf{LiDAR :} Erreurs d'initialisation (Panne matérielle suspectée).
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 8 : VISION 360 ---
+\begin{frame}{Innovation 2026 : Projet Parallèle 360°}
+    \begin{columns}
+        \column{0.6\textwidth}
+        \textbf{Pourquoi ?}
+        \begin{itemize}
+            \item La caméra PTZ impose des arrêts fréquents.
+            \item Risque de rater des zones hors champ.
+        \end{itemize}
+
+        \vspace{0.3cm}
+
+        \textbf{Nouvelle Approche :}
+        \begin{itemize}
+            \item \textbf{Vision 360° :} Capture globale (Voûte + Murs) en une seule prise.
+            \item \textbf{Détection continue :} Analyse en temps réel sans arrêt du robot.
+        \end{itemize}
+
+        \column{0.3\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=1\textwidth]{images/ricoh.jpg}
+            \caption{Ricoh Theta}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
+% --- SECTION 4 ---
+\section{Perspectives}
+
+% --- SLIDE 9 : OBJECTIFS FEVRIER ---
+\begin{frame}{Objectifs : Descente Février 2026}
+    \begin{block}{1. Validation Système}
+        Tester la fiabilité du robot "reconstruit" en conditions réelles.
+        \\ \textit{Cycle : Avancer $\rightarrow$ Stop $\rightarrow$ Photo $\rightarrow$ Repartir.}
+    \end{block}
+
+    \vspace{0.5cm}
+
+    \begin{block}{2. Acquisition de Données}
+        \begin{itemize}
+            \item Focus prioritaire sur la capture \textbf{360°}.
+            \item Constitution du dataset pour le nouveau modèle IA.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+% --- SLIDE 10 : LIMITATIONS ---
+\begin{frame}{Contraintes et Limitations Actuelles}
+    \begin{itemize}
+        \setlength\itemsep{1em}
+        \item[\textbf{--}] \textbf{Matériel 360° :} Équipement prêté par l'ANDRA intégration au robot impossible.
+        
+        \item[\textbf{--}] \textbf{Communication :} Aucune solution validée pour le contrôle sans fil en tunnel profond.
+        
+        \item[\textbf{--}] \textbf{Maturité :} Système global en retrait par rapport à la fin du projet 2024-2025.
+
+        \item[\textbf{--}] \textbf{Localisation :} La chaîne complète (création de carte + navigation) reste à valider.
+    \end{itemize}
+\end{frame}
+
+% --- SLIDE 11 : CONCLUSION ---
+\begin{frame}{Conclusion}
+    \textbf{Bilan Semestre 1 :}
+    \begin{itemize}
+        \item Socle logiciel ROS2 sain, modulaire et documenté.
+        \item Infrastructure de développement rétablie après l'incident système.
+    \end{itemize}
+
+    \vspace{0.5cm}
+
+    \textbf{Prochaines étapes (Court terme) :}
+    \begin{enumerate}
+        \item Réussir l'acquisition de données en février.
+        \item Entraîner le modèle sur images 360°.
+        \item Atteindre l'état final du projet 2024-2025.
+    \end{enumerate}
+    
+    \vspace{1cm}
+    \centering
+    \Large \textbf{Merci de votre attention.}
+\end{frame}
+
+\end{document}
