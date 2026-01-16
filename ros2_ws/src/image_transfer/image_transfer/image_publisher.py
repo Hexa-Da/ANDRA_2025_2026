@@ -28,7 +28,7 @@ class ImagePublisher(Node):
         
         # Paramètres de sauvegarde
         self.declare_parameter('save_all_images', True)  # Sauvegarder toutes les images capturées
-        self.declare_parameter('images_output_dir', 'ros2_ws/images_capturees')  # Dossier de sauvegarde
+        self.declare_parameter('images_output_dir', 'ros2_ws/images_capturees_techlab')  # Dossier de sauvegarde
 
         # Mode de capture
         # False = Prend des photos tout seul (Timer)

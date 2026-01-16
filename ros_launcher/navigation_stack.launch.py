@@ -65,10 +65,10 @@ def generate_launch_description():
         
         # YDLIDAR - conditionnel
         Node(
-    	    package='ydlidar_ros2_driver',
-    	    executable='ydlidar_ros2_driver_node',
-    	    name='ydlidar_ros2_driver_node',
-    	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
+            package='ydlidar_ros2_driver',
+            executable='ydlidar_ros2_driver_node',
+            name='ydlidar_ros2_driver_node',
+            parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
             output='screen',
             condition=IfCondition(enable_lidar),
         ),
@@ -88,29 +88,49 @@ def generate_launch_description():
             condition=IfCondition(enable_zed),
         ),
         
+        # --- NOUVEAU : Contrôleur PTZ (Marshall) ---
+        Node(
+            package='image_transfer',
+            executable='ptz_controller.py',
+            name='ptz_controller',
+            output='screen',
+            condition=IfCondition(enable_ptz),
+        ),
+
         # Image transfer nodes - conditionnel
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'image_subscriber'],
+            cmd=['ros2', 'run', 'image_transfer', 'image_subscriber.py'],
             output='screen',
             condition=IfCondition(enable_image_transfer),
         ),
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
+            cmd=['ros2', 'run', 'image_transfer', 'position_publisher.py'],
             output='screen',
         ),
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'report_fissures'],
+            cmd=['ros2', 'run', 'image_transfer', 'report_fissures.py'],
             output='screen',
         ),
+        
+        # --- NOUVEAU : Superviseur de Scan ---
+        Node(
+            package='image_transfer',
+            executable='fissure_scanner.py',
+            name='fissure_scanner',
+            output='screen',
+            condition=IfCondition(enable_image_transfer),
+        ),
+
         # PTZ camera publisher - conditionnel et configurable
         Node(
             package='image_transfer',
-            executable='image_publisher',
+            executable='image_publisher.py',
             name='image_publisher',
             parameters=[{
                 'brightness': PythonExpression(['float(', ptz_brightness, ')']),
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
+                'mode_manuel': True,  # Ajouté pour le scan contrôlé
                 'images_output_dir': 'ros2_ws/images_capturees',
             }],
             output='screen',
