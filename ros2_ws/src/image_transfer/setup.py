@@ -27,7 +27,8 @@ setup(
             'position_publisher = image_transfer.position_publisher:main',
             'report_fissures = image_transfer.report_fissures:main',
             'test_image_publisher = image_transfer.test_image_publisher:main',
-            'ptz_controller = image_transfer.ptz_controller:main'
+            'ptz_controller = image_transfer.ptz_controller:main',
+            'fissure_scanner = image_transfer.fissure_scanner:main'
         ],
     },
 )
