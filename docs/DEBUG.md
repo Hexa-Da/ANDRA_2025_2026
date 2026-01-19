@@ -42,8 +42,13 @@ ros2 topic echo /odom_robot
 
 # Odométrie filtrée par le filtre EKF (nav_msgs/Odometry)
 # Publié par : EKF
-# Souscrit par : image_subscriber, position_publisher
+# Souscrit par : image_subscriber, position_publisher, odom_to_path
 ros2 topic echo /odometry/filtered
+
+# Trajet du robot (nav_msgs/Path)
+# Publié par : odom_to_path 
+# Visualisé dans RViz2 via le display Path
+ros2 topic echo /robot_path
 ```
 
 #### Topics de contrôle PTZ
@@ -88,4 +93,66 @@ map → odom → base_link → {laser_frame, zed_camera_link}
 
 **Transformations dynamiques** (changent avec le mouvement) :
 - `map` → `odom` : publiée par SLAM/AMCL
-- `odom` → `base_link` : publiée par EKF
+- `odom` → `base_link` : publiée par EKF et `odom_to_path`
+
+## Vérifier la configuration DDS et la communication réseau
+
+### Vérifier ROS_DOMAIN_ID
+
+```bash
+# Sur le robot
+echo $ROS_DOMAIN_ID  # Doit afficher 0
+
+# Dans le conteneur Docker (si utilisé)
+echo $ROS_DOMAIN_ID  # Doit également afficher 0
+```
+
+### Vérifier le middleware DDS (RMW_IMPLEMENTATION)
+
+```bash
+# Sur le robot
+echo $RMW_IMPLEMENTATION  # Doit afficher rmw_fastrtps_cpp
+
+# Dans le conteneur Docker (si utilisé)
+echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide = FastRTPS par défaut)
+```
+
+**Important** : Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne.
+
+### Diagnostic des problèmes de communication
+
+Si les topics du robot ne sont pas visibles dans le conteneur Docker :
+
+1. **Vérifier le réseau** :
+   ```bash
+   # Depuis le conteneur Docker
+   ping -c 3 192.168.40.99  # IP du robot
+   ```
+
+2. **Vérifier ROS_DOMAIN_ID** :
+   ```bash
+   # Doit être identique des deux côtés
+   echo $ROS_DOMAIN_ID
+   ```
+
+3. **Vérifier RMW_IMPLEMENTATION** :
+   ```bash
+   # Doit être identique des deux côtés
+   echo $RMW_IMPLEMENTATION
+   ```
+
+4. **Vérifier que les topics sont publiés sur le robot** :
+   ```bash
+   # Sur le robot
+   ros2 topic list
+   ros2 topic hz /map  # Vérifier la fréquence de publication
+   ```
+
+5. **Vérifier les ports DDS** :
+   ```bash
+   # Sur le robot
+   netstat -tuln | grep -E "(7400|7401)"  # Ports FastRTPS
+   
+   # Dans le conteneur Docker
+   netstat -tuln | grep -E "(7400|7401)"
+   ```

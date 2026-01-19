@@ -258,4 +258,23 @@ Le middleware DDS (Data Distribution Service) est la couche de communication sou
 - La transmission des messages entre les nœuds
 - La gestion de la qualité de service (QoS)
 
-Le script `scripts/setup.sh` configure automatiquement le middleware DDS pour le projet.
+**Configuration automatique par `scripts/setup.sh`**
+
+Le script `scripts/setup.sh` configure automatiquement :
+- **`ROS_DOMAIN_ID=0`** : Identifiant du domaine ROS2 (doit être identique sur tous les nœuds qui doivent communiquer)
+- **`RMW_IMPLEMENTATION=rmw_fastrtps_cpp`** : Middleware DDS utilisé (FastRTPS)
+
+**Important pour la communication réseau** :
+- Pour que RViz2 dans le conteneur Docker puisse voir les topics du robot, les deux doivent avoir :
+  - Le même `ROS_DOMAIN_ID` (généralement `0`)
+  - Le même middleware DDS (`rmw_fastrtps_cpp` pour FastRTPS)
+- Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne
+
+**Vérification de la configuration** :
+```bash
+# Vérifier ROS_DOMAIN_ID
+echo $ROS_DOMAIN_ID  # Doit afficher 0
+
+# Vérifier le middleware DDS
+echo $RMW_IMPLEMENTATION  # Doit afficher rmw_fastrtps_cpp
+```

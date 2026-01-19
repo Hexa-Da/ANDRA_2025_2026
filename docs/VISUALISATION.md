@@ -64,6 +64,13 @@ Le fichier `ros_launcher/config.rviz` contient une configuration pré-définie q
 - **Visualisation** : Flèche indiquant la position et l'orientation
 - **Utilité** : Vérifier la précision de la localisation (mode AMCL uniquement)
 
+#### 8. **Path** (Trajet du robot)
+- **Topic** : `/robot_path`
+- **Rôle** : Affiche le trajet parcouru par le robot
+- **Visualisation** : Ligne orange montrant l'historique des positions
+- **Utilité** : Visualiser le chemin emprunté par le robot, utile pour déboguer la navigation
+- **Publication** : Nœud `odom_to_path` qui s'abonne à `/odometry/filtered` et publie le Path
+
 ### Outils de navigation
 
 #### **SetInitialPose** (Estimation de pose initiale)
@@ -111,7 +118,7 @@ Une fois RViz2 lancé, vous verrez :
 
 #### Barre d'outils en bas
 - **Time** : Affiche le temps ROS2
-- **Frame** : Frame de référence actuelle (généralement `map`)
+- **Frame** : Frame de référence actuelle (généralement `odom` ou `map` selon le mode)
 
 ### Workflow complet : Visualiser le robot en action
 
@@ -124,18 +131,26 @@ Une fois RViz2 lancé, vous verrez :
    ./scripts/launch.sh slam  # Mode SLAM pour créer une carte
    ```
 
-2. **Lancer RViz2 sur votre PC** :
+2. **Lancer RViz2 sur votre PC Linux** :
    ```bash
-   # Avec l'image Docker
+   # Avec l'image Docker (sur une machine Linux du TechLab)
    cd ros-docker
-   ./launch
+   ./launch.sh  # Lance le conteneur Docker avec --net=host
+   # Dans le conteneur :
+   cd /workspace
    rviz2 -d ros_launcher/config.rviz
    ```
+
+   **Note importante** : Le conteneur Docker utilise `--net=host` pour communiquer avec le robot. Assurez-vous que :
+   - Votre machine Linux est sur le même réseau WiFi que le robot
+   - `ROS_DOMAIN_ID=0` est défini (défini automatiquement par `scripts/setup.sh` sur le robot)
+   - Le middleware DDS est cohérent (FastRTPS par défaut, configuré dans `scripts/setup.sh`)
 
 3. **Observer la visualisation** :
    - La carte se construit progressivement (mode SLAM)
    - Les scans LIDAR apparaissent en temps réel
    - Le robot est représenté par une flèche sur la carte
+   - Le trajet du robot est visualisé via le Path `/robot_path` (ligne orange)
 
 4. **Interagir avec le robot** :
    - Utiliser "2D Goal Pose" pour envoyer le robot à un endroit précis
@@ -207,117 +222,10 @@ Cela créera deux fichiers :
 - **TF `base_link → zed_camera_link`** : Vérifier la position de la caméra
 - **Images** : Utiliser d'autres outils pour visualiser les images (rqt_image_view)
 
-## Personnalisation de la configuration
-
-Vous pouvez modifier `ros_launcher/config.rviz` pour :
-- Changer les couleurs des displays
-- Ajouter/supprimer des displays
-- Modifier les topics
-- Ajuster les paramètres de visualisation
-
-**Note** : Sauvegardez une copie avant de modifier si vous voulez revenir à la configuration par défaut.
-
-### Modifier un display
-
-1. Dans le panneau de gauche, cliquez sur le display à modifier
-2. Dans le panneau de droite, modifiez les propriétés :
-   - **Topic** : Changez le topic ROS2 (ex: `/scan` → `/scan_filtered`)
-   - **Color** : Changez la couleur d'affichage
-   - **Size** : Ajustez la taille des éléments
-   - **Alpha** : Ajustez la transparence
-
-### Ajouter un nouveau display
-
-1. Cliquez sur le bouton **"Add"** (en bas du panneau Displays)
-2. Sélectionnez le type de display (ex: "Image", "Marker", "Path", etc.)
-3. Cliquez sur **"OK"**
-4. Configurez le display dans le panneau de droite (topic, couleur, etc.)
-
-### Exemples de displays utiles à ajouter
-
-- **Path** : Visualiser le chemin planifié (`/plan` ou `/global_plan`)
-- **Marker** : Visualiser des marqueurs personnalisés
-- **Image** : Visualiser les images de la caméra (`/zed/zed_node/left/image_rect_color`)
-- **PointCloud2** : Visualiser les nuages de points de la ZED2 (`/zed/zed_node/point_cloud/cloud_registered`)
-
-## Dépannage
-
-### RViz2 ne s'affiche pas / Fenêtre vide
-
-**Problème** : RViz2 se lance mais la vue est vide.
-
-**Solutions** :
-1. Vérifier que les nœuds ROS2 sont lancés sur le robot :
-   ```bash
-   ros2 topic list
-   # Vous devriez voir /map, /scan, etc.
-   ```
-
-2. Vérifier que vous êtes sur le même réseau WiFi que le robot
-
-3. Vérifier le ROS_DOMAIN_ID :
-   ```bash
-   echo $ROS_DOMAIN_ID
-   # Doit être identique sur le robot et votre machine
-   ```
-
-4. Vérifier que les topics sont publiés :
-   ```bash
-   ros2 topic echo /map --once
-   ros2 topic echo /scan --once
-   ```
-
-### La carte ne s'affiche pas
-
-**Problème** : Le display "Map" est activé mais rien n'apparaît.
-
-**Solutions** :
-1. Vérifier que le topic `/map` est publié :
-   ```bash
-   ros2 topic info /map
-   ros2 topic echo /map --once
-   ```
-
-2. Vérifier que le frame "map" existe dans TF :
-   ```bash
-   ros2 run tf2_ros tf2_echo map base_link
-   ```
-
-3. Dans RViz2, vérifier que le **Fixed Frame** est bien défini sur `map` :
-   - Panneau de gauche → **Global Options** → **Fixed Frame** : `map`
-
-### Les scans LIDAR ne s'affichent pas
-
-**Problème** : Le display "LaserScan" est activé mais aucun point n'apparaît.
-
-**Solutions** :
-1. Vérifier que le topic `/scan` est publié :
-   ```bash
-   ros2 topic echo /scan --once
-   ```
-
-2. Vérifier que le frame `laser_frame` existe dans TF :
-   ```bash
-   ros2 run tf2_ros tf2_echo base_link laser_frame
-   ```
-
-3. Dans RViz2, vérifier les propriétés du LaserScan :
-   - **Topic** : `/scan`
-   - **Size (m)** : 0.05 (taille des points)
-   - **Color** : Vérifier que la couleur n'est pas transparente
-
-### RViz2 est lent / Lag
-
-**Problème** : RViz2 met du temps à répondre ou est saccadé.
-
-**Solutions** :
-1. Réduire la fréquence d'affichage dans les propriétés des displays
-2. Désactiver temporairement les displays non essentiels
-3. Réduire la taille des points (LaserScan) ou la résolution de la carte
-4. Si sur Docker, vérifier les ressources allouées à Docker
 
 ## Liens utiles
 
 - [Documentation RViz2](https://github.com/ros2/rviz)
 - [Documentation SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox)
 - [Documentation Nav2](https://navigation.ros.org/)
+- [Documentation FastRTPS](https://fast-dds.docs.eprosima.com/)

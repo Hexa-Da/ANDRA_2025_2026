@@ -126,6 +126,40 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - `enable_zed:=false` : Désactiver la caméra ZED
   - `enable_ptz:=false` : Désactiver la caméra PTZ
   - Permet de tester le système même si un composant pose problème
+
+### Configuration visualisation RViz2 avec Docker
+- [x] **Tentative macOS** : Tentative d'utilisation de RViz2 sur macOS via Docker
+  - **Problème initial** : Besoin d'un conteneur Docker pour utiliser RViz2 sur macOS
+  - **Solution XQuartz** : Création de `launch-macos.sh` utilisant XQuartz pour l'affichage X11
+  - **Décision** : Abandon de la compatibilité macOS/Windows pour simplifier le setup
+- [x] **Simplification Linux uniquement** : Retour à un setup Linux uniquement
+  - **Suppression** : Suppression de `launch-macos.sh`, `launch-macos-vnc.sh`, `launch-windows.sh`
+  - **Nettoyage Dockerfile** : Retrait de Mesa, xvfb, x11vnc, iputils-ping (ajoutés pour macOS/Windows)
+  - **Documentation** : Mise à jour de `ros-docker/README.md` pour ne documenter que Linux
+  - **Raison** : Complexité trop élevée pour macOS/Windows, utilisation prévue sur les machines Linux du TechLab
+- [x] **Problème de communication DDS** : Topics et nœuds ROS2 non visibles dans le conteneur Docker
+  - **Symptômes** : `ros2 topic list` et `ros2 node list` vides dans le conteneur malgré les nœuds actifs sur le robot
+  - **Diagnostics effectués** :
+    - Vérification réseau : `ping` fonctionnait entre robot et conteneur
+    - Vérification `ROS_DOMAIN_ID` : Configuré à `0` des deux côtés
+    - Vérification middleware : Robot utilisait FastRTPS par défaut (port 7400/7401 visibles avec `netstat`)
+    - Conteneur utilisait également FastRTPS par défaut
+  - **Problème identifié** : Mismatch potentiel de configuration DDS (FastRTPS vs CycloneDDS)
+  - **Solution** : Configuration explicite de `RMW_IMPLEMENTATION=rmw_fastrtps_cpp` partout
+- [x] **Configuration FastRTPS** : Standardisation sur FastRTPS pour robot et conteneur Docker
+  - **État actuel** : Robot et conteneur Docker utilisent maintenant FastRTPS de manière cohérente
+- [x] **Amélioration visualisation RViz2** : Ajout de displays et configuration du Fixed Frame
+  - **Nœud odom_to_path** : Création de `ros2_ws/src/image_transfer/image_transfer/odom_to_path.py`
+    - **Fonctionnalités** :
+      - Abonnement à `/odometry/filtered` (odométrie filtrée par EKF)
+      - Publication du Path sur `/robot_path` pour visualiser le trajet du robot
+      - Publication TF `odom → base_link` pour compléter l'arbre de transformations
+    - **Paramètres** : Ajout d'un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
+  - **Configuration RViz2** : Mise à jour de `ros_launcher/config.rviz`
+    - **Fixed Frame** : Changé de `map` à `odom` pour permettre la visualisation même si la carte n'est pas encore créée (mode SLAM initial)
+    - **Display RobotPath** : Ajout d'un display Path pour visualiser `/robot_path` (couleur orange, style Lines)
+    - **Displays existants** : Conservation de tous les displays précédents (Grid, TF, Map, LaserScan, PoseArray, Polygon, Pose)
+  - **Utilité** : Permet de visualiser le trajet du robot même en mode SLAM avant que la carte ne soit créée
   
 ---
 
@@ -237,4 +271,4 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 12 Janvier 2026
+**Dernière mise à jour** : 16 Janvier 2026

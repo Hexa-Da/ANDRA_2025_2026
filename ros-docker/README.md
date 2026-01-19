@@ -16,6 +16,7 @@ C'est l'environnement de développement local qui vous permet de :
 - **Git** installé
 - **Pas besoin d'installer ROS2 nativement** sur votre système
 - **Même réseau WiFi** : Votre ordinateur doit être connecté au même réseau que le robot pour que RViz2 puisse recevoir les données du robot
+- **Configuration DDS cohérente** : Le robot et le conteneur Docker doivent utiliser le même `ROS_DOMAIN_ID` (généralement `0`) et le même middleware DDS (`rmw_fastrtps_cpp` pour FastRTPS)
 
 ## Installation (une seule fois)
 
@@ -87,6 +88,7 @@ Le fichier `config.rviz` est automatiquement monté depuis `ros_launcher/config.
 - Les scans LIDAR (`/scan`)
 - Les transformations TF
 - La position du robot
+- Le trajet du robot (`/robot_path`) via le display Path
 - Les particules AMCL (en mode localisation)
 
 **Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Car les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot.

@@ -102,9 +102,9 @@ def generate_launch_description():
             cmd=['ros2', 'run', 'image_transfer', 'report_fissures'],
             output='screen',
         ),
-        # --- TEST : Conversion odométrie vers Path ---
+        # Conversion odométrie vers Path pour visualisation
         Node(
-            package='image_transfer',
+            package='navigation_utils',
             executable='odom_to_path',
             name='odom_to_path',
             output='screen',

@@ -28,7 +28,6 @@ setup(
             'report_fissures = image_transfer.report_fissures:main',
             'test_image_publisher = image_transfer.test_image_publisher:main',
             'ptz_controller = image_transfer.ptz_controller:main',
-            'odom_to_path = image_transfer.odom_to_path:main'
         ],
     },
 )

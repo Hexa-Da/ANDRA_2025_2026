@@ -57,9 +57,8 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `ptz_controller` : Contrôle de la caméra PTZ
   - `resource/` : Fichier de marqueur requis par ament_index
   - `test/` : Tests de qualité de code (linting, copyright, PEP257) - standards ROS2
-  - `package.xml` : Métadonnées du package ROS2 (dépendances, version, description) 
-  - `setup.py` : Configuration Python setuptools (entry points, dépendances Python) 
-  - `setup.cfg` : Configuration additionnelle setuptools (emplacement des scripts) 
+- `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
+  - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
 - `src/slam_andra_package/` : Package de configuration SLAM
 - `src/ydlidar_nav2_slam/` : Configuration SLAM pour le LIDAR
 - `images_capturees/` : Images brutes capturées par la caméra PTZ

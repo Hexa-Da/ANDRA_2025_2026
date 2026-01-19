@@ -14,7 +14,9 @@ Ce script :
 - ✅ Source le workspace scout_base 
 - ✅ Source le workspace ZED Wrapper 
 - ✅ Source le workspace ANDRA
-- ✅ Configure automatiquement le middleware DDS
+- ✅ Configure automatiquement le middleware DDS :
+  - `ROS_DOMAIN_ID=0` (si non défini)
+  - `RMW_IMPLEMENTATION=rmw_fastrtps_cpp` (si non défini)
 
 ### `scripts/build.sh` - Compilation des workspaces
 
