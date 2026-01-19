@@ -3,8 +3,8 @@
 <package format="3">
   <name>navigation_utils</name>
   <version>0.0.0</version>
-  <description>Utilitaires de navigation et visualisation pour le robot ANDRA (Path, TF, etc.)</description>
-  <maintainer email="techlab@robot-andra">techlab</maintainer>
+  <description>Utilitaires de navigation et visualisation</description>
+  <maintainer email="antoine.richard@depinfonancy.net">techlab</maintainer>
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
