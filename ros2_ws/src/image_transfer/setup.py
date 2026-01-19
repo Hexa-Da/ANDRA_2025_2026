@@ -25,7 +25,6 @@ setup(
             'test = image_transfer.test:main',
             'show_pos = image_transfer.show_pos:main',
             'position_publisher = image_transfer.position_publisher:main',
-            'report_fissures = image_transfer.report_fissures:main',
             'test_image_publisher = image_transfer.test_image_publisher:main',
             'ptz_controller = image_transfer.ptz_controller:main',
         ],

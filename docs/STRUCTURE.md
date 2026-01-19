@@ -52,13 +52,13 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `src/image_transfer/` : Package ROS2 pour la détection de fissures
   - `image_publisher` : Capture d'images depuis la caméra PTZ
   - `image_subscriber` : Détection YOLO des fissures
-  - `position_publisher` : Affichage de la position du robot
-  - `report_fissures` : Traçage des positions détectées sur la carte
+  - `position_publisher` : Affichage de la position du robot lors des détections
   - `ptz_controller` : Contrôle de la caméra PTZ
-  - `resource/` : Fichier de marqueur requis par ament_index
-  - `test/` : Tests de qualité de code (linting, copyright, PEP257) - standards ROS2
 - `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
   - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
+  - `report_fissures` : Trace les positions détectées sur la carte
+  - `show_pos` : Affiche la position du robot (odométrie)
+  - `test` : Outil de test pour vérifier la disponibilité de la carte
 - `src/slam_andra_package/` : Package de configuration SLAM
 - `src/ydlidar_nav2_slam/` : Configuration SLAM pour le LIDAR
 - `images_capturees/` : Images brutes capturées par la caméra PTZ

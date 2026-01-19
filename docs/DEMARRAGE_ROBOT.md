@@ -160,6 +160,13 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - S'abonne au topic `detection_status` (Bool) pour être notifié lorsqu'une fissure est détectée
   - Affiche dans les logs la position (x, y, z) du robot au moment où une détection se produit
+
+### Nœuds de navigation et visualisation (navigation_utils)
+- **`odom_to_path`** : Visualisation du trajet du robot
+  - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
+  - Publie le Path sur `/robot_path` pour visualiser le trajet parcouru dans RViz2
+  - Publie la transformation TF `odom` → `base_link` pour compléter l'arbre de transformations
+  - Ajoute un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
 - **`report_fissures`** : Trace les positions détectées sur la carte
   - Reçoit les positions depuis le topic `/position_detectee`
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
@@ -221,7 +228,7 @@ source scripts/setup.sh
 ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
 ```
 
-### Terminal 4 : Nœuds de traitement d'images
+### Terminal 4 : Nœuds de traitement d'images ou de navigation
 
 ```bash
 source scripts/setup.sh
@@ -235,8 +242,14 @@ ros2 run image_transfer image_subscriber
 # Publisher de position
 ros2 run image_transfer position_publisher
 
-# Rapport des fissures
-ros2 run image_transfer report_fissures
+# Rapport des fissures (trace sur la carte)
+ros2 run navigation_utils report_fissures
+
+# Afficher la position du robot
+ros2 run navigation_utils show_pos
+
+# Test de la carte
+ros2 run navigation_utils test
 ```
 
 ### Terminal 5 : Contole de la PTZ

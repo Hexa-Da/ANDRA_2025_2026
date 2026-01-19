@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'pillow', 'matplotlib'],
     zip_safe=True,
     maintainer='techlab',
     maintainer_email='techlab@robot-andra',
@@ -25,6 +25,9 @@ setup(
     entry_points={
         'console_scripts': [
             'odom_to_path = navigation_utils.odom_to_path:main',
+            'report_fissures = navigation_utils.report_fissures:main',
+            'show_pos = navigation_utils.show_pos:main',
+            'test = navigation_utils.test:main',
         ],
     },
 )

@@ -149,7 +149,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] **Configuration FastRTPS** : Standardisation sur FastRTPS pour robot et conteneur Docker
   - **État actuel** : Robot et conteneur Docker utilisent maintenant FastRTPS de manière cohérente
 - [x] **Amélioration visualisation RViz2** : Ajout de displays et configuration du Fixed Frame
-  - **Nœud odom_to_path** : Création de `ros2_ws/src/image_transfer/image_transfer/odom_to_path.py`
+  - **Nœud odom_to_path** : Création de `ros2_ws/src/navigation_utils/navigation_utils/odom_to_path.py`
     - **Fonctionnalités** :
       - Abonnement à `/odometry/filtered` (odométrie filtrée par EKF)
       - Publication du Path sur `/robot_path` pour visualiser le trajet du robot
