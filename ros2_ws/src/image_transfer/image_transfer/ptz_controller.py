@@ -64,8 +64,13 @@ class PTZControllerVISCA(Node):
             - angular.z: Pan (rotation horizontale) - positif = droite, négatif = gauche
             - linear.y: Tilt (rotation verticale) - positif = haut, négatif = bas
         """
+        self.get_logger().info(f"Commande PTZ reçue: pan={msg.angular.z:.2f}, tilt={msg.linear.y:.2f}")
         if not self.sock:
-            return
+            self.get_logger().warn("⚠️ Socket VISCA non initialisé, tentative de reconnexion...")
+            self._connect_visca()
+            if not self.sock:
+                self.get_logger().error("❌ Impossible de se connecter à la caméra PTZ")
+                return
             
         # Conversion Twist -> VISCA (Pan: 1-18, Tilt: 1-14)
         pan_speed = int(min(max(abs(msg.angular.z) * 18, 1), 18))
@@ -115,7 +120,7 @@ class PTZControllerVISCA(Node):
         Valeurs spéciales:
             -1: Home (position centrale)
             -2: Reset
-            0-127: Preset VISCA standard
+            0-127: Preset VISCA standard (appel)
         """
         if not self.sock:
             return

@@ -49,16 +49,16 @@ else
     echo "❌  Workspace ZED Wrapper non trouvé dans dependencies/"
 fi
 
-# 5. Workspace principal ANDRA
-ANDRA_WS="$PROJECT_DIR/ros2_ws"
-if [ -f "$ANDRA_WS/install/setup.bash" ]; then
-    cd "$ANDRA_WS"
+# 5. Workspace principal ros2_ws
+ROS2_WS="$PROJECT_DIR/ros2_ws"
+if [ -f "$ROS2_WS/install/setup.bash" ]; then
+    cd "$ROS2_WS"
     source install/setup.bash
-    echo "✅ Workspace ANDRA sourcé"
-elif [ -d "$ANDRA_WS" ]; then
-    echo "❌ Workspace ANDRA trouvé mais non compilé (exécutez: scripts/build.sh)"
+    echo "✅ Workspace ros2_ws sourcé"
+elif [ -d "$ROS2_WS" ]; then
+    echo "❌ Workspace ros2_ws trouvé mais non compilé (exécutez: scripts/build.sh)"
 else
-    echo "❌ Erreur: Workspace ANDRA non trouvé"
+    echo "❌ Erreur: Workspace ros2_ws non trouvé"
     return 1
 fi
 

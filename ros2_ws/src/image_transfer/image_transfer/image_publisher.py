@@ -4,6 +4,7 @@ import subprocess
 import time
 import socket
 from sensor_msgs.msg import Image
+from std_msgs.msg import Empty
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -18,6 +19,7 @@ class ImagePublisher(Node):
         # Paramètres configurables pour la caméra PTZ
         self.declare_parameter('capture_interval', 10.0)  # secondes
         self.declare_parameter('enable_ptz', True)
+        self.declare_parameter('enable_capture_auto', True)  # Capture automatique périodique
         
         # Paramètres d'ajustement d'image
         self.declare_parameter('brightness', 1.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
@@ -32,6 +34,7 @@ class ImagePublisher(Node):
         # Récupérer les paramètres
         capture_interval = self.get_parameter('capture_interval').get_parameter_value().double_value
         enable_ptz = self.get_parameter('enable_ptz').get_parameter_value().bool_value
+        enable_capture_auto = self.get_parameter('enable_capture_auto').get_parameter_value().bool_value
         
         # Paramètres d'ajustement d'image
         self.brightness = self.get_parameter('brightness').get_parameter_value().double_value
@@ -64,14 +67,28 @@ class ImagePublisher(Node):
         self.get_logger().info(f"Configuration PTZ : 192.168.5.163:554")
         self.get_logger().info(f"URL RTSP : rtsp://admin:admin@192.168.5.163:554/live/av0")
         self.get_logger().info(f"PTZ activée : {enable_ptz}, Intervalle de capture : {capture_interval}s")
+        self.get_logger().info(f"Capture automatique : {enable_capture_auto}")
         if self.enable_adjustment:
             self.get_logger().info(f"Ajustement d'image : Mode MANUEL - Luminosité={self.brightness}, Contraste={self.contrast}, Gamma={self.gamma}")
 
         self.set_auto_exposure()
 
-        # Capture une image toutes les X secondes (configurable)
+        # Subscriber pour déclencher des captures à la demande
         if enable_ptz:
+            self.trigger_sub = self.create_subscription(
+                Empty,
+                '/trigger_capture',
+                self.trigger_capture_callback,
+                10
+            )
+            self.get_logger().info("Topic de déclenchement activé : /trigger_capture")
+        
+        # Capture automatique périodique (si activée)
+        if enable_ptz and enable_capture_auto:
             self.timer = self.create_timer(capture_interval, self.capture_and_publish)
+            self.get_logger().info(f"Capture automatique activée avec intervalle de {capture_interval}s")
+        elif enable_ptz and not enable_capture_auto:
+            self.get_logger().info("Capture automatique désactivée. Utilisez le topic /trigger_capture pour déclencher des captures.")
 
     def set_auto_exposure(self):
             """Active le mode Full Auto via une connexion VISCA temporaire"""
@@ -94,6 +111,11 @@ class ImagePublisher(Node):
                     
             except Exception as e:
                 self.get_logger().error(f'Impossible d\'activer l\'auto-exposure matériel : {e}')
+
+    def trigger_capture_callback(self, msg):
+        """Callback pour déclencher une capture à la demande"""
+        self.get_logger().info("Déclenchement de capture à la demande...")
+        self.capture_and_publish()
 
     def capture_and_publish(self):
         self.get_logger().info("Capture d'une image depuis la caméra PTZ...")

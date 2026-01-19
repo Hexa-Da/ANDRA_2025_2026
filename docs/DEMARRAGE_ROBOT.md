@@ -242,6 +242,12 @@ ros2 run image_transfer image_subscriber
 # Publisher de position
 ros2 run image_transfer position_publisher
 
+# Controle de la PTZ
+ros2 run image_transfer ptz_controller
+
+# Séquence de base
+ros2 run navigation_utils sequence_robot
+
 # Rapport des fissures (trace sur la carte)
 ros2 run navigation_utils report_fissures
 
@@ -250,13 +256,6 @@ ros2 run navigation_utils show_pos
 
 # Test de la carte
 ros2 run navigation_utils test
-```
-
-### Terminal 5 : Contole de la PTZ
-
-```bash
-source scripts/setup.sh
-ros2 run image_transfer ptz_controller
 ```
 
 ## Notes techniques
