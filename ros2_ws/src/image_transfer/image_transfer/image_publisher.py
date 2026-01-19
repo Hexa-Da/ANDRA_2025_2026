@@ -19,7 +19,7 @@ class ImagePublisher(Node):
         # Paramètres configurables pour la caméra PTZ
         self.declare_parameter('capture_interval', 10.0)  # secondes
         self.declare_parameter('enable_ptz', True)
-        self.declare_parameter('enable_capture_auto', True)  # Capture automatique périodique
+        self.declare_parameter('enable_capture_auto', False)  # Capture automatique périodique
         
         # Paramètres d'ajustement d'image
         self.declare_parameter('brightness', 1.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)

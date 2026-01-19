@@ -16,6 +16,7 @@ __pycache__/
 # Images et vidéos générées (trop volumineuses)
 ros2_ws/images_detectees/
 ros2_ws/images_capturees/
+ros2_ws/images_capturees_techlab/
 videos/video_output/
 
 # Note: Les cartes .pgm sont importantes, on les garde

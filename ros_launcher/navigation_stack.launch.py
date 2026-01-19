@@ -119,7 +119,26 @@ def generate_launch_description():
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
                 'images_output_dir': 'ros2_ws/images_capturees',
+                'enable_capture_auto': False,  # Désactivé par défaut pour permettre le contrôle via /trigger_capture
             }],
+            output='screen',
+            condition=IfCondition(enable_ptz),
+        ),
+        
+        # PTZ controller - conditionnel
+        Node(
+            package='image_transfer',
+            executable='ptz_controller',
+            name='ptz_controller',
+            output='screen',
+            condition=IfCondition(enable_ptz),
+        ),
+        
+        # PTZ presets manager - expose les presets aux autres nœuds
+        Node(
+            package='navigation_utils',
+            executable='ptz_presets',
+            name='ptz_presets_manager',
             output='screen',
             condition=IfCondition(enable_ptz),
         ),
