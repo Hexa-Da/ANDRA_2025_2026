@@ -87,7 +87,7 @@
     \begin{block}{Défis Scientifiques}
         \begin{itemize}
             \item \textbf{Environnement :} Absence totale de GPS à 500m de profondeur $\rightarrow$ Nécessité d'une localisation relative robuste (SLAM/AMCL).
-            \item \textbf{Milieu Complexe : }Conditions difficiles (poussière, obstacles).
+            \item \textbf{Milieu Complexe : }Conditions difficiles (poussière, obstacles, lumière).
         \end{itemize}
     \end{block}
 \end{frame}
@@ -144,7 +144,6 @@
     \begin{columns}[t] 
         % --- COLONNE 1 : TEXTE ---
         \column{0.30\textwidth}
-        \vspace{-0.5cm} 
         
         \textbf{Le Cerveau :}
         \begin{itemize}
@@ -170,19 +169,19 @@
 
         % --- COLONNE 2 : IMAGE AVANT ---
         \column{0.35\textwidth}
-        \vspace{0pt} 
+        \vspace{-0.5cm} 
         \begin{figure}
             \centering
-            \includegraphics[width=\linewidth, height=5.5cm, keepaspectratio]{images/avant_robot.jpg}
+            \includegraphics[width=\linewidth, angle=-90, keepaspectratio]{images/avant.JPG}
             \caption{Vue Avant}
         \end{figure}
 
         % --- COLONNE 3 : IMAGE ARRIERE ---
         \column{0.35\textwidth}
-        \vspace{0pt}
+        \vspace{-0.5cm}
         \begin{figure}
             \centering
-            \includegraphics[width=\linewidth, height=5.5cm, keepaspectratio]{images/arriere_robot.jpg}
+            \includegraphics[width=\linewidth, angle=-90, keepaspectratio]{images/arrière.JPG}
             \caption{Vue Arrière}
         \end{figure}
     \end{columns}
@@ -202,7 +201,7 @@
             \begin{itemize}
                 \item Architecture ROS2.
                 \item Interface Matérielle (Drivers, CAN).
-                \item Stratégie de navigation (AMCL, Odométrie).
+                \item Stratégie de navigation (AMCL, SLAM).
             \end{itemize}
         \end{block}
 
@@ -232,15 +231,15 @@
     \textbf{Actions correctives réalisées :}
     \begin{itemize}
         \item Reconstruction intégrale de l'environnement ROS2 (Workspaces, dépendances).
-        \item \textbf{Interface CAN :} Patch du driver \texttt{scout\_base} pour reconnaissance matérielle spécifique.
+        \item \textbf{Interface CAN :} Patch du driver \texttt{scout\_base} pour utiliser le système D du techlab.
         \item \textbf{Caméra PTZ :} Rétablissement IP et création de scripts d'automatisation.
     \end{itemize}
 
     \vspace{0.3cm}
     \textbf{État des capteurs :}
     \begin{itemize}
-        \item[\textcolor{green}{\checkmark}] Caméra ZED2, PTZ, Odométrie Base.
-        \item[\textcolor{red}{\textbf{!}}] \textbf{LiDAR :} Erreurs d'initialisation (Panne matérielle suspectée).
+        \item[\textcolor{green}{\checkmark}] Caméra ZED2, Odométrie Base.
+        \item[\textcolor{red}{\textbf{!}}] \textbf{LiDAR :} Erreurs de scan (Panne matérielle suspectée).
     \end{itemize}
 \end{frame}
 
@@ -289,7 +288,7 @@
     
     \textbf{Objectif S2}
         \begin{itemize}
-            \item Créer un dataset intermédiaire dans le parking sousterrain (béton, faible luminosité, tuyaux).
+            \item Créer un dataset intermédiaire dans le parking souterrain (béton, faible luminosité, tuyaux).
         \end{itemize}
     
 \end{frame}
@@ -312,7 +311,7 @@
 
         \textbf{Défis S2 :}
         \begin{itemize}
-            \item Entrainer un modèle sur les données que nous comptons récupérer à Bure.
+            \item Entrainer un modèle sur un nouveau dataset créé à Bure.
             \item Estimer le gain en efficacité.
         \end{itemize}
 
@@ -331,15 +330,15 @@
 \begin{frame}{Contraintes et Limitations Actuelles}
     \begin{itemize}
         \setlength\itemsep{1em}
-        \item[\textbf{--}] \textbf{Matériel 360° :} Équipement prêté par l'ANDRA intégration au robot impossible.
+        \item[\textbf{--}] \textbf{Caméra 360° :} Équipement prêté par l'ANDRA intégration au robot impossible.
         
         \item[\textbf{--}] \textbf{Communication :} Système de hot spot testé au techlab mais non définitif.
         
         \item[\textbf{--}] \textbf{Maturité :} Système global en retrait par rapport à la fin du projet 2024-2025.
 
-        \item[\textbf{--}] \textbf{Localisation :} La chaîne complète (création de carte + navigation) reste à maîtriser.
-
         \item[\textbf{--}] \textbf{LIDAR :} Problème de matériel qui nous empêche de créer des cartes.
+
+        \item[\textbf{--}] \textbf{Localisation :} La chaîne complète (création de carte + navigation) reste à maîtriser.
     \end{itemize}
 \end{frame}
 
