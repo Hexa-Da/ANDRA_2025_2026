@@ -1,4 +1,4 @@
-# Decription du projetription
+# Description du projet
 
 Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
@@ -26,6 +26,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Contenu** :
 - `DEMARRAGE_ROBOT.md` : Guide de démarrage des nœuds sur le robot
 - `DEBUG.md` : Commandes de débogage et vérification du système
+- `PTZ_PRESETS.md` : Guide de contrôle PTZ et utilisation de la caméra
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
 - `STRUCTURE.md` : Ce fichier (structure du projet)
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
@@ -49,14 +50,15 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Rôle** : Workspace ROS2 principal contenant tout le code du projet
 
 **Contenu** :
-- `src/image_transfer/` : Package ROS2 pour la détection de fissures
-  - `image_publisher` : Capture d'images depuis la caméra PTZ
+- `src/image_transfer/` : Package ROS2 pour la détection de fissures et contrôle PTZ
+  - `image_publisher` : Capture d'images depuis la caméra PTZ (RTSP)
   - `image_subscriber` : Détection YOLO des fissures
   - `position_publisher` : Affichage de la position du robot lors des détections
-  - `ptz_controller` : Contrôle de la caméra PTZ
+  - `ptz_controller` : Contrôle de la caméra PTZ Marshall CV-605
 - `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
   - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
   - `report_fissures` : Trace les positions détectées sur la carte
+  - `sequence_robot` : Automatise la séquence de mouvement et captures PTZ en boucle
   - `show_pos` : Affiche la position du robot (odométrie)
   - `test` : Outil de test pour vérifier la disponibilité de la carte
 - `src/slam_andra_package/` : Package de configuration SLAM

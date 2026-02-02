@@ -125,7 +125,7 @@ Une fois RViz2 lancé, vous verrez :
 1. **Démarrer les nœuds ROS2 sur le robot** :
    ```bash
    # Sur le robot
-   ssh techlab@192.168.40.99
+   ssh techlab@192.168.40.101
    cd ~/Documents/ANDRA_2025-2026
    source scripts/setup.sh
    ./scripts/launch.sh slam  # Mode SLAM pour créer une carte
@@ -223,9 +223,43 @@ Cela créera deux fichiers :
 - **Images** : Utiliser d'autres outils pour visualiser les images (rqt_image_view)
 
 
+## Notes techniques
+
+### Configuration Middleware DDS
+
+**Qu'est-ce que le middleware DDS ?**
+
+Le middleware DDS (Data Distribution Service) est la couche de communication sous-jacente utilisée par ROS2 pour permettre aux nœuds de communiquer entre eux. C'est lui qui gère :
+- La publication et la souscription aux topics ROS2
+- La découverte automatique des nœuds sur le réseau
+- La transmission des messages entre les nœuds
+- La gestion de la qualité de service (QoS)
+
+**Configuration automatique par `scripts/setup.sh`**
+
+Le script `scripts/setup.sh` configure automatiquement :
+- **`ROS_DOMAIN_ID=0`** : Identifiant du domaine ROS2 (doit être identique sur tous les nœuds qui doivent communiquer)
+- **`RMW_IMPLEMENTATION=rmw_fastrtps_cpp`** : Middleware DDS utilisé (FastRTPS)
+
+**Important pour la communication réseau** :
+- Pour que RViz2 dans le conteneur Docker puisse voir les topics du robot, les deux doivent avoir :
+  - Le même `ROS_DOMAIN_ID` (généralement `0`)
+  - Le même middleware DDS (`rmw_fastrtps_cpp` pour FastRTPS)
+- Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne
+
+**Vérification de la configuration** :
+```bash
+# Vérifier ROS_DOMAIN_ID
+echo $ROS_DOMAIN_ID  # Doit afficher 0
+
+# Vérifier le middleware DDS
+echo $RMW_IMPLEMENTATION  # Doit afficher rmw_fastrtps_cpp
+```
+
 ## Liens utiles
 
 - [Documentation RViz2](https://github.com/ros2/rviz)
 - [Documentation SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox)
 - [Documentation Nav2](https://navigation.ros.org/)
 - [Documentation FastRTPS](https://fast-dds.docs.eprosima.com/)
+

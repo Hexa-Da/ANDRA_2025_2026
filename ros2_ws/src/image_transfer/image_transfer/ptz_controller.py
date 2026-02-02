@@ -2,12 +2,14 @@ import rclpy
 from rclpy.node import Node
 import socket
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Int32
 
 class PTZControllerVISCA(Node):
     """Contrôleur PTZ pour caméra Marshall CV-605 via protocole VISCA over IP
     
-    Ce nœud gère uniquement les commandes de mouvement continu (cmd_vel).
-    Les presets sont gérés par ptz_presets_manager.
+    Ce nœud gère :
+    - Les commandes de mouvement continu (cmd_vel) via /ptz/cmd_vel
+    - La commande Home (preset -1) via /ptz/preset
     """
     
     def __init__(self):
@@ -20,7 +22,10 @@ class PTZControllerVISCA(Node):
         # Subscriber pour les commandes de mouvement
         self.create_subscription(Twist, '/ptz/cmd_vel', self.cmd_vel_callback, 10)
         
-        self.get_logger().info("PTZ Controller démarré (cmd_vel uniquement)")
+        # Subscriber pour les presets 
+        self.create_subscription(Int32, '/ptz/preset', self.preset_callback, 10)
+        
+        self.get_logger().info("PTZ Controller démarré (cmd_vel + preset Home)")
     
     def _connect_visca(self):
         """Établit la connexion VISCA avec la caméra"""
@@ -107,6 +112,19 @@ class PTZControllerVISCA(Node):
                 return [0x01, 0x03]  # Left
             else:
                 return [0x03, 0x03]  # Stop
+    
+    def preset_callback(self, msg):
+        """Gère les commandes de preset (uniquement Home = -1)"""
+        preset = msg.data
+        
+        if preset == -1:
+            # Home: retour à la position centrale
+            # Commande VISCA: 0x01 0x06 0x04
+            command = bytes([0x01, 0x06, 0x04])
+            if self.send_visca_command(command):
+                self.get_logger().info('PTZ: Home (position centrale)')
+        else:
+            self.get_logger().warn(f'Preset {preset} non géré. Utilisez -1 pour Home ou /ptz/cmd_vel pour les mouvements.')
 
 
 def main(args=None):

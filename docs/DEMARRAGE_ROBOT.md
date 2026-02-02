@@ -7,8 +7,10 @@ Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout
 ### 1. Connexion au robot
 
 ```bash
-ssh techlab@192.168.40.99
+ssh techlab@192.168.40.101
 ```
+
+**Note :** Vérifier avec nmap -sn 192.168.40.0/24 et chercher orin2 
 
 ### 2. Initialiser l'environnement
 
@@ -145,13 +147,17 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
 
 ### Nœuds de traitement d'images (image_transfer)
-- **`image_publisher`** : Capture des images depuis la caméra PTZ (à revoir)
-  - active le mode auto exposure au démarrage
-  - Intervalle de capture configurable (défaut: 10 secondes)
-  - Ajustement automatique de luminosité/contraste/gamma
+- **`image_publisher`** : Capture des images depuis la caméra PTZ
+  - Active le mode auto exposure au démarrage (via VISCA)
+  - Capture automatique optionnelle (désactivée par défaut)
+  - Capture à la demande via le topic `/trigger_capture` (String)
+  - Ajustement manuel de luminosité/contraste/gamma (activé avec `enable_image_adjustment:=true`)
   - Sauvegarde de toutes les images dans `ros2_ws/images_capturees/`
   - Publication sur le topic `/photo_topic`
-  - Paramètres configurables : `brightness`, `contrast`, `gamma`, `capture_interval`, `auto_adjustment_mode`
+- **`ptz_controller`** : Contrôle de la caméra PTZ Marshall CV-605
+  - Gère les commandes de mouvement via `/ptz/cmd_vel` (geometry_msgs/Twist)
+  - Gère le preset Home (-1) via `/ptz/preset` (std_msgs/Int32)
+  - Communication VISCA avec la caméra (192.168.5.163:1259)
 - **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
   - Reçoit les images depuis `/photo_topic`
   - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
@@ -172,6 +178,8 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
   - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
+
+**Note** : Le nœud `sequence_robot` n'est **pas** lancé automatiquement. Il doit être lancé manuellement pour automatiser la séquence de mouvement et captures PTZ.
 
 ### Localisation et cartographie
 
@@ -258,35 +266,3 @@ ros2 run navigation_utils show_pos
 ros2 run navigation_utils test
 ```
 
-## Notes techniques
-
-### Configuration Middleware DDS
-
-**Qu'est-ce que le middleware DDS ?**
-
-Le middleware DDS (Data Distribution Service) est la couche de communication sous-jacente utilisée par ROS2 pour permettre aux nœuds de communiquer entre eux. C'est lui qui gère :
-- La publication et la souscription aux topics ROS2
-- La découverte automatique des nœuds sur le réseau
-- La transmission des messages entre les nœuds
-- La gestion de la qualité de service (QoS)
-
-**Configuration automatique par `scripts/setup.sh`**
-
-Le script `scripts/setup.sh` configure automatiquement :
-- **`ROS_DOMAIN_ID=0`** : Identifiant du domaine ROS2 (doit être identique sur tous les nœuds qui doivent communiquer)
-- **`RMW_IMPLEMENTATION=rmw_fastrtps_cpp`** : Middleware DDS utilisé (FastRTPS)
-
-**Important pour la communication réseau** :
-- Pour que RViz2 dans le conteneur Docker puisse voir les topics du robot, les deux doivent avoir :
-  - Le même `ROS_DOMAIN_ID` (généralement `0`)
-  - Le même middleware DDS (`rmw_fastrtps_cpp` pour FastRTPS)
-- Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne
-
-**Vérification de la configuration** :
-```bash
-# Vérifier ROS_DOMAIN_ID
-echo $ROS_DOMAIN_ID  # Doit afficher 0
-
-# Vérifier le middleware DDS
-echo $RMW_IMPLEMENTATION  # Doit afficher rmw_fastrtps_cpp
-```

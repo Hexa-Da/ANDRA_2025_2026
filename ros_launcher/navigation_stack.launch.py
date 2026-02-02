@@ -134,15 +134,6 @@ def generate_launch_description():
             condition=IfCondition(enable_ptz),
         ),
         
-        # PTZ presets manager - expose les presets aux autres nœuds
-        Node(
-            package='navigation_utils',
-            executable='ptz_presets',
-            name='ptz_presets_manager',
-            output='screen',
-            condition=IfCondition(enable_ptz),
-        ),
-        
         # Static transform publishers
         Node(
             package='tf2_ros',

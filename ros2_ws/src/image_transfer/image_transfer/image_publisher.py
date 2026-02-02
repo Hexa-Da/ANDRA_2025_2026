@@ -4,7 +4,7 @@ import subprocess
 import time
 import socket
 from sensor_msgs.msg import Image
-from std_msgs.msg import Empty
+from std_msgs.msg import String
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -76,7 +76,7 @@ class ImagePublisher(Node):
         # Subscriber pour déclencher des captures à la demande
         if enable_ptz:
             self.trigger_sub = self.create_subscription(
-                Empty,
+                String,
                 '/trigger_capture',
                 self.trigger_capture_callback,
                 10
@@ -113,45 +113,53 @@ class ImagePublisher(Node):
                 self.get_logger().error(f'Impossible d\'activer l\'auto-exposure matériel : {e}')
 
     def trigger_capture_callback(self, msg):
-        """Callback pour déclencher une capture à la demande"""
-        self.get_logger().info("Déclenchement de capture à la demande...")
-        self.capture_and_publish()
+        """Callback pour déclencher une capture à la demande (msg.data = label optionnel)"""
+        label = msg.data.strip() if msg.data else ""
+        self.get_logger().info("Déclenchement de capture à la demande" + (f" ({label})" if label else "") + "...")
+        self.capture_and_publish(label)
 
-    def capture_and_publish(self):
+    def capture_and_publish(self, label=""):
         self.get_logger().info("Capture d'une image depuis la caméra PTZ...")
 
         # Exécute FFmpeg et récupère l'image directement en mémoire
         ffmpeg_command = [
-            "ffmpeg", "-i", self.rtsp_url,
+            "ffmpeg", "-y", "-rtsp_transport", "tcp", "-i", self.rtsp_url,
             "-vframes", "1", "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"
         ]
 
-        # Récupérer les erreurs de la commande FFmpeg
-        process = subprocess.run(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
-        
+        try:
+            process = subprocess.run(
+                ffmpeg_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=15,
+            )
+        except subprocess.TimeoutExpired:
+            self.get_logger().error("FFmpeg timeout (15s). Vérifiez : ping 192.168.5.163, RTSP URL.")
+            return
+        except FileNotFoundError:
+            self.get_logger().error("FFmpeg non trouvé. Installez : sudo apt install ffmpeg")
+            return
+
         if process.returncode == 0:
-            # Convertir le flux binaire en image OpenCV
             np_arr = np.frombuffer(process.stdout, np.uint8)
             img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
             if img is not None:
-                # Appliquer les ajustements d'image si activés
                 if self.enable_adjustment:
                     img = self.adjust_image(img)
-                
-                # Sauvegarder l'image si activé
                 if self.save_all_images:
-                    self.save_image(img)
-                
-                # Convertir l'image en message ROS 2
+                    self.save_image(img, label)
+                else:
+                    self.get_logger().warn("Sauvegarde désactivée (save_all_images=False).")
                 ros_img = self.bridge.cv2_to_imgmsg(img, "bgr8")
                 self.publisher.publish(ros_img)
             else:
                 self.get_logger().error("Erreur lors du décodage de l'image capturée.")
         else:
-            error_msg = process.stderr.decode('utf-8') if process.stderr else "Erreur inconnue"
-            self.get_logger().error(f"Erreur lors de la capture avec FFmpeg : {error_msg}")
-            self.get_logger().error(f"Vérifiez la connexion réseau et l'accessibilité de la caméra PTZ")
+            err = process.stderr.decode("utf-8", errors="replace") if process.stderr else "Erreur inconnue"
+            self.get_logger().error(f"Erreur FFmpeg (code {process.returncode}) : {err[-600:]}")
+            self.get_logger().error("Vérifiez : ping 192.168.5.163, URL RTSP, ffmpeg -i rtsp://...")
   
     def adjust_image(self, img):
         """
@@ -181,19 +189,25 @@ class ImagePublisher(Node):
         
         return img_adjusted
 
-    def save_image(self, img):
+    def save_image(self, img, label=""):
         """
-        Sauvegarde l'image capturée avec un timestamp
+        Sauvegarde l'image capturée avec un timestamp (label optionnel dans le nom).
         """
         try:
+            if not os.path.exists(self.images_output_dir):
+                os.makedirs(self.images_output_dir)
+                self.get_logger().info(f"Dossier créé : {self.images_output_dir}")
             self.image_count += 1
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            image_filename = f"image_{self.image_count:04d}_{timestamp}.jpg"
+            suffix = f"_{label}" if label else ""
+            image_filename = f"image_{self.image_count:04d}_{timestamp}{suffix}.jpg"
             image_path = os.path.join(self.images_output_dir, image_filename)
-            cv2.imwrite(image_path, img) 
-            self.get_logger().info(f'Image sauvegardée : {image_filename} ({img.shape[1]}x{img.shape[0]})')
+            if cv2.imwrite(image_path, img):
+                self.get_logger().info(f"Image sauvegardée : {image_path} ({img.shape[1]}x{img.shape[0]})")
+            else:
+                self.get_logger().error(f"Échec cv2.imwrite : {image_path}")
         except Exception as e:
-            self.get_logger().error(f'Erreur lors de la sauvegarde : {e}')
+            self.get_logger().error(f"Erreur lors de la sauvegarde : {e}")
 
 def main(args=None):
     rclpy.init(args=args)

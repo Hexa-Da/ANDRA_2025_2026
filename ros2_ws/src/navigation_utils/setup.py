@@ -29,7 +29,6 @@ setup(
             'show_pos = navigation_utils.show_pos:main',
             'test = navigation_utils.test:main',
             'sequence_robot = navigation_utils.sequence_robot:main',
-            'ptz_presets = navigation_utils.ptz_presets:main',
         ],
     },
 )

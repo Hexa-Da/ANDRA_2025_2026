@@ -38,6 +38,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] Explication de la structure du projet (`STRUCTURE.md`)
 - [x] Guide d'utilisation des scripts (`SCRIPTS.md`)
 - [x] Guide de debogage (`DEBUG.md`)
+- [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
 - [x] Documentation des nœuds ROS2
 
 ### Verification des nœuds ROS2  
@@ -46,6 +47,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
+- [x] `sequence_robot` : Automatisation de la séquence de mouvement et captures PTZ en boucle
 - [x] Correction des erreurs de shutdown dans les nœuds Python 
 
 ### Configuration navigation
@@ -111,13 +113,22 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **Protocole** : VISCA over IP sur le port 1259 (port par défaut selon documentation)
   - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
   - **Topics** :
-    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu
-    - `/ptz/preset` (std_msgs/Int32) : Appel de presets (0-127) ou commandes spéciales (-1: Home, -2: Reset)
+    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_robot`)
+    - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre (utilisé par `sequence_robot`)
   - **Format VISCA** : Implémentation selon documentation Marshall CV-605
     - Header : `0x80 + camera_address` (adresse 1 par défaut)
     - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
-  - **Paramètres configurables** : `ptz_ip`, `visca_port`, `camera_address`
-  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement
+    - Home : `0x01 0x06 0x04` pour retour au centre
+  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset Home
+- [x] **Automatisation séquence robot** : Création du nœud `sequence_robot`
+  - **Fonctionnalités** :
+    - Avance le robot de 1m, s'arrête 30s pour captures PTZ, puis repart en boucle
+    - Séquence PTZ précise : gauche(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
+    - → haut(5.5s) → stab(0.5s) → capture → attendre(0.5s) → home(5.5s)
+    - → droite(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
+  - **Contrôle PTZ** : Utilise `/ptz/cmd_vel` pour les mouvements et preset Home (-1) pour retour au centre
+  - **Paramètres configurables** : Durées de mouvement, stabilisation, retour au centre
+  - **État actuel** : ✅ Séquence automatique fonctionnelle avec captures PTZ
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
@@ -183,7 +194,10 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 ### Reproduire les résultats de l'année dernière
 - [x] Robot capable d'avancer en ligne droite pendant 1 mètre
 - [x] Robot capable de s'arrêter pour prendre une image
-- [ ] Robot capable de recommencer le cycle
+- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_robot`)
+  - Séquence PTZ : gauche → haut → droite avec captures
+  - Retour au centre via preset Home (-1)
+  - Boucle automatique de la séquence complète
 - [ ] Robot capable de prendre une carte en entrée et d'estimer sa position (AMCL)
 
 ### Préparation première descente
@@ -271,4 +285,4 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 16 Janvier 2026
+**Dernière mise à jour** : 2 Février 2026
