@@ -234,7 +234,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: odom
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -289,7 +289,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.01
-      Target Frame: odom
+      Target Frame: world
       Value: TopDownOrtho (rviz)
       X: 0
       Y: 0

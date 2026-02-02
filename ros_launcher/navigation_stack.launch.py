@@ -38,12 +38,12 @@ def generate_launch_description():
     ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml') 
 
     return LaunchDescription([
-        # World frame - must be first to establish world -> map -> odom chain
+        # World frame - parent of odom (always available, even without SLAM)
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
-            name='world_to_map_tf',
-            arguments=['0', '0', '0', '0', '0', '0', 'world', 'map'],
+            name='world_to_odom_tf',
+            arguments=['0', '0', '0', '0', '0', '0', 'world', 'odom'],
             output='screen',
         ),
         
