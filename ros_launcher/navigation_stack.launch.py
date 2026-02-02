@@ -147,6 +147,14 @@ def generate_launch_description():
            name='base_to_laser_tf',
            arguments=['0', '0', '0', '1.57', '0', '0', 'base_link', 'laser_frame']
        ),
+       # Dans navigation_stack.launch.py, après les autres static_transform_publisher
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='world_to_odom_tf',
+            arguments=['0', '0', '0', '0', '0', '0', 'world', 'odom'],
+            output='screen',
+        ),
         
         # Robot localization node
         Node(
