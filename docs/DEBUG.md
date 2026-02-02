@@ -156,3 +156,18 @@ Si les topics du robot ne sont pas visibles dans le conteneur Docker :
    # Dans le conteneur Docker
    netstat -tuln | grep -E "(7400|7401)"
    ```
+
+### Prendre le contrôle manuel
+
+Pour controler les roues :
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Pour obtenir les informations de la zed2i :
+```bash
+# à ajuster selon le dossier courant
+source dependencies/zed-sdk/install/setup.sh
+
+ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2i
+```

@@ -6,11 +6,29 @@ Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout
 
 ### 1. Connexion au robot
 
+Pour vous connecter au robot, vous devez être sur le même réseau WIFI que lui.
+
+## Au techlab
+Si l'adresse ip n'a pas changé,
+vous pouvez vous connecter avec :
+
 ```bash
 ssh techlab@192.168.40.101
 ```
 
 **Note :** Vérifier avec nmap -sn 192.168.40.0/24 et chercher orin2 
+
+## En dehors du techlab
+
+Vous devez avoir le service avahi installé sur votre ordinateur.
+Vous pouvez alors effectuer la commande :
+
+```bash
+ssh techlab@orin2.local
+```
+
+**Note :** Si l'adresse IP fonctionne mais pas le nom du robot, vérifiez qu'Avahi est aussi installé sur le robot.
+
 
 ### 2. Initialiser l'environnement
 
