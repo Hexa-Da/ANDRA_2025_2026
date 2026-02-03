@@ -35,10 +35,12 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Documentation
 - [x] Documentation complète du démarrage (`DEMARRAGE_ROBOT.md`)
+- [x] Guide connexion réseau Techlab vs Hotspot (`docs/HOTSPOT.md`)
 - [x] Explication de la structure du projet (`STRUCTURE.md`)
 - [x] Guide d'utilisation des scripts (`SCRIPTS.md`)
 - [x] Guide de debogage (`DEBUG.md`)
 - [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
+- [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
 - [x] Documentation des nœuds ROS2
 
 ### Verification des nœuds ROS2  
@@ -56,6 +58,7 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [x] Configuration EKF pour fusion des capteurs (`ros_launcher/ekf_config.yaml`)
 - [x] Launch file principal (`ros_launcher/navigation_stack.launch.py`)
 - [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame)
+- [x] Visualisation trajet en RViz (Fixed Frame `odom`, Path `/robot_path`, nœud `odom_to_path`)
 
 ---
 
@@ -140,14 +143,10 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Configuration visualisation RViz2 avec Docker
 - [x] **Tentative macOS** : Tentative d'utilisation de RViz2 sur macOS via Docker
-  - **Problème initial** : Besoin d'un conteneur Docker pour utiliser RViz2 sur macOS
   - **Solution XQuartz** : Création de `launch-macos.sh` utilisant XQuartz pour l'affichage X11
   - **Décision** : Abandon de la compatibilité macOS/Windows pour simplifier le setup
 - [x] **Simplification Linux uniquement** : Retour à un setup Linux uniquement
-  - **Suppression** : Suppression de `launch-macos.sh`, `launch-macos-vnc.sh`, `launch-windows.sh`
-  - **Nettoyage Dockerfile** : Retrait de Mesa, xvfb, x11vnc, iputils-ping (ajoutés pour macOS/Windows)
-  - **Documentation** : Mise à jour de `ros-docker/README.md` pour ne documenter que Linux
-  - **Raison** : Complexité trop élevée pour macOS/Windows, utilisation prévue sur les machines Linux du TechLab
+  - **Raison** : Complexité de configuration trop élevée pour macOS/Windows et machine Linux du TechLab disponible
 - [x] **Problème de communication DDS** : Topics et nœuds ROS2 non visibles dans le conteneur Docker
   - **Symptômes** : `ros2 topic list` et `ros2 node list` vides dans le conteneur malgré les nœuds actifs sur le robot
   - **Diagnostics effectués** :
@@ -171,7 +170,17 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
     - **Display RobotPath** : Ajout d'un display Path pour visualiser `/robot_path` (couleur orange, style Lines)
     - **Displays existants** : Conservation de tous les displays précédents (Grid, TF, Map, LaserScan, PoseArray, Polygon, Pose)
   - **Utilité** : Permet de visualiser le trajet du robot même en mode SLAM avant que la carte ne soit créée
-  
+  - **Frame world** : Ajout de la frame `world` dans l'arbre TF
+  - **Reconstruction de l'arbre TF** : Réorganisation de l'arbre des transformations pour intégrer `world` et clarifier les liens entre frames
+  - **Conflit avec le nœud odom_to_path** : Le nœud `odom_to_path` publiais aussi `odom → base_link` ; à prendre en compte dans la reconstruction TF (éviter doublon ou conflit avec l'EKF)
+  - **Objectif** : Constater la dérive de trajectoire entre les différents capteurs (odométrie roues, ZED, EKF fusionné) pour diagnostiquer le positionnement
+
+### Config Hotspot pour connexion dans les tunnels ANDRA
+- [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
+- [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le Techlab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.101` en mode hotspot).
+- [x] **À tester** : Connexion et stabilité SSH depuis un PC portable connecté au hotspot du robot, dans un environnement extérieur au labo.
+- [x] **Référence** : Procédure détaillée dans `docs/HOTSPOT.md` (mode Terrain, commandes `nmcli`).
+
 ---
 
 ## À faire - Court terme (avant première descente debut février)
@@ -184,12 +193,12 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
 
 ### Test et compréhension du projet
-- [ ] Tester la configuration de la navigation
+- [x] Tester la configuration de la navigation
 - [ ] Crée une map de test
 - [ ] Tester les noeuds de position du cette map
 - [ ] Tests de bout en bout du système complet
 - [ ] Validation des transformations TF (vérifier toutes les transformations)
-- [ ] Tests de performance des nœuds (fréquence de publication, latence)
+- [x] Tests de performance des nœuds (fréquence de publication, latence)
 
 ### Reproduire les résultats de l'année dernière
 - [x] Robot capable d'avancer en ligne droite pendant 1 mètre
@@ -285,4 +294,4 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 2 Février 2026
+**Dernière mise à jour** : 3 Février 2026
