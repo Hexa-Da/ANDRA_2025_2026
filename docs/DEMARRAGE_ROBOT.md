@@ -9,14 +9,13 @@ Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout
 Pour vous connecter au robot, vous devez être sur le même réseau WIFI que lui.
 
 ## Au techlab
-Si l'adresse ip n'a pas changé,
-vous pouvez vous connecter avec :
+Si l'adresse ip n'a pas changé, vous pouvez vous connecter avec via le réseau wifi : Techlab-wifi
 
 ```bash
 ssh techlab@192.168.40.101
 ```
 
-**Note :** Vérifier avec nmap -sn 192.168.40.0/24 et chercher orin2 
+**Note :** Vérifier avec nmap -sn 192.168.40.0/24 et chercher orin2 ou nmap -Pn -p 22 192.168.40.0/24 pour forcer la reponse de tous les host
 
 ## En dehors du techlab
 

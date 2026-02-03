@@ -276,7 +276,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz_default_plugins/TopDownOrtho
+      Class: rviz_default_plugins/Orbit
       Distance: 10.0
       Enable Stereo Rendering:
         Value: false
@@ -289,11 +289,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.01
-      Target Frame: world
-      Value: TopDownOrtho (rviz)
-      X: 0
-      Y: 0
-      Z: 10.0
+      Pitch: 0.75
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 0.75
     Saved: ~
 Window Geometry:
   Displays:

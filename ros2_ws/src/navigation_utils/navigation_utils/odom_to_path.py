@@ -30,30 +30,12 @@ class OdomToPath(Node):
         # Paramètres
         self.min_distance = 0.1  # Ajouter un point tous les 10 cm minimum
         
-        self.get_logger().info('Nœud odom_to_path démarré. Publication du Path sur /robot_path et TF odom->base_link')
+        self.get_logger().info('Nœud odom_to_path démarré.')
         
     def odom_callback(self, msg):
         """Callback appelé à chaque message d'odométrie"""
         current_pose = msg.pose.pose
         current_position = current_pose.position
-        
-        # NOUVEAU : Publier la transformation TF odom -> base_link
-        t = TransformStamped()
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = 'odom'
-        t.child_frame_id = 'base_link'
-        
-        # Copier la position et orientation depuis l'odométrie
-        t.transform.translation.x = current_position.x
-        t.transform.translation.y = current_position.y
-        t.transform.translation.z = current_position.z
-        
-        t.transform.rotation.x = current_pose.orientation.x
-        t.transform.rotation.y = current_pose.orientation.y
-        t.transform.rotation.z = current_pose.orientation.z
-        t.transform.rotation.w = current_pose.orientation.w
-        
-        self.tf_broadcaster.sendTransform(t)
         
         # Code existant pour le Path
         # Calculer la distance depuis le dernier point
@@ -70,9 +52,12 @@ class OdomToPath(Node):
         if distance > self.min_distance or len(self.path.poses) == 0:
             pose_stamped = PoseStamped()
             pose_stamped.header = msg.header
+            pose_stamped.header.frame_id = 'odom'
             pose_stamped.pose = current_pose
+
             self.path.poses.append(pose_stamped)
             self.path.header.stamp = self.get_clock().now().to_msg()
+            self.path.header.frame_id = 'odom'
             self.path_publisher.publish(self.path)
             
             # Log périodique (tous les 50 points pour éviter le spam)
