@@ -55,13 +55,16 @@ ros2 topic pub --once /ptz/cmd_vel geometry_msgs/Twist "{linear: {x: 0.0, y: 1.0
 ros2 topic pub --once /ptz/cmd_vel geometry_msgs/Twist "{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}"
 ```
 
-### Méthode 2 : Retour à la position centrale (Home)
+### Méthode 2 : Preset
 
-Pour revenir rapidement à la position centrale, utilisez le preset Home (-1) :
+Pour revenir rapidement à la position centrale ou recalibrer la position :
 
 ```bash
 # Retour au centre avec preset Home
 ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: -1}"
+
+# Reset et calibrage des moteurs
+ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: 0}"
 ```
 
 **Note** : Le script `sequence_robot` utilise automatiquement le preset Home (-1) pour revenir au centre après chaque capture. Le nœud `ptz_controller` gère ce topic et envoie la commande VISCA appropriée à la caméra.

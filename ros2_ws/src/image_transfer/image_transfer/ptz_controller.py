@@ -41,24 +41,30 @@ class PTZControllerVISCA(Node):
                 self.sock = None
     
     def send_visca_command(self, command_bytes):
-        """Envoie une commande VISCA à la caméra"""
+        """Envoie une commande VISCA avec tentative de reconnexion automatique"""
+        # Si le socket est fermé, on tente de le rouvrir
+        if self.sock is None:
+            self.get_logger().warn("Socket non initialisé, tentative de reconnexion...")
+            self._connect_visca()
+            
         if not self.sock:
-            self.get_logger().error('Socket VISCA non initialisé')
+            self.get_logger().error('Échec critique : Impossible de joindre la caméra.')
             return False
             
         try:
-            header = bytes([0x80 + 1])
+            header = bytes([0x81]) # Directement 0x81 pour l'adresse 1
             terminator = bytes([0xFF])
             packet = header + command_bytes + terminator
             
             self.sock.send(packet)
             return True
                 
-        except Exception as e:
-            self.get_logger().error(f'Erreur VISCA: {e}')
+        except (socket.error, Exception) as e:
+            self.get_logger().error(f'Erreur lors de l\'envoi : {e}')
+            # On nettoie le socket pour forcer la reconnexion au prochain essai
             if self.sock:
                 self.sock.close()
-                self.sock = None
+            self.sock = None
             return False
     
     def cmd_vel_callback(self, msg):
@@ -114,17 +120,25 @@ class PTZControllerVISCA(Node):
                 return [0x03, 0x03]  # Stop
     
     def preset_callback(self, msg):
-        """Gère les commandes de preset (uniquement Home = -1)"""
         preset = msg.data
         
         if preset == -1:
-            # Home: retour à la position centrale
-            # Commande VISCA: 0x01 0x06 0x04
-            command = bytes([0x01, 0x06, 0x04])
+            # HOME : On envoie juste le corps de la commande
+            command = bytes([0x01, 0x06, 0x04]) 
             if self.send_visca_command(command):
-                self.get_logger().info('PTZ: Home (position centrale)')
+                self.get_logger().info('PTZ: Home (Retour au centre)')
+
+        elif preset == 0:
+            # RESET : Calibration
+            command = bytes([0x01, 0x06, 0x05])
+            if self.send_visca_command(command):
+                self.get_logger().info('PTZ: Reset (Calibration complète des moteurs)')
+
         else:
-            self.get_logger().warn(f'Preset {preset} non géré. Utilisez -1 pour Home ou /ptz/cmd_vel pour les mouvements.')
+            # RAPPEL PRESET : 01 04 3F 02 [preset]
+            command = bytes([0x01, 0x04, 0x3F, 0x02, preset])
+            if self.send_visca_command(command):
+                self.get_logger().info(f'PTZ: Rappel Preset {preset}')
 
 
 def main(args=None):
