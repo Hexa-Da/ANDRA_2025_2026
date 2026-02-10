@@ -2,14 +2,16 @@
 
 ## Contexte du projet
 
-Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDRA pour effectuer une analyse des fissures sur les murs via une caméra 3D.
+Projet réalisé par un groupe de 4 étudiants en partenariat avec l'ANDRA.
 
-**Transmission d'année en année** : Ce projet est transmis d'année en année parmi les étudiants. Le but est de s'approprier les avancées réalisées l'année dernière pour reproduire leurs résultats finaux, puis réalisé les mission demandé par l'ANDRA.
+Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDRA pour effectuer une analyse des fissures sur les murs via une caméra 3D.
+
+**Transmission d'année en année** : Ce projet est transmis d'année en année parmi les étudiants. Le but est de s'approprier les avancées réalisées l'année dernière pour reproduire leurs résultats finaux, puis réalisé les missions supplémentaires demandé par l'ANDRA.
 
 ## Échéances importantes
 
 - **Soutenance mi-parcouts** : 23 janvier 2026
-- **Première descente dans les tunnels** : début février 2026
+- **Première descente dans les tunnels** : 6 février 2026
 - **Autres descente** : ?
 - **Soutenance fianle** : 12 juin 2026
 
@@ -71,24 +73,29 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ### Problème LIDAR
 - [x] Connexion au port série (`/dev/ttyTHS1`)
-- [ ] **Erreur** : `Error, cannot retrieve Lidar health code -1`
-- [ ] **Erreur** : `Fail to get baseplate device information!`
-- [ ] **Erreur** : `Failed to start scan mode -1`
-- [ ] **Statut** : Connexion OK mais scan ne démarre pas
-- [ ] **Tests effectués** : 
-  - Modèles G2.yaml et G4.yaml testés
-  - Baudrates 115200 et 230400 testés
-  - Port série `/dev/ttyTHS1` confirmé 
-- [ ] **Action** : Vérifier connexion matérielle (alimentation, câble) ou décider de continuer sans LIDAR
+- [x] **Diagnostic chipset (Carte Radar_Con)** : ✅ Chipset opérationnel
+  - Test loopback réussi (TX/RX fonctionnels)
+- [x] **Diagnostic communication LiDAR** : ❌ Pas de réponse du processeur
+  - Scan de baudrates effectués : 115200, 128000 (X4), 230400 (G4) sans réponse
+  - Tentative activation forcée via DTR/RTS sans succès
+  - LED s'allume brièvement puis s'éteint (mise en sécurité ou coupure alimentation)
+- [ ] **Erreurs persistantes** :
+  - `Error, cannot retrieve Lidar health code -1`
+  - `Fail to get baseplate device information!`
+  - `Failed to start scan mode -1`
+- [ ] **Hypothèses matérielles** :
+  - **Alimentation** : Port Micro-USB avec source externe suspecté instable
+  - **État actuel** : LiDAR s'initialise au branchement mais s'arrête sans commande "Start Scan" valide
 
 ### Problème Zed 2
-- [ ] **zed_wrapper** : Package installé et fonctionnel
+- [x] **zed_wrapper** : Package installé et fonctionnel
   - ZED SDK installé dans /usr/local/zed
   - zed_msgs installé via apt
   - zed_wrapper compilé dans dependencies/zed-ros2-wrapper
   - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
   - Configuration EKF mise à jour pour utiliser les données ZED
+- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2 pas encore vérifiée
 
 ### Problèmes scout_base
 - [x] **Package** : Package non trouvé (nécessaire pour l'odométrie des roues)
@@ -111,18 +118,17 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
     - Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
     - Vérifie que la route passe bien par Ethernet
   - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
-- [x] **Controle PTZ** : Contrôle PTZ fonctionnel via VISCA over IP
+- [x] **Controle PTZ** : Contrôle PTZ fonctionnel via VISCA over IP port 1259
   - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
-  - **Protocole** : VISCA over IP sur le port 1259 (port par défaut selon documentation)
   - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
   - **Topics** :
     - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_robot`)
-    - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre (utilisé par `sequence_robot`)
+    - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre et Reset (0) pour le recallibrage
   - **Format VISCA** : Implémentation selon documentation Marshall CV-605
     - Header : `0x80 + camera_address` (adresse 1 par défaut)
     - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
     - Home : `0x01 0x06 0x04` pour retour au centre
-  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset Home
+  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset
 - [x] **Automatisation séquence robot** : Création du nœud `sequence_robot`
   - **Fonctionnalités** :
     - Avance le robot de 1m, s'arrête 30s pour captures PTZ, puis repart en boucle
@@ -174,12 +180,42 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
   - **Reconstruction de l'arbre TF** : Réorganisation de l'arbre des transformations pour intégrer `world` et clarifier les liens entre frames
   - **Conflit avec le nœud odom_to_path** : Le nœud `odom_to_path` publiais aussi `odom → base_link` ; à prendre en compte dans la reconstruction TF (éviter doublon ou conflit avec l'EKF)
   - **Objectif** : Constater la dérive de trajectoire entre les différents capteurs (odométrie roues, ZED, EKF fusionné) pour diagnostiquer le positionnement
+- [ ] **Navigation et visualisation** (etat de la prise en main après première descente) :
+  - Familiarisation avec RViz2 en cours
+  - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
+  - **Caméra ZED2** : Cohérence des données pas encore vérifiée
+  - **Lidar** : Lidar toujours hors service, ce qui empêche la création de la carte pour le moment
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
 - [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le Techlab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.101` en mode hotspot).
 - [x] **À tester** : Connexion et stabilité SSH depuis un PC portable connecté au hotspot du robot, dans un environnement extérieur au labo.
 - [x] **Référence** : Procédure détaillée dans `docs/HOTSPOT.md` (mode Terrain, commandes `nmcli`).
+
+### Inventaire et analyse hardware
+- [x] **Inventaire complet** : Paul-Antoine a effectué un inventaire de l'ensemble des composants matériels du robot et a organisé le câblage interne de la tourelle.
+- [x] **Étude de la structure de la tourelle** : Démontage puis remontage de la tourelle pour :
+  - Identifier les composants effectivement utilisé ou non
+  - Comprendre le rôle et l'utilité de chaque élément
+  - Effectuer des tests individuels sur chaque capteur
+
+### Première descente - Vendredi 6 février 2026
+- [x] **Réalisation** : Première descente dans les tunnels ANDRA effectuée avec succès
+- [x] **Caméra 360** : Caméra 360 prêtée par l'ANDRA, dataset créé (à trier et annoter)
+- [x] **Système opérationnel** : 
+  - ✅ Séquence de prise de photo fonctionnelle comme prévu
+  - ✅ Système de Hotspot opérationnel
+  - ✅ Tous les nœuds ROS2 fonctionnels
+- [x] **Incident matériel** : Alimentation de la Jetson arrachée suite à une mauvaise manipulation
+  - **Réparation** : Paul-Antoine a réparé la carte en changeant l'alimentation le week-end suivant
+  - **État** : Robot de nouveau opérationnel rapidement
+- [ ] **Constats sur la séquence PTZ** :
+  - Séquence complète dans une galerie assez longue
+  - Séquence actuelle (3 photos) ne couvre pas l'entièreté de l'arche avec la PTZ
+  - **Solutions à explorer** :
+    - Passer d'une séquence de 3 photos à 5 photos
+    - Revoir l'enchaînement des positions de la PTZ
+    - Essayer d'utiliser le script video à très basse vitesse
 
 ---
 
@@ -210,15 +246,17 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 - [ ] Robot capable de prendre une carte en entrée et d'estimer sa position (AMCL)
 
 ### Préparation première descente
-- [ ] Tester le système complet dans l'environnement TechLab
-- [ ] Prendre des photos avec la caméra 360 dans les tunnels
-- [ ] Documenter les résultats de la première descente
+- [x] Tester le système complet dans l'environnement TechLab
+- [x] Prendre des photos avec la caméra 360 dans les tunnels
+- [x] Documenter les résultats de la première descente (cf section "Première descente - Vendredi 6 février 2026")
 
 ---
 
 ## À faire - Moyen terme (avant les autres descente)
 
 ### Amélioration du modèle de détection
+- [x] **Dataset caméra 360** : Dataset créé lors de la première descente (6 février 2026) - à trier et annoter
+- [ ] **Lucas et Adrien** : Trier et annoter le dataset de la caméra 360
 - [ ] **Lucas et Adrien** : Entraîner un modèle de détection sur image avec caméra 360
 - [ ] Améliorer l'efficacité du robot avec le nouveau modèle
 - [ ] Tester le nouveau modèle sur les images capturées
@@ -294,4 +332,4 @@ Groupe de 4 étudiants en projet industriel avec l'ANDRA. Mission : rendre le ro
 
 ---
 
-**Dernière mise à jour** : 3 Février 2026
+**Dernière mise à jour** : 10 Février 2026
