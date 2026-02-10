@@ -200,7 +200,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
 
-**Note** : Le nœud `sequence_robot` n'est **pas** lancé automatiquement. Il doit être lancé manuellement pour automatiser la séquence de mouvement et captures PTZ.
+**Note** : Le nœud `sequence_photo` n'est **pas** lancé automatiquement. Il doit être lancé manuellement pour automatiser la séquence de mouvement et captures PTZ.
 
 ### Localisation et cartographie
 
@@ -275,7 +275,7 @@ ros2 run image_transfer position_publisher
 ros2 run image_transfer ptz_controller
 
 # Séquence de base
-ros2 run navigation_utils sequence_robot
+ros2 run navigation_utils sequence_photo
 
 # Rapport des fissures (trace sur la carte)
 ros2 run navigation_utils report_fissures

@@ -48,22 +48,27 @@ class RobotSequence(Node):
         self.robot_speed = 0.3  # m/s (vitesse de déplacement)
         
         # Configuration PTZ - Séquence précise avec durées fixes
-        # Séquence : gauche(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-        #          → haut(5.5s) → stab(0.5s) → capture → attendre(0.5s) → home(5.5s)
-        #          → droite(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-        self.declare_parameter('ptz_move_90_duration', 3.5)   # Durée mouvement pan (gauche/droite)
-        self.declare_parameter('ptz_move_up_duration', 5.5)   # Durée mouvement tilt (haut)
+        # Séquence : gauche(3.6s) → stab(0.5s) → capture → attendre(0.5s)
+        #          → haut(3s) → stab(0.5s) → capture → attendre(0.5s)
+        #          → haut(4s) → stab(0.5s) → capture → attendre(0.5s) → Home(4.5s)
+        #          → droite(3.6s) → stab(0.5s) → capture → attendre(0.5s)
+        #          → haut(3s) → stab(0.5s) → capture → attendre(0.5s)
+        #          → Home(3s)
+        self.declare_parameter('ptz_move_90_duration', 3.6)   # Durée mouvement pan (gauche/droite)
+        self.declare_parameter('ptz_move_up_short_duration', 3.0)   # Durée mouvement tilt (haut) court
+        self.declare_parameter('ptz_move_up_long_duration', 4.0)   # Durée mouvement tilt (haut) long
         self.declare_parameter('ptz_stable_duration', 0.5)    # Durée stabilisation avant capture
-        self.declare_parameter('delay_after_capture', 0.5)     # Attente après capture avant retour home
-        self.declare_parameter('ptz_center_duration_pan', 3.5)  # Durée retour home depuis pan (gauche/droite)
-        self.declare_parameter('ptz_center_duration_tilt', 5.5)  # Durée retour home depuis tilt (haut)
+        self.declare_parameter('delay_after_capture', 0.5)     # Attente après capture avant mouvement suivant
+        self.declare_parameter('ptz_home_duration_mid', 4.5)   # Durée retour Home après capture 3
+        self.declare_parameter('ptz_home_duration_final', 1.5)   # Durée retour Home final
         
         self.ptz_move_90_duration = self.get_parameter('ptz_move_90_duration').get_parameter_value().double_value
-        self.ptz_move_up_duration = self.get_parameter('ptz_move_up_duration').get_parameter_value().double_value
+        self.ptz_move_up_short_duration = self.get_parameter('ptz_move_up_short_duration').get_parameter_value().double_value
+        self.ptz_move_up_long_duration = self.get_parameter('ptz_move_up_long_duration').get_parameter_value().double_value
         self.ptz_stable_duration = self.get_parameter('ptz_stable_duration').get_parameter_value().double_value
         self.delay_after_capture = self.get_parameter('delay_after_capture').get_parameter_value().double_value
-        self.ptz_center_duration_pan = self.get_parameter('ptz_center_duration_pan').get_parameter_value().double_value
-        self.ptz_center_duration_tilt = self.get_parameter('ptz_center_duration_tilt').get_parameter_value().double_value   
+        self.ptz_home_duration_mid = self.get_parameter('ptz_home_duration_mid').get_parameter_value().double_value
+        self.ptz_home_duration_final = self.get_parameter('ptz_home_duration_final').get_parameter_value().double_value
         
         # Timer pour la séquence
         self.timer = self.create_timer(0.1, self.sequence_loop)  # 10 Hz
@@ -72,7 +77,7 @@ class RobotSequence(Node):
         self.get_logger().info(f"Distance cible: {self.target_distance}m")
         self.get_logger().info(f"Durée d'arrêt: {self.stop_duration}s")
         self.get_logger().info(
-            f"Captures à t={self.ptz_move_90_duration}s, {self.ptz_move_up_duration}s, {self.ptz_move_90_duration}s"
+            f"5 captures PTZ: Gauche, Haut(3s), Haut(3.5s)+Home, Droite, Haut(3s), puis Home final"
         )
         self.get_logger().info("PTZ: Utilisation de /ptz/cmd_vel (mouvements de base)")
         self.get_logger().info("Appuyez sur Ctrl+C pour arrêter la boucle")
@@ -84,9 +89,8 @@ class RobotSequence(Node):
         self.capture_index = 0
         self.ptz_step = 'idle'
         self.sequence_count = 0
-        self.center_wait_duration = None  # Durée spécifique pour le retour au centre
-        self.last_movement_type = None  # 'pan' ou 'tilt' pour déterminer la durée de retour home
         self.step_start_time = None  # Timestamp du début de l'étape actuelle
+        self.robot_can_move = False  # Flag pour permettre au robot de repartir pendant le Home final
         
     def reset_sequence(self):
         """Réinitialise la séquence pour une nouvelle itération"""
@@ -96,6 +100,7 @@ class RobotSequence(Node):
         self.capture_index = 0
         self.ptz_step = 'idle'
         self.sequence_count += 1
+        self.robot_can_move = False
         self.get_logger().info(f"--- Début séquence #{self.sequence_count} ---")
         
     def odom_callback(self, msg):
@@ -153,11 +158,6 @@ class RobotSequence(Node):
         self.ptz_move_duration = duration
         self.move_ptz(pan, tilt)
         self.state = 'PTZ_MOVING'
-        # Enregistrer le type de mouvement pour déterminer la durée de retour home
-        if abs(pan) > 0.1:
-            self.last_movement_type = 'pan'
-        elif abs(tilt) > 0.1:
-            self.last_movement_type = 'tilt'
         direction = []
         if abs(pan) > 0.1:
             direction.append("gauche" if pan < 0 else "droite")
@@ -167,10 +167,12 @@ class RobotSequence(Node):
             direction.append("centre")
         self.get_logger().info(f"PTZ: Mouvement vers {'-'.join(direction)} pendant {duration}s")
     
-    def return_ptz_to_center(self):
+    def return_ptz_to_center(self, duration=None, allow_robot_move=False):
         """Retourne la PTZ au centre en utilisant le preset Home (-1)
         
-        Utilise la durée appropriée selon le dernier mouvement (pan ou tilt)
+        Args:
+            duration: Durée d'attente pour le retour au centre (None = utiliser durée par défaut)
+            allow_robot_move: Si True, le robot peut repartir pendant le retour au centre
         """
         # D'abord arrêter tout mouvement en cours
         self.stop_ptz()
@@ -180,16 +182,14 @@ class RobotSequence(Node):
         msg.data = -1  # -1 = Home (position centrale)
         self.ptz_preset_pub.publish(msg)
         
-        # Passer en état d'attente avec la durée appropriée pour le retour au centre
+        # Passer en état d'attente pour le retour au centre
         self.state = 'WAITING_STABLE'
         self.stable_start_time = time.time()
-        # Utiliser la durée selon le type de mouvement précédent
-        if self.last_movement_type == 'tilt':
-            self.center_wait_duration = self.ptz_center_duration_tilt
-            self.get_logger().info(f"PTZ: Commande Home (position centrale) - attente {self.ptz_center_duration_tilt}s")
-        else:  # pan (gauche/droite)
-            self.center_wait_duration = self.ptz_center_duration_pan
-            self.get_logger().info(f"PTZ: Commande Home (position centrale) - attente {self.ptz_center_duration_pan}s")
+        self.center_wait_duration = duration if duration is not None else 5.0
+        self.robot_can_move = allow_robot_move
+        self.get_logger().info(f"PTZ: Commande Home (position centrale) - attente {self.center_wait_duration}s")
+        if allow_robot_move:
+            self.get_logger().info("Robot peut repartir pendant le retour au centre")
     
     def trigger_capture(self, description=""):
         """Déclenche une capture via le topic /trigger_capture (std_msgs/String)"""
@@ -224,6 +224,18 @@ class RobotSequence(Node):
                 # Continuer à avancer
                 self.move_robot(self.robot_speed)
         
+        elif self.state == 'RESETTING':
+            # Si le robot peut repartir pendant le Home final, démarrer immédiatement
+            if self.robot_can_move and self.capture_index == 6:
+                # Le robot peut repartir même si la PTZ n'a pas fini de revenir au centre
+                self.get_logger().info("Robot repart pendant le retour au centre de la PTZ...")
+                self.reset_sequence()
+                return
+            
+            # Attendre un peu avant de recommencer (sauf si robot peut déjà bouger)
+            if time.time() - self.reset_start_time >= 2.0:
+                self.reset_sequence()
+        
         elif self.state == 'PTZ_MOVING':
             # Vérifier si le mouvement PTZ est terminé
             if self.ptz_move_start_time is not None:
@@ -233,37 +245,55 @@ class RobotSequence(Node):
                     self.stop_ptz()
                     self.state = 'WAITING_STABLE'
                     self.stable_start_time = time.time()
-                    self.center_wait_duration = None  # Utiliser ptz_stable_duration pour la stabilisation
         
         elif self.state == 'WAITING_STABLE':
             # Attendre la stabilisation après le mouvement PTZ ou le retour au centre
-            wait_duration = self.center_wait_duration if self.center_wait_duration is not None else self.ptz_stable_duration
-            
-            if time.time() - self.stable_start_time >= wait_duration:
-                # Stabilisation terminée, retourner à STOPPED
-                self.state = 'STOPPED'
-                self.center_wait_duration = None  # Réinitialiser pour le prochain mouvement
+            wait_duration = getattr(self, 'center_wait_duration', None)
+            if wait_duration is not None:
+                # Retour au centre en cours
+                elapsed = time.time() - self.stable_start_time
+                if elapsed >= wait_duration:
+                    self.state = 'STOPPED'
+                    self.center_wait_duration = None
+                    self.robot_can_move = False
+                elif self.robot_can_move:
+                    # Si le robot peut repartir, permettre le mouvement même pendant le Home
+                    # Le robot peut commencer à bouger pendant que la PTZ revient au centre
+                    pass
+            else:
+                # Stabilisation normale après mouvement
+                if time.time() - self.stable_start_time >= self.ptz_stable_duration:
+                    self.state = 'STOPPED'
         
         elif self.state == 'STOPPED':
             elapsed = time.time() - self.stop_start_time
             
+            # Si le robot peut repartir pendant le Home final, permettre le mouvement
+            if self.robot_can_move and self.capture_index == 6:
+                # Le robot peut repartir même si la PTZ n'a pas fini de revenir au centre
+                if elapsed >= self.stop_duration:
+                    self.get_logger().info("Robot repart pendant le retour au centre de la PTZ...")
+                    self.state = 'RESETTING'
+                    self.reset_start_time = time.time()
+                    return
+            
             if elapsed >= self.stop_duration:
                 # Temps écoulé (30 secondes), retourner au centre puis recommencer
-                if self.capture_index == 3:
-                    if self.ptz_step == 'idle':
-                        # Retourner au centre
-                        self.return_ptz_to_center()
-                        self.ptz_step = 'waiting_home_final'
-                    elif self.ptz_step == 'waiting_home_final' and self.state == 'STOPPED':
-                        self.get_logger().info(f"Séquence #{self.sequence_count} terminée. Caméra revenue au centre.")
+                if self.capture_index == 6:
+                    # Séquence complètement terminée
+                    if not self.robot_can_move:
+                        # Si le robot ne peut pas repartir pendant le Home, attendre que le Home soit terminé
+                        self.get_logger().info(f"Séquence #{self.sequence_count} terminée.")
                         self.get_logger().info("Réinitialisation pour nouvelle séquence...")
                         self.state = 'RESETTING'
                         self.reset_start_time = time.time()
+                    # Si robot_can_move, la logique ci-dessus gère déjà le cas
                 else:
+                    # Pour les autres captures, passer à RESETTING normalement
                     self.state = 'RESETTING'
                     self.reset_start_time = time.time()
             elif self.capture_index == 0:
-                # Séquence gauche : mouvement(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
+                # Séquence gauche : mouvement(3.5s) → stab(0.5s) → capture → attendre(0.5s)
                 if self.ptz_step == 'idle':
                     # Début : mouvement vers la gauche (3.5s)
                     self.get_logger().info("Positionnement PTZ: 90° à gauche...")
@@ -277,35 +307,59 @@ class RobotSequence(Node):
                         self.ptz_step = 'waiting_after_capture'
                         self.step_start_time = time.time()
                 elif self.ptz_step == 'waiting_after_capture':
-                    # Après capture + attendre(0.5s) : retour home (3.5s)
+                    # Après capture + attendre(0.5s) : passer à la position suivante (haut)
                     if time.time() - self.step_start_time >= self.delay_after_capture:
-                        self.return_ptz_to_center()
-                        self.ptz_step = 'waiting_home'
+                        self.ptz_step = 'idle'
                         self.capture_index = 1
             elif self.capture_index == 1:
-                # Séquence haut : home terminé → mouvement(5s) → stab(0.5s) → capture → attendre(0.5s) → home(5s)
-                if self.ptz_step == 'waiting_home' and self.state == 'STOPPED':
-                    # Home terminé, aller vers le haut (5s)
-                    self.get_logger().info("Positionnement PTZ: vers le haut...")
-                    self.start_ptz_movement(0.0, 1.0, self.ptz_move_up_duration)
+                # Séquence haut #1 : mouvement(3s) → stab(0.5s) → capture → attendre(0.5s)
+                if self.ptz_step == 'idle':
+                    # Aller vers le haut depuis la position gauche (3s)
+                    self.get_logger().info("Positionnement PTZ: vers le haut (1/2)...")
+                    self.start_ptz_movement(0.0, 1.0, self.ptz_move_up_short_duration)
                     self.ptz_step = 'moving_up'
                     self.step_start_time = time.time()
                 elif self.ptz_step == 'moving_up' and self.state == 'STOPPED':
-                    # Après mouvement(5s) + stab(0.5s) : capture
-                    if time.time() - self.step_start_time >= (self.ptz_move_up_duration + self.ptz_stable_duration):
-                        self.trigger_capture("Haut")
+                    # Après mouvement(3s) + stab(0.5s) : capture
+                    if time.time() - self.step_start_time >= (self.ptz_move_up_short_duration + self.ptz_stable_duration):
+                        self.trigger_capture("Haut-1")
                         self.ptz_step = 'waiting_after_capture'
                         self.step_start_time = time.time()
                 elif self.ptz_step == 'waiting_after_capture':
-                    # Après capture + attendre(0.5s) : retour home (5s)
+                    # Après capture + attendre(0.5s) : passer à la position suivante (haut #2)
                     if time.time() - self.step_start_time >= self.delay_after_capture:
-                        self.return_ptz_to_center()
-                        self.ptz_step = 'waiting_home'
+                        self.ptz_step = 'idle'
                         self.capture_index = 2
             elif self.capture_index == 2:
-                # Séquence droite : home terminé → mouvement(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-                if self.ptz_step == 'waiting_home' and self.state == 'STOPPED':
-                    # Home terminé, aller vers la droite (3.5s)
+                # Séquence haut #2 : mouvement(3.5s) → stab(0.5s) → capture → attendre(0.5s) → Home(6s)
+                if self.ptz_step == 'idle':
+                    # Continuer vers le haut (3.5s)
+                    self.get_logger().info("Positionnement PTZ: vers le haut (2/2)...")
+                    self.start_ptz_movement(0.0, 1.0, self.ptz_move_up_long_duration)
+                    self.ptz_step = 'moving_up'
+                    self.step_start_time = time.time()
+                elif self.ptz_step == 'moving_up' and self.state == 'STOPPED':
+                    # Après mouvement(3.5s) + stab(0.5s) : capture
+                    if time.time() - self.step_start_time >= (self.ptz_move_up_long_duration + self.ptz_stable_duration):
+                        self.trigger_capture("Haut-2")
+                        self.ptz_step = 'waiting_after_capture'
+                        self.step_start_time = time.time()
+                elif self.ptz_step == 'waiting_after_capture':
+                    # Après capture + attendre(0.5s) : retour Home(6s)
+                    if time.time() - self.step_start_time >= self.delay_after_capture:
+                        self.return_ptz_to_center(self.ptz_home_duration_mid, allow_robot_move=False)
+                        self.ptz_step = 'waiting_home_mid'
+                        self.capture_index = 3
+            elif self.capture_index == 3:
+                # Attendre que le Home soit terminé avant de passer à droite
+                if self.ptz_step == 'waiting_home_mid' and self.state == 'STOPPED':
+                    # Home terminé, passer à la position suivante (droite)
+                    self.ptz_step = 'idle'
+                    self.capture_index = 4
+            elif self.capture_index == 4:
+                # Séquence droite : mouvement(3.5s) → stab(0.5s) → capture → attendre(0.5s)
+                if self.ptz_step == 'idle':
+                    # Aller vers la droite (3.5s)
                     self.get_logger().info("Positionnement PTZ: 90° à droite...")
                     self.start_ptz_movement(1.0, 0.0, self.ptz_move_90_duration)
                     self.ptz_step = 'moving_right'
@@ -314,20 +368,34 @@ class RobotSequence(Node):
                     # Après mouvement(3.5s) + stab(0.5s) : capture
                     if time.time() - self.step_start_time >= (self.ptz_move_90_duration + self.ptz_stable_duration):
                         self.trigger_capture("Droite")
+                        self.ptz_step = 'waiting_after_capture'
+                        self.step_start_time = time.time()
+                elif self.ptz_step == 'waiting_after_capture':
+                    # Après capture + attendre(0.5s) : passer à la position suivante (haut)
+                    if time.time() - self.step_start_time >= self.delay_after_capture:
+                        self.ptz_step = 'idle'
+                        self.capture_index = 5
+            elif self.capture_index == 5:
+                # Séquence haut #3 : mouvement(3s) → stab(0.5s) → capture → attendre(0.5s)
+                if self.ptz_step == 'idle':
+                    # Aller vers le haut depuis la position droite (3s)
+                    self.get_logger().info("Positionnement PTZ: vers le haut (final)...")
+                    self.start_ptz_movement(0.0, 1.0, self.ptz_move_up_short_duration)
+                    self.ptz_step = 'moving_up'
+                    self.step_start_time = time.time()
+                elif self.ptz_step == 'moving_up' and self.state == 'STOPPED':
+                    # Après mouvement(3s) + stab(0.5s) : capture
+                    if time.time() - self.step_start_time >= (self.ptz_move_up_short_duration + self.ptz_stable_duration):
+                        self.trigger_capture("Haut-3")
                         self.get_logger().info("Toutes les captures effectuées.")
                         self.ptz_step = 'waiting_after_capture'
                         self.step_start_time = time.time()
                 elif self.ptz_step == 'waiting_after_capture':
-                    # Après capture + attendre(0.5s) : retour home (3.5s)
+                    # Après capture + attendre(0.5s) : retour Home(5s) - robot peut repartir
                     if time.time() - self.step_start_time >= self.delay_after_capture:
-                        self.return_ptz_to_center()
+                        self.return_ptz_to_center(self.ptz_home_duration_final, allow_robot_move=True)
                         self.ptz_step = 'waiting_home_final'
-                        self.capture_index = 3
-        
-        elif self.state == 'RESETTING':
-            # Attendre un peu avant de recommencer
-            if time.time() - self.reset_start_time >= 2.0:
-                self.reset_sequence()
+                        self.capture_index = 6
 
 
 def main(args=None):

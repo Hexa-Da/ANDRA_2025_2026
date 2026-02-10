@@ -67,17 +67,17 @@ ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: -1}"
 ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: 0}"
 ```
 
-**Note** : Le script `sequence_robot` utilise automatiquement le preset Home (-1) pour revenir au centre après chaque capture. Le nœud `ptz_controller` gère ce topic et envoie la commande VISCA appropriée à la caméra.
+**Note** : Le script `sequence_photo` utilise automatiquement le preset Home (-1) pour revenir au centre après chaque capture. Le nœud `ptz_controller` gère ce topic et envoie la commande VISCA appropriée à la caméra.
 
 
 **Important** : Le topic `/ptz/preset` n'est plus géré automatiquement par le système. Si vous voulez utiliser des presets, vous devez créer un nœud personnalisé qui écoute ce topic et envoie les commandes VISCA appropriées à la caméra.
 
-### Utilisation dans sequence_robot
+### Utilisation dans sequence_photo
 
-Le script `sequence_robot` utilise **uniquement les commandes de base `/ptz/cmd_vel`** et le preset Home (-1) pour contrôler la PTZ car beaucoup plus simple a configurer :
+Le script `sequence_photo` utilise **uniquement les commandes de base `/ptz/cmd_vel`** et le preset Home (-1) pour contrôler la PTZ car beaucoup plus simple a configurer :
 
 ```bash
-ros2 run navigation_utils sequence_robot
+ros2 run navigation_utils sequence_photo
 ```
 
 La séquence suit une séquence précise avec durées fixes :

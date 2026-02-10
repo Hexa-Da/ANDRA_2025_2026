@@ -58,7 +58,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
   - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
   - `report_fissures` : Trace les positions détectées sur la carte
-  - `sequence_robot` : Automatise la séquence de mouvement et captures PTZ en boucle
+  - `sequence_photo` : Automatise la séquence de mouvement et captures PTZ en boucle
   - `show_pos` : Affiche la position du robot (odométrie)
   - `test` : Outil de test pour vérifier la disponibilité de la carte
 - `src/slam_andra_package/` : Package de configuration SLAM
