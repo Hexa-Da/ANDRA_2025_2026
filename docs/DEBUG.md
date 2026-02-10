@@ -81,6 +81,7 @@ map → odom → base_link → {laser_frame, zed_camera_link}
 ```
 
 **Frames utilisés :**
+- **`world`** : Repère d'origine correspondant au point de départ du robot
 - **`map`** : Repère de la carte globale (publié par SLAM/AMCL)
 - **`odom`** : Repère d'odométrie (publié par EKF, fusion des capteurs)
 - **`base_link`** : Centre du robot (repère de référence)
@@ -118,56 +119,3 @@ echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide =
 ```
 
 **Important** : Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne.
-
-### Diagnostic des problèmes de communication
-
-Si les topics du robot ne sont pas visibles dans le conteneur Docker :
-
-1. **Vérifier le réseau** :
-   ```bash
-   # Depuis le conteneur Docker
-   ping -c 3 192.168.40.99  # IP du robot
-   ```
-
-2. **Vérifier ROS_DOMAIN_ID** :
-   ```bash
-   # Doit être identique des deux côtés
-   echo $ROS_DOMAIN_ID
-   ```
-
-3. **Vérifier RMW_IMPLEMENTATION** :
-   ```bash
-   # Doit être identique des deux côtés
-   echo $RMW_IMPLEMENTATION
-   ```
-
-4. **Vérifier que les topics sont publiés sur le robot** :
-   ```bash
-   # Sur le robot
-   ros2 topic list
-   ros2 topic hz /map  # Vérifier la fréquence de publication
-   ```
-
-5. **Vérifier les ports DDS** :
-   ```bash
-   # Sur le robot
-   netstat -tuln | grep -E "(7400|7401)"  # Ports FastRTPS
-   
-   # Dans le conteneur Docker
-   netstat -tuln | grep -E "(7400|7401)"
-   ```
-
-### Prendre le contrôle manuel
-
-Pour controler les roues :
-```bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
-
-Pour obtenir les informations de la zed2i :
-```bash
-# à ajuster selon le dossier courant
-source dependencies/zed-sdk/install/setup.sh
-
-ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2i
-```

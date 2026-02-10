@@ -123,7 +123,7 @@ Le fichier `ros_launcher/config.rviz` contient une configuration pré-définie q
 1. **Démarrer les nœuds ROS2 sur le robot** :
    ```bash
    # Sur le robot
-   ssh techlab@192.168.40.101
+   ssh techlab@orin2.local
    cd ~/Documents/ANDRA_2025-2026
    source scripts/setup.sh
    # Mode SLAM pour créer une carte ou pour observer les derives en desactivant les capteurs
