@@ -102,7 +102,7 @@ Voici la sequence la plus rapide efficace qu'il est possible de faire d'apres no
 - `ptz_home_duration_mid:=4.5` : Durée pour retour home après capture 3 (haut #2) en secondes
 - `ptz_home_duration_final:=1.5` : Durée pour retour home final après capture 5 (haut #3) en secondes
 
-Voici une proposition de réécriture pour votre documentation Markdown, optimisée pour expliquer le nouveau pattern **"Scanner de Voûte"** (Sinusoïdal Horizontal) qui maximise les capacités de la caméra pour l'analyse par IA.
+**Arrêt (Ctrl+C)** : Le script envoie STOP puis HOME directement via socket VISCA, indépendant de ROS2, pour garantir le retour au centre même si le contexte ROS2 est invalidé.
 
 ---
 
@@ -119,19 +119,26 @@ ros2 run navigation_utils sequence_video
 
 Ce pattern utilise un **balayage sinusoïdal horizontal**. Il permet de transformer la caméra en un scanner de ligne haute qui "déroule" la surface du tunnel pendant que le robot avance.
 
-1. **Axe Pan (Horizontal)** : Oscillation continue entre l'extrême gauche (`-1.0`) et l'extrême droite (`1.0`). La vitesse suit une courbe en cosinus : elle ralentit aux extrémités pour stabiliser l'image avant l'inversion du mouvement.
-2. **Axe Tilt (Vertical)** : Fixé à son angle maximal théorique (`1.0`, soit environ +30°). Cela permet de filmer l'ensemble de la voûte du tunnel, évitant ainsi les distorsions de perspective sur les fissures.
-3. **Avance Robot** : Le robot maintient une vitesse minimale constante (`0.05 m/s`). Chaque passage horizontal de la caméra couvre une nouvelle section de tunnel avec un léger recouvrement (*overlap*) nécessaire à la reconstruction post-traitement.
+1. **Axe Pan (Horizontal)** : Oscillation continue entre l'extrême gauche (`-1.0`) et l'extrême droite 
+(`1.0`). La vitesse suit une courbe en cosinus : elle ralentit aux extrémités pour stabiliser l'image 
+avant l'inversion du mouvement.
+2. **Axe Tilt (Vertical)** : Fixe pendant le balayage. Une légère poussée (0.1) est appliquée uniquement au début du premier cycle pour positionner vers la voûte.
+3. **Avance Robot** : Le robot maintient une vitesse constante (`0.06 m/s`). Chaque passage 
+horizontal de la caméra couvre une nouvelle section de tunnel avec un léger recouvrement (*overlap*) 
+nécessaire à la reconstruction post-traitement.
 
-**Paramètres configurables mis à jour** :
+**Arrêt (Ctrl+C)** : Le script envoie STOP puis HOME directement via socket VISCA, indépendant de ROS2, pour garantir le retour au centre même si le contexte ROS2 est invalidé.
+
+**Paramètres configurables** :
 
 | Paramètre | Valeur par défaut | Description |
 | --- | --- | --- |
-| `robot_speed` | `0.05` | Vitesse d'avance du robot (m/s) |
+| `robot_speed` | `0.06` | Vitesse d'avance du robot (m/s) |
 | `ptz_sweep_duration` | `30.0` | Temps pour un aller-retour horizontal complet |
 | `ptz_start_pan` | `-1.0` | Limite gauche du balayage |
-| `ptz_end_pan` | `1.0` | Limite droite du balayage |
-| `ptz_start_tilt` | `1.0` | Inclinaison fixe vers la voûte (90°) |
+| `ptz_end_pan` | `0.0` | Limite droite du balayage (centre) |
+| `ptz_start_tilt` | `0.0` | Tilt de départ |
+| `ptz_end_tilt` | `1.0` | Tilt cible (poussée au 1er cycle uniquement) |
 | `ptz_speed_factor` | `10.0` | Gain appliqué aux commandes de vitesse PTZ |
 | `rtsp_url` | `rtsp://...` | Flux source de la Marshall CV605 |
 | `enable_video_adjustment` | `false` | Activer le traitement logiciel (Luminosité/Contraste) |

@@ -274,8 +274,11 @@ ros2 run image_transfer position_publisher
 # Controle de la PTZ
 ros2 run image_transfer ptz_controller
 
-# Séquence de base
+# Séquence photo (Step-and-Go, 5 captures PTZ)
 ros2 run navigation_utils sequence_photo
+
+# Séquence vidéo (enregistrement continu + balayage PTZ)
+ros2 run navigation_utils sequence_video
 
 # Rapport des fissures (trace sur la carte)
 ros2 run navigation_utils report_fissures

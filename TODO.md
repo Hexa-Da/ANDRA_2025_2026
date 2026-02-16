@@ -45,13 +45,14 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
 - [x] Documentation des nœuds ROS2
 
-### Verification des nœuds ROS2  
+### Verification/Implémentation des nœuds ROS2  
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
-- [x] `sequence_robot` : Automatisation de la séquence de mouvement et captures PTZ en boucle
+- [x] `sequence_photo` : Automatisation de la séquence de mouvement et captures PTZ en boucle (5 captures)
+- [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ horizontal
 - [x] Correction des erreurs de shutdown dans les nœuds Python 
 
 ### Configuration navigation
@@ -122,22 +123,19 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
   - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
   - **Topics** :
-    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_robot`)
+    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_photo` et `sequence_video`)
     - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre et Reset (0) pour le recallibrage
   - **Format VISCA** : Implémentation selon documentation Marshall CV-605
     - Header : `0x80 + camera_address` (adresse 1 par défaut)
     - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
     - Home : `0x01 0x06 0x04` pour retour au centre
   - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset
-- [x] **Automatisation séquence robot** : Création du nœud `sequence_robot`
-  - **Fonctionnalités** :
-    - Avance le robot de 1m, s'arrête 30s pour captures PTZ, puis repart en boucle
-    - Séquence PTZ précise : gauche(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-    - → haut(5.5s) → stab(0.5s) → capture → attendre(0.5s) → home(5.5s)
-    - → droite(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-  - **Contrôle PTZ** : Utilise `/ptz/cmd_vel` pour les mouvements et preset Home (-1) pour retour au centre
+- [x] **Automatisation séquence robot** : Création des nœuds `sequence_photo` et `sequence_video`
+  - **sequence_photo** : Avance 1m, arrêt 30s, 5 captures PTZ (Gauche, Haut×3, Droite, Haut), boucle
+  - **sequence_video** : Vidéo continue + balayage PTZ horizontal sinusoïdal + robot à 0.06 m/s
+  - **Contrôle PTZ** : `/ptz/cmd_vel` pour les mouvements ; preset Home (-1) ou socket VISCA direct à l'arrêt (Ctrl+C)
   - **Paramètres configurables** : Durées de mouvement, stabilisation, retour au centre
-  - **État actuel** : ✅ Séquence automatique fonctionnelle avec captures PTZ
+  - **État actuel** : ✅ Séquence automatique fonctionnelle, arrêt propre avec STOP puis HOME via socket
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
@@ -239,7 +237,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ### Reproduire les résultats de l'année dernière
 - [x] Robot capable d'avancer en ligne droite pendant 1 mètre
 - [x] Robot capable de s'arrêter pour prendre une image
-- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_robot`)
+- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_photo` ou `sequence_video`)
   - Séquence PTZ : gauche → haut → droite avec captures
   - Retour au centre via preset Home (-1)
   - Boucle automatique de la séquence complète
@@ -332,4 +330,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 10 Février 2026
+**Dernière mise à jour** : 16 Février 2026

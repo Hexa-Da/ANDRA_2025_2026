@@ -17,7 +17,7 @@ __pycache__/
 ros2_ws/images_detectees/
 ros2_ws/images_capturees/
 ros2_ws/images_capturees_techlab/
-videos/video_output/
+video/video_output/
 
 # Note: Les cartes .pgm sont importantes, on les garde
 # Si vous voulez les ignorer, décommentez la ligne suivante :
