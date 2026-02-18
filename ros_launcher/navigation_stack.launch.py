@@ -28,14 +28,6 @@ def generate_launch_description():
     ekf_config = os.path.join(config_dir, 'ekf_config.yaml')
     slam_config = os.path.join(config_dir, 'slam_config.yaml')
     amcl_config = os.path.join(config_dir, 'amcl_config.yaml')
-    
-   # YDLidar configuration (DEBUG) 
-    ydlidar_params_dir = os.path.join(
-        get_package_share_directory('ydlidar_ros2_driver'),
-        'params'
-    )
-    # Tester avec différents modèles : G2.yaml, G4.yaml, X4.yaml, etc.
-    ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml') 
 
     return LaunchDescription([
         # World frame - parent of odom (always available, even without SLAM)
@@ -74,10 +66,10 @@ def generate_launch_description():
         
         # YDLIDAR - conditionnel
         Node(
-    	    package='ydlidar_ros2_driver',
-    	    executable='ydlidar_ros2_driver_node',
-    	    name='ydlidar_ros2_driver_node',
-    	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
+            package='ydlidar_ros2_driver',
+            executable='ydlidar_ros2_driver_node',
+            name='ydlidar_ros2_driver_node',
+            parameters=[os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'params', 'TG.yaml')],
             output='screen',
             condition=IfCondition(enable_lidar),
         ),
