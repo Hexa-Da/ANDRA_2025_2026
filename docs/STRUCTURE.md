@@ -82,7 +82,6 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `slam_config.yaml` : Configuration SLAM (cartographie)
   - `amcl_config.yaml` : Configuration AMCL (localisation)
 - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
-- `ydlidar_config.yaml` : Configuration du LIDAR
 - `config.rviz` : Configuration pré-définie pour RViz2 
 
 **Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL. Le fichier `config.rviz` peut être utilisé avec ou sans Docker pour visualiser le robot et la carte.

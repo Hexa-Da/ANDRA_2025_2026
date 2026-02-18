@@ -53,7 +53,6 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
 - [x] `sequence_photo` : Automatisation de la séquence de mouvement et captures PTZ en boucle (5 captures)
 - [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ horizontal
-- [x] Correction des erreurs de shutdown dans les nœuds Python 
 
 ### Configuration navigation
 - [x] Configuration SLAM Toolbox (`ros_launcher/slam_config.yaml`)
@@ -69,24 +68,35 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Réinstallation complète du robot
 - [ ] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
-- [ ] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
+- [x] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
 - [ ] **Objectif** : Atteindre les résultats finaux de l'année dernière
 
 ### Problème LIDAR
 - [x] Connexion au port série (`/dev/ttyTHS1`)
-- [x] **Diagnostic chipset (Carte Radar_Con)** : ✅ Chipset opérationnel
-  - Test loopback réussi (TX/RX fonctionnels)
-- [x] **Diagnostic communication LiDAR** : ❌ Pas de réponse du processeur
+- [x] **Diagnostic communication LiDAR** : 
   - Scan de baudrates effectués : 115200, 128000 (X4), 230400 (G4) sans réponse
   - Tentative activation forcée via DTR/RTS sans succès
   - LED s'allume brièvement puis s'éteint (mise en sécurité ou coupure alimentation)
-- [ ] **Erreurs persistantes** :
-  - `Error, cannot retrieve Lidar health code -1`
-  - `Fail to get baseplate device information!`
-  - `Failed to start scan mode -1`
-- [ ] **Hypothèses matérielles** :
-  - **Alimentation** : Port Micro-USB avec source externe suspecté instable
-  - **État actuel** : LiDAR s'initialise au branchement mais s'arrête sans commande "Start Scan" valide
+- [x] **Diagnostic du chipset (Carte Radar_Con)** : 
+  - Le port Micro USB est arraché, ce qui empêche l’alimentation du moteur et donc le lancement du scan
+  - Test de loopback concluant (TX/RX opérationnels), le reste des composants fonctionne donc correctement
+  - Un branchement de secours via le port USB-C a été tenté et s’est avéré fonctionnel
+- [x] **Problème résolu après intervention sur le chipset** : ✅ **RÉSOLU**
+  - **Modification de l’alimentation** : Passage au port USB-C `/dev/ttyUSB0` pour fournir suffisamment de puissance au LIDAR.
+  - **Correction de la configuration** : Le mauvais fichier de configuration (G4.yaml) était utilisé alors que le LIDAR est en réalité un modèle TG15.
+  - **Actions menées** :
+    - Remplacement du port `/dev/ttyTHS1` par `/dev/ttyUSB0`
+    - Suppression de l’ancien fichier de configuration local (`ros_launcher/ydlidar_config.yaml`)
+    - Adoption du fichier officiel `TG.yaml` du package `ydlidar_ros2_driver`
+    - Simplification du launch file afin d’utiliser directement la configuration officielle fournie par le package
+  - **Résultat** : Le LIDAR démarre normalement et publie sur `/scan` avec les paramètres attendus.
+- [x] **État actuel** : ✅ LIDAR en service
+  - Modèle : TG15 (Model Code 100)
+  - Port utilisé : `/dev/ttyUSB0` (détection automatique)
+  - Baudrate : 512000
+  - Fréquence de balayage : 10 Hz
+  - Taux d’échantillonnage : 20 kHz
+  - Publication sur `/scan` : ✅ Ok
 
 ### Problème Zed 2
 - [x] **zed_wrapper** : Package installé et fonctionnel
@@ -182,7 +192,6 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Familiarisation avec RViz2 en cours
   - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
   - **Caméra ZED2** : Cohérence des données pas encore vérifiée
-  - **Lidar** : Lidar toujours hors service, ce qui empêche la création de la carte pour le moment
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
@@ -220,11 +229,11 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ## À faire - Court terme (avant première descente debut février)
 
 ### Configuration et installation
-- [ ] Finaliser la réinstallation de l'image du robot
+- [x] Finaliser la réinstallation de l'image du robot
 - [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [ ] Installer/configurer le driver `zed_wrapper`
+- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
 - [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
-- [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
+- [x] Résoudre le problème LIDAR ✅ (Résolu le 18 février 2026)
 
 ### Test et compréhension du projet
 - [x] Tester la configuration de la navigation
@@ -330,4 +339,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 16 Février 2026
+**Dernière mise à jour** : 18 Février 2026
