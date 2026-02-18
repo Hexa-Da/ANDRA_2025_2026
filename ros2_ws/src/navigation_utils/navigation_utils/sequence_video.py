@@ -240,9 +240,17 @@ class RobotSequenceVideo(Node):
                 '-c:v', 'libx264',
                 '-preset', 'medium',
                 '-crf', '23',
+                '-movflags', '+faststart',  # Écrire le moov atom au début pour robustesse
             ])
         else:
-            ffmpeg_cmd.extend(['-c', 'copy'])  # Copie directe sans réencodage
+            # Utiliser un réencodage léger avec faststart pour éviter les vidéos corrompues
+            # même sans ajustements vidéo
+            ffmpeg_cmd.extend([
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',  # Réencodage très rapide
+                '-crf', '23',
+                '-movflags', '+faststart',  # Écrire le moov atom au début pour robustesse
+            ])
         
         ffmpeg_cmd.append(self.video_filename)
         

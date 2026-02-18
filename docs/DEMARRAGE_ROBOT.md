@@ -179,10 +179,21 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Gère les commandes de mouvement via `/ptz/cmd_vel` (geometry_msgs/Twist)
   - Gère le preset Home (-1) via `/ptz/preset` (std_msgs/Int32)
   - Communication VISCA avec la caméra (192.168.5.163:1259)
+- **`video_publisher`** : Traitement des vidéos enregistrées et extraction d'images
+  - Surveille le dossier `video/video_output/` toutes les 5 secondes pour détecter de nouvelles vidéos `.mp4`
+  - Vérifie que les vidéos sont stables (pas en cours d'écriture) avant traitement
+  - Valide les vidéos avant traitement (vérifie FPS et capacité de lecture)
+  - Extrait des images à un taux configurable (`extract_rate`, défaut: 10 images/seconde)
+  - Sauvegarde les images extraites dans `ros2_ws/images_capturees/` avec le préfixe `from_vid_`
+  - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
+  - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
+  - Déplace les vidéos corrompues vers `video/video_output/failed/` pour éviter les traitements répétés
+  - Paramètre ROS2 configurable : `extract_rate` (défaut: 10.0 images/seconde)
 - **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
-  - Reçoit les images depuis `/photo_topic`
+  - Reçoit les images depuis `/photo_topic` (publiées par `image_publisher` ou `video_publisher`)
   - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
   - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
+  - Publie la position du robot sur `/position_detectee` lorsqu'une fissure est détectée
 - **`position_publisher`** : Affichage de la position du robot lors des détections
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - S'abonne au topic `detection_status` (Bool) pour être notifié lorsqu'une fissure est détectée
@@ -199,8 +210,6 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
   - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
-
-**Note** : Le nœud `sequence_photo` n'est **pas** lancé automatiquement. Il doit être lancé manuellement pour automatiser la séquence de mouvement et captures PTZ.
 
 ### Localisation et cartographie
 
@@ -262,8 +271,11 @@ ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
 ```bash
 source scripts/setup.sh
 
-# Publisher d'images
+# Publisher d'images depuis la caméra PTZ
 ros2 run image_transfer image_publisher
+
+# Publisher de vidéos (traitement des vidéos enregistrées)
+ros2 run image_transfer video_publisher
 
 # Subscriber d'images (détection YOLO)
 ros2 run image_transfer image_subscriber

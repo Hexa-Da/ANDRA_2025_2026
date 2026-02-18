@@ -47,12 +47,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Verification/Implémentation des nœuds ROS2  
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
+- [x] `video_publisher` : Traitement des vidéos enregistrées, extraction d'images et publication sur `/photo_topic`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
 - [x] `sequence_photo` : Automatisation de la séquence de mouvement et captures PTZ en boucle (5 captures)
-- [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ horizontal
+- [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
 
 ### Configuration navigation
 - [x] Configuration SLAM Toolbox (`ros_launcher/slam_config.yaml`)
@@ -339,4 +340,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 18 Février 2026
+**Dernière mise à jour** : 17 Février 2026

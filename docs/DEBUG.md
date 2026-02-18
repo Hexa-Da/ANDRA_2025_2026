@@ -21,10 +21,13 @@ ros2 topic list
 #### Topics de détection et traitement d'images
 
 ```bash
-# Images capturées depuis la caméra PTZ (sensor_msgs/Image)
-# Publié par : image_publisher
+# Images capturées depuis la caméra PTZ ou extraites de vidéos (sensor_msgs/Image)
+# Publié par : image_publisher (caméra PTZ) ou video_publisher (vidéos enregistrées)
 # Souscrit par : image_subscriber
 ros2 topic echo /photo_topic
+
+# Vérifier la fréquence de publication
+ros2 topic hz /photo_topic
 
 # Positions où des fissures ont été détectées (geometry_msgs/Point)
 # Publié par : image_subscriber
