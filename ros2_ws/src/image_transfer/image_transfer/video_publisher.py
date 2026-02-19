@@ -20,9 +20,10 @@ class VideoFilePublisher(Node):
         self.processed_dir = os.path.join(self.video_input_dir, "processed")
         self.failed_dir = os.path.join(self.video_input_dir, "failed")  # Pour les vidéos corrompues
 
-        # Paramètres
-        self.declare_parameter('extract_rate', 10.0)  # Extraire 10 images par seconde de vidéo
+        # extract_rate: nombre d'images extraites par seconde de vidéo
+        self.declare_parameter('extract_rate', 30.0)
         self.extract_rate = self.get_parameter('extract_rate').get_parameter_value().double_value
+        self.get_logger().info(f"Taux d'extraction: {self.extract_rate} images/seconde")
         
         # Création des dossiers
         os.makedirs(self.video_input_dir, exist_ok=True)  # Créer le dossier d'entrée s'il n'existe pas
@@ -181,13 +182,15 @@ class VideoFilePublisher(Node):
                     img_name = f"from_vid_{timestamp}_{saved_count:03d}.jpg"
                     img_path = os.path.join(self.images_output_dir, img_name)
 
-                    # 1. Sauvegarde physique
+                    # 1. Sauvegarde physique dans images_capturees
                     cv2.imwrite(img_path, frame)
                     
-                    # 2. Publication ROS pour YOLO
+                    # 2. Publication ROS sur /photo_topic pour image_subscriber (YOLO)
                     try:
                         ros_img = self.bridge.cv2_to_imgmsg(frame, "bgr8")
                         self.publisher.publish(ros_img)
+                        if saved_count % 10 == 0:  # Log toutes les 10 images pour éviter le spam
+                            self.get_logger().info(f"📤 Image {saved_count} sauvegardée et publiée sur /photo_topic")
                     except Exception as e:
                         self.get_logger().warn(f"Erreur lors de la publication de l'image {saved_count}: {e}")
                     

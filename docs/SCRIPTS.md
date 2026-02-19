@@ -87,6 +87,22 @@ Ce script :
 
 **Note** : À exécuter après chaque redémarrage du robot pour accéder à la caméra PTZ.
 
+### `scripts/pytorch.sh` - Lancement du nœud image_subscriber avec GPU
+
+Lance le nœud `image_subscriber` dans un conteneur Docker avec accès GPU pour la détection YOLO :
+
+```bash
+./scripts/pytorch.sh
+```
+
+### `scripts/convert_to_tensorrt.sh` - Conversion du modèle en TensorRT
+
+Convertit le modèle PyTorch (`best.pt`) en TensorRT (`best.engine`) pour améliorer les performances :
+
+```bash
+./scripts/convert_to_tensorrt.sh
+```
+
 ### `video/script.sh` - Enregistrement vidéo depuis la caméra PTZ
 
 Script interactif pour enregistrer des vidéos depuis le flux RTSP de la caméra PTZ avec retouches d'image :

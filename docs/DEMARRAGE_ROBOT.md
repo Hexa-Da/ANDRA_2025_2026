@@ -156,6 +156,45 @@ ros2 launch navigation_stack.launch.py \
   map_path:=ros_launcher/andra.yaml 
 ```
 
+### 7. Lancer le nœud image_subscriber avec GPU (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+./scripts/pytorch.sh
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/pytorch.sh`)
+
+### 8. Lancer le nœud sequence_photo (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run navigation_utils sequence_photo
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `sequence_photo` (`ros2 run navigation_utils sequence_photo`)
+
+### 9. Lancer le nœud sequence_video (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run navigation_utils sequence_video
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `sequence_video` (`ros2 run navigation_utils sequence_video`)
+
 ## Nœuds lancés automatiquement
 
 Que vous utilisiez `scripts/launch.sh` ou `navigation_stack.launch.py` directement, les mêmes nœuds sont lancés (car `launch.sh` appelle `navigation_stack.launch.py` en interne).
@@ -183,17 +222,11 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Surveille le dossier `video/video_output/` toutes les 5 secondes pour détecter de nouvelles vidéos `.mp4`
   - Vérifie que les vidéos sont stables (pas en cours d'écriture) avant traitement
   - Valide les vidéos avant traitement (vérifie FPS et capacité de lecture)
-  - Extrait des images à un taux configurable (`extract_rate`, défaut: 10 images/seconde)
+  - Extrait des images à un taux configurable (`extract_rate`, défaut: 30 images/seconde)
   - Sauvegarde les images extraites dans `ros2_ws/images_capturees/` avec le préfixe `from_vid_`
   - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
   - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
   - Déplace les vidéos corrompues vers `video/video_output/failed/` pour éviter les traitements répétés
-  - Paramètre ROS2 configurable : `extract_rate` (défaut: 10.0 images/seconde)
-- **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
-  - Reçoit les images depuis `/photo_topic` (publiées par `image_publisher` ou `video_publisher`)
-  - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
-  - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
-  - Publie la position du robot sur `/position_detectee` lorsqu'une fissure est détectée
 - **`position_publisher`** : Affichage de la position du robot lors des détections
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - S'abonne au topic `detection_status` (Bool) pour être notifié lorsqu'une fissure est détectée
@@ -276,9 +309,6 @@ ros2 run image_transfer image_publisher
 
 # Publisher de vidéos (traitement des vidéos enregistrées)
 ros2 run image_transfer video_publisher
-
-# Subscriber d'images (détection YOLO)
-ros2 run image_transfer image_subscriber
 
 # Publisher de position
 ros2 run image_transfer position_publisher

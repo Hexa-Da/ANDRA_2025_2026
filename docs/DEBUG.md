@@ -35,6 +35,16 @@ ros2 topic hz /photo_topic
 ros2 topic echo /position_detectee
 ```
 
+#### Vérifier l'utilisation GPU
+
+```bash
+# Sur Jetson
+tegrastats
+
+# Ou avec jtop
+jtop
+```
+
 #### Topics d'odométrie et localisation
 
 ```bash

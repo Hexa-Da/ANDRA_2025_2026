@@ -57,7 +57,7 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_ptz', default_value='true',
                              description='Enable PTZ camera'),
         DeclareLaunchArgument('enable_image_transfer', default_value='true',
-                             description='Enable image transfer nodes (image_subscriber & position_publisher)'),
+                             description='Enable image transfer node'),
         DeclareLaunchArgument('enable_video_publisher', default_value='true',
                              description='Enable video publisher node'),
         DeclareLaunchArgument('ptz_brightness', default_value='1.0',
@@ -97,17 +97,14 @@ def generate_launch_description():
         
         # Image transfer nodes - conditionnel
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'image_subscriber'],
+            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
             output='screen',
             condition=IfCondition(enable_image_transfer),
         ),
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
-            output='screen',
-        ),
-        ExecuteProcess(
             cmd=['ros2', 'run', 'navigation_utils', 'report_fissures'],
             output='screen',
+            condition=IfCondition(enable_image_transfer),
         ),
         # Conversion odométrie vers Path pour visualisation
         Node(

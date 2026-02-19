@@ -30,19 +30,24 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
 - `STRUCTURE.md` : Ce fichier (structure du projet)
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
+- `DETECTION_YOLO.md` : Guide complet sur la détection YOLO des fissures avec GPU/TensorRT
 
 **Intérêt** : Centralise toute la documentation pour faciliter la compréhension et la maintenance du projet.
 
 ---
 
 ### `ros-docker/`
-**Rôle** : Environnement Docker pour visualiser le robot à distance
+**Rôle** : Environnements Docker pour développement et exécution GPU
 
 **Contenu** :
-- `Dockerfile` : Image Docker avec ROS2 et RViz2
-- `launch.sh` : Script de lancement du conteneur Docker
+- `Dockerfile` : Image Docker avec ROS2 et RViz2 (pour PC de développement)
+- `Dockerfile.jetson` : Image Docker avec PyTorch + ROS2 pour Jetson Orin (GPU)
+- `launch.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
+- `launch_jetson.sh` : Script de lancement du nœud `image_subscriber` avec GPU sur Jetson
 
-**Intérêt** : Permet de visualiser le robot et la carte depuis un PC distant sans installer ROS2 localement.
+**Intérêt** : 
+- Permet de visualiser le robot et la carte depuis un PC distant sans installer ROS2 localement
+- Permet d'exécuter le nœud `image_subscriber` avec GPU sur Jetson dans un environnement isolé
 
 ---
 
@@ -120,5 +125,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `build.sh` : Compile les workspaces ROS2 (tous ou un spécifique)
 - `launch.sh` : Lance le système complet (mode SLAM ou AMCL)
 - `ptz-network-setup.sh` : Configure le réseau Ethernet pour accéder à la caméra PTZ
+- `pytorch.sh` : Lance le nœud `image_subscriber` avec GPU dans Docker
+- `convert_to_tensorrt.sh` : Convertit le modèle PyTorch (`best.pt`) en TensorRT (`best.engine`) pour améliorer les performances
 
 **Intérêt** : Simplifie grandement l'utilisation du projet. Au lieu de se souvenir de multiples commandes ROS2, vous utilisez des scripts simples. Facilite l'onboarding de nouveaux utilisateurs.

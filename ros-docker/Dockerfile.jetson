@@ -1,0 +1,43 @@
+# Dockerfile pour Jetson Orin avec PyTorch + ROS 2 Humble + GPU
+# Usage: docker build -t ros2-humble-pytorch-jetson:r36.2.0 -f Dockerfile.jetson .
+# Cette image est optimisée pour NVIDIA Jetson avec support GPU
+
+FROM dustynv/l4t-pytorch:r36.2.0
+
+# Installation de ROS 2 Humble
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update -qq && \
+    apt-get install -y -qq curl gnupg2 lsb-release software-properties-common && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | gpg --dearmor -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    ARCH=$(dpkg --print-architecture) && \
+    CODENAME=$(lsb_release -cs) && \
+    echo "deb [arch=${ARCH} signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu ${CODENAME} main" > /etc/apt/sources.list.d/ros2-latest.list && \
+    apt-get update -qq && \
+    apt-get install -y -qq \
+        ros-humble-desktop \
+        python3-rosdep \
+        python3-colcon-common-extensions \
+        ros-humble-cv-bridge \
+        ros-humble-image-geometry \
+        build-essential \
+        git \
+        && rm -rf /var/lib/apt/lists/*
+
+# Bootstrap rosdep
+RUN rosdep init || true && \
+    rosdep update --rosdistro humble || true
+
+# Installation des dépendances Python pour YOLO
+# IMPORTANT: numpy<2 pour compatibilité avec cv_bridge compilé avec NumPy 1.x
+# Note: Utiliser PyPI standard pour éviter les problèmes avec les index Jetson
+RUN pip install --no-cache-dir --index-url https://pypi.org/simple \
+    'numpy<2.0' \
+    'opencv-python<4.10' \
+    ultralytics \
+    pillow \
+    matplotlib
+
+# Configuration de l'environnement ROS 2
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
+
+WORKDIR /ros2_ws

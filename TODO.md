@@ -44,6 +44,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
 - [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
 - [x] Documentation des nœuds ROS2
+- [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
 
 ### Verification/Implémentation des nœuds ROS2  
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
@@ -225,6 +226,15 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
     - Revoir l'enchaînement des positions de la PTZ
     - Essayer d'utiliser le script video à très basse vitesse
 
+- [x] **Optimisation de la détection YOLO avec Docker et TensorRT** :
+  - **Recherche et construction de l'image Docker** : Création d'une image Docker spécialisée pour Jetson Orin (`Dockerfile.jetson`) basée sur `dustynv/l4t-pytorch:r36.2.0` pour bénéficier du support GPU natif. L'image intègre ROS 2 Humble, PyTorch avec CUDA, et toutes les dépendances nécessaires (Ultralytics, OpenCV, NumPy < 2.0 pour compatibilité avec cv_bridge). Cette approche permet d'isoler l'environnement de détection YOLO et d'utiliser efficacement le GPU du Jetson.
+  - **Optimisation par conversion TensorRT** : Création du script `scripts/convert_to_tensorrt.sh` pour convertir le modèle PyTorch `best.pt` en format TensorRT `best.engine`, permettant une accélération significative de l'inférence sur Jetson (jusqu'à 3-5x plus rapide). Le script utilise le conteneur Docker pour effectuer la conversion avec les paramètres optimaux (half precision, device GPU, taille d'image 640x640).
+  - **Adaptation et création des scripts** : 
+    - `scripts/pytorch.sh` : Script unifié qui délègue à `ros-docker/launch_jetson.sh` pour lancer le nœud `image_subscriber` dans le conteneur Docker avec accès GPU
+    - `ros-docker/launch_jetson.sh` : Script de lancement du conteneur Docker avec configuration réseau host, montage des volumes, et vérification automatique des dépendances (ROS 2, Ultralytics, modèles YOLO)
+    - `ros-docker/Dockerfile.jetson` : Dockerfile optimisé pour Jetson avec installation de ROS 2 Humble et dépendances Python pour YOLO
+  - **Adaptation du code Python** : Modification de `ros2_ws/src/image_transfer/image_transfer/image_subscriber.py` pour détecter et utiliser automatiquement le modèle TensorRT (`best.engine`) s'il est disponible, avec fallback sur `best.pt` si nécessaire. 
+
 ---
 
 ## À faire - Court terme (avant première descente debut février)
@@ -340,4 +350,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 17 Février 2026
+**Dernière mise à jour** : 19 Février 2026
