@@ -68,6 +68,17 @@ def generate_launch_description():
                              description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
         DeclareLaunchArgument('video_extract_rate', default_value='10.0',
                              description='Extract rate for video publisher (images per second)'),
+
+
+        # YDLIDAR - conditionnel
+        Node(
+            package='ydlidar_ros2_driver',
+            executable='ydlidar_ros2_driver_node',
+            name='ydlidar_ros2_driver_node',
+            parameters=[os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'params', 'TG.yaml')],
+            output='screen',
+            condition=IfCondition(enable_lidar),
+        ),
      
         # Scout base - conditionnel
         ExecuteProcess(
