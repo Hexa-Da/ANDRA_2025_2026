@@ -35,48 +35,55 @@ class ImageSubscriber(Node):
         self.bridge = CvBridge()
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        if torch.cuda.is_available():
+        self._gpu_available = torch.cuda.is_available()
+        # Configurable via env: GPU_RETRY_INTERVAL (default 50 images)
+        self._gpu_retry_interval = int(os.environ.get('GPU_RETRY_INTERVAL', '50'))
+        self._images_since_gpu_failure = 0
+        
+        if self._gpu_available:
             try:
                 gpu_name = torch.cuda.get_device_name(0)
                 self.get_logger().info(f"CUDA disponible: {gpu_name}")
-                # Garder une marge memoire sur Jetson pour eviter les erreurs NvMap.
-                torch.cuda.set_per_process_memory_fraction(0.5)
+                # Allocation dynamique - pas de reservation fixe pour partager avec ZED/SLAM
+                torch.cuda.empty_cache()
             except Exception as e:
-                self.get_logger().warn(f"Probleme CUDA: {e}, fallback CPU")
-                self.device = 'cpu'
+                self.get_logger().warn(f"Probleme init CUDA: {e}")
+                # Ne pas abandonner le GPU, reessayer plus tard
         else:
             self.get_logger().warn("CUDA non disponible, fallback CPU")
 
-        # Chercher d'abord TensorRT (.engine), puis PyTorch (.pt)
-        # TensorRT est beaucoup plus rapide sur Jetson
+        # Chemins des modeles (Docker et local)
         docker_engine = '/ros2_ws/models/best.engine'
         docker_pt = '/ros2_ws/models/best.pt'
         local_engine = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.engine'
         local_pt = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt'
         
-        # Recherche du modele YOLO (TensorRT prioritaire)
-        model_candidates = [
-            (docker_engine, "TensorRT"), (docker_pt, "PyTorch"),
-            (local_engine, "TensorRT"), (local_pt, "PyTorch")
-        ]
+        # Trouver les modeles disponibles
+        self.engine_path = None
+        self.pytorch_path = None
+        for engine in [docker_engine, local_engine]:
+            if os.path.exists(engine) and os.access(engine, os.R_OK):
+                self.engine_path = engine
+                break
+        for pt in [docker_pt, local_pt]:
+            if os.path.exists(pt) and os.access(pt, os.R_OK):
+                self.pytorch_path = pt
+                break
         
-        # Priorite: TensorRT (.engine) avant PyTorch (.pt)
+        # Priorite: TensorRT si GPU disponible, sinon PyTorch
         force_pytorch = os.environ.get('FORCE_PYTORCH', '0') == '1'
         if force_pytorch:
             self.get_logger().warn("FORCE_PYTORCH=1: TensorRT desactive")
         
-        self.model_path = None
         self.use_tensorrt = False
-        for path, model_type in model_candidates:
-            if force_pytorch and model_type == "TensorRT":
-                continue
-            if os.path.exists(path) and os.access(path, os.R_OK):
-                self.model_path = path
-                self.use_tensorrt = (model_type == "TensorRT")
-                self.get_logger().info(f"Modele {model_type}: {path}")
-                break
-        
-        if self.model_path is None:
+        if self.engine_path and self._gpu_available and not force_pytorch:
+            self.model_path = self.engine_path
+            self.use_tensorrt = True
+            self.get_logger().info(f"Modele TensorRT: {self.engine_path}")
+        elif self.pytorch_path:
+            self.model_path = self.pytorch_path
+            self.get_logger().info(f"Modele PyTorch: {self.pytorch_path}")
+        else:
             raise FileNotFoundError("Modele YOLO non trouve (best.engine ou best.pt)")
         
         self.model = None
@@ -141,33 +148,65 @@ class ImageSubscriber(Node):
                 self.position_pub.publish(point_msg)
                 self.get_logger().info("Position detectee publiee")
 
+    def _check_gpu_memory(self, min_gb=1.0):
+        """Verifie si assez de memoire GPU est disponible."""
+        if not self._gpu_available:
+            return False
+        try:
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            props = torch.cuda.get_device_properties(0)
+            total = props.total_memory / 1024**3
+            allocated = torch.cuda.memory_allocated(0) / 1024**3
+            free = total - allocated
+            self.get_logger().info(f"GPU: {free:.2f}/{total:.2f} GB libre")
+            return free >= min_gb
+        except Exception as e:
+            self.get_logger().warn(f"Impossible de verifier GPU: {e}")
+            return False
+
     def _load_model(self):
         """Charge YOLO au premier callback."""
         if self._model_loaded:
             return
         
         try:
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                try:
-                    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
-                    gpu_allocated = torch.cuda.memory_allocated(0) / 1024**3
-                    gpu_free = gpu_memory - gpu_allocated
-                    self.get_logger().info(f"Memoire GPU libre: {gpu_free:.2f} / {gpu_memory:.2f} GB")
-                    if gpu_free < 1.0:
-                        self.get_logger().warn("Memoire GPU insuffisante (<1GB), fallback CPU")
+            # Pour TensorRT: verifier memoire GPU sinon segfault
+            if self.use_tensorrt:
+                if not self._check_gpu_memory(min_gb=1.5):
+                    if self.pytorch_path:
+                        self.get_logger().warn("Memoire GPU insuffisante pour TensorRT, fallback PyTorch CPU")
+                        self.model_path = self.pytorch_path
+                        self.use_tensorrt = False
                         self.device = 'cpu'
-                except Exception as e:
-                    self.get_logger().warn(f"Impossible de lire la memoire GPU: {e}, fallback CPU")
-                    self.device = 'cpu'
+                    else:
+                        self.get_logger().error("Pas assez de memoire GPU et pas de modele PyTorch disponible")
+                        raise RuntimeError("GPU memory insufficient for TensorRT")
 
-            self.get_logger().info("Chargement modele YOLO...")
-            self.model = YOLO(self.model_path)
+            self.get_logger().info(f"Chargement {'TensorRT' if self.use_tensorrt else 'PyTorch'}...")
+            self.model = YOLO(self.model_path, task='segment')
             self._model_loaded = True
-            self.get_logger().info(f"Modele charge. Device inference cible: {self.device}")
-            time.sleep(0.2)
+            
+            if self.use_tensorrt:
+                self.get_logger().info("TensorRT charge (inference GPU)")
+            else:
+                self.get_logger().info(f"PyTorch charge (device: {self.device})")
+                    
         except Exception as e:
             self.get_logger().error(f"Erreur chargement modele: {e}")
+            # Tentative fallback PyTorch si TensorRT a echoue
+            if self.use_tensorrt and self.pytorch_path:
+                self.get_logger().warn("Echec TensorRT, tentative PyTorch CPU...")
+                self.model_path = self.pytorch_path
+                self.use_tensorrt = False
+                self.device = 'cpu'
+                try:
+                    self.model = YOLO(self.model_path, task='segment')
+                    self._model_loaded = True
+                    self.get_logger().info("Fallback PyTorch CPU reussi")
+                    return
+                except Exception as e2:
+                    self.get_logger().error(f"Echec fallback PyTorch: {e2}")
             raise
     
     def detect_tags(self, img):
@@ -176,14 +215,26 @@ class ImageSubscriber(Node):
             if not self._model_loaded:
                 self._load_model()
 
-            device_id = 0 if self.device == 'cuda' and torch.cuda.is_available() else 'cpu'
+            # Retry GPU periodiquement apres un fallback CPU (PyTorch seulement)
+            if self.device == 'cpu' and self._gpu_available and not self.use_tensorrt:
+                self._images_since_gpu_failure += 1
+                if self._images_since_gpu_failure >= self._gpu_retry_interval:
+                    self._images_since_gpu_failure = 0
+                    if self._check_gpu_memory(min_gb=0.5):
+                        self.device = 'cuda'
+                        self.get_logger().info("Retour sur GPU (PyTorch)")
+
+            device_id = 0 if self.device == 'cuda' and self._gpu_available else 'cpu'
+            
             try:
+                # Nettoyer le cache GPU avant inference pour liberer la memoire
+                if device_id == 0:
+                    torch.cuda.empty_cache()
+                
                 if device_id == 0:
                     if self.use_tensorrt:
-                        # TensorRT: deja optimise pour GPU, pas besoin de half/imgsz
                         results = self.model(img, device=0, verbose=False)
                     else:
-                        # PyTorch: FP16 + image plus petite pour reduire memoire CUDA
                         results = self.model(
                             img,
                             device=0,
@@ -196,22 +247,28 @@ class ImageSubscriber(Node):
                 
                 # Reset compteur si inference reussie
                 self._consecutive_errors = 0
+                self._images_since_gpu_failure = 0
                 
             except Exception as e:
                 self._consecutive_errors += 1
+                self.get_logger().warn(f"Erreur inference ({type(e).__name__}): {e}")
                 
-                # Si trop d'erreurs consecutives avec TensorRT, basculer sur CPU
-                if self.use_tensorrt and self._consecutive_errors >= self._max_errors_before_fallback:
-                    self.get_logger().error(
-                        f"{self._consecutive_errors} erreurs TensorRT consecutives - "
-                        "regenerer .engine avec: model.export(format='engine', device=0)"
-                    )
+                # TensorRT ne peut PAS tourner sur CPU - basculer sur PyTorch
+                if self.use_tensorrt and self.pytorch_path:
+                    self.get_logger().warn("Erreur TensorRT, rechargement en PyTorch CPU...")
+                    try:
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                    self.model_path = self.pytorch_path
+                    self.use_tensorrt = False
                     self.device = 'cpu'
-                    self._consecutive_errors = 0
-                
-                # Fallback robuste en cas de crash/erreur CUDA a l'inference.
-                if device_id != 'cpu':
-                    self.get_logger().warn(f"Erreur inference GPU ({type(e).__name__}: {e}), fallback CPU")
+                    self.model = YOLO(self.model_path, task='segment')
+                    self.get_logger().info("Modele PyTorch charge, retry inference...")
+                    results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
+                # PyTorch: fallback GPU -> CPU
+                elif device_id != 'cpu' and not self.use_tensorrt:
+                    self.get_logger().warn("Fallback PyTorch CPU")
                     self.device = 'cpu'
                     try:
                         torch.cuda.empty_cache()
@@ -224,12 +281,18 @@ class ImageSubscriber(Node):
             detected = len(results[0].boxes) > 0
             
             # plot() dessine les bounding boxes sur l'image (operation CPU)
-            # Si draw_boxes=False, on retourne l'image originale (plus rapide)
-            if detected:
-                if self.draw_boxes:
-                    img_with_boxes = results[0].plot()  # Dessine les boxes (CPU)
-                else:
-                    img_with_boxes = img  # Pas de dessin = plus rapide
+            if detected and self.draw_boxes:
+                try:
+                    img_with_boxes = results[0].plot()
+                except KeyError:
+                    # TensorRT: noms de classes non disponibles, dessiner manuellement
+                    img_with_boxes = img.copy()
+                    for box in results[0].boxes:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+                        cv2.rectangle(img_with_boxes, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        conf = float(box.conf[0])
+                        cv2.putText(img_with_boxes, f"{conf:.2f}", (x1, y1-5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             else:
                 img_with_boxes = img
                 

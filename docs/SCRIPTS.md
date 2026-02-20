@@ -68,7 +68,7 @@ Lancer le système complet :
 
 **Mode AMCL** (pour utiliser une carte existante) :
 ```bash
-./scripts/launch.sh amcl ros_launcher/andra.yaml
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/andra.yaml
 ```
 
 ### `scripts/ptz-network-setup.sh` - Configuration réseau PTZ

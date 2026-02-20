@@ -126,7 +126,7 @@ Il existe deux façons de lancer le système :
 ./scripts/launch.sh slam enable_lidar:=false enable_zed:=false
 
 # Mode AMCL (vérifie automatiquement que la carte est fournie)
-./scripts/launch.sh amcl ros_launcher/andra.yaml
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/andra.yaml
 ```
 
 #### `navigation_stack.launch.py` (pour configuration avancée)
@@ -137,11 +137,8 @@ Il existe deux façons de lancer le système :
 - Utile pour le débogage et les tests
 
 ```bash
-# Depuis le répertoire ros_launcher
-cd ros_launcher
-
 # Mode SLAM avec paramètres PTZ personnalisés
-ros2 launch navigation_stack.launch.py \
+ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=true \
   enable_ptz:=true \
   ptz_brightness:=2.0 \
@@ -150,10 +147,10 @@ ros2 launch navigation_stack.launch.py \
   enable_image_transfer:=true
 
 # Mode AMCL avec configuration personnalisée
-ros2 launch navigation_stack.launch.py \
+ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=false \
   use_amcl:=true \
-  map_path:=ros_launcher/andra.yaml 
+  map_path:=ros2_ws/src/ros_launcher/map_results/andra.yaml 
 ```
 
 ### 7. Lancer le nœud image_subscriber avec GPU (dans un terminal séparé)
@@ -241,7 +238,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **`report_fissures`** : Trace les positions détectées sur la carte
   - Reçoit les positions depuis le topic `/position_detectee`
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
-  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
+  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros2_ws/src/ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
 
 ### Localisation et cartographie

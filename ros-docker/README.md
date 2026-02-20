@@ -38,7 +38,7 @@ colcon build
 source install/setup.bash
 
 # Lancer RViz2
-rviz2 -d /workspace/ros_launcher/config.rviz
+rviz2 -d /workspace/ros2_ws/src/ros_launcher/config.rviz
 ```
 
 **Prérequis** :

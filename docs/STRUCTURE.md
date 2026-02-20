@@ -8,8 +8,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
 ├── ros-docker/                  # Environnement Docker ROS2 pour developper sans avoir accès au robot
-├── ros2_ws/                     # Workspace principal (code robot, navigation, etc)
-├── ros_launcher/                # Fichiers de lancement ROS2 (scripts .launch.py et cartes)
+├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
 │   ├── scout_base/              # Workspace ROS2 pour le robot Scout
@@ -78,8 +77,8 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 ---
 
-### `ros_launcher/`
-**Rôle** : Fichiers de configuration et de lancement du système ROS2
+### `ros2_ws/src/ros_launcher/`
+**Rôle** : Package ROS2 de configuration et de lancement du système
 
 **Contenu** :
 - `navigation_stack.launch.py` : Fichier de lancement principal (lance tous les nœuds)
@@ -88,6 +87,8 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `slam_config.yaml` : Configuration SLAM (cartographie)
   - `amcl_config.yaml` : Configuration AMCL (localisation)
 - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
+- `package.xml` : Manifest du package ROS2
+- `CMakeLists.txt` : Configuration de build
 - `config.rviz` : Configuration pré-définie pour RViz2 
 
 **Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL. Le fichier `config.rviz` peut être utilisé avec ou sans Docker pour visualiser le robot et la carte.

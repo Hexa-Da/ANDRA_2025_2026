@@ -11,9 +11,9 @@ RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de
 - **Définir des objectifs de navigation** (Set Goal)
 - **Déboguer visuellement** le système robotique
 
-## Configuration : `ros_launcher/config.rviz`
+## Configuration : `ros2_ws/src/ros_launcher/config.rviz`
 
-Le fichier `ros_launcher/config.rviz` contient une configuration pré-définie qui affiche tous les éléments essentiels.
+Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pré-définie qui affiche tous les éléments essentiels.
 
 ## Deux modes d'utilisation
 
@@ -139,7 +139,7 @@ Le fichier `ros_launcher/config.rviz` contient une configuration pré-définie q
    ./launch.sh  # Lance le conteneur Docker avec --net=host
    # Dans le conteneur :
    cd /workspace
-   rviz2 -d ros_launcher/config.rviz
+   rviz2 -d ros2_ws/src/ros_launcher/config.rviz
    ```
 
    **Note importante** : Le conteneur Docker utilise `--net=host` pour communiquer avec le robot. Assurez-vous que :
@@ -163,8 +163,8 @@ Une fois la carte construite en mode SLAM, vous pouvez la sauvegarder :
 
 ```bash
 # Sur le robot
-cd ~/Documents/ANDRA_2025-2026/ros_launcher
-ros2 run nav2_map_server map_saver -f map_results/ma_carte
+cd ~/Documents/ANDRA_2025-2026
+ros2 run nav2_map_server map_saver -f ros2_ws/src/ros_launcher/map_results/ma_carte
 ```
 
 Cela créera deux fichiers :

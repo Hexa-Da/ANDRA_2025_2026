@@ -23,13 +23,13 @@ def generate_launch_description():
     ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
     video_extract_rate = LaunchConfiguration('video_extract_rate', default='10.0')
     
-    # Config directory
-    config_dir = 'configs'
+    # Get package share directory for config files
+    pkg_share = get_package_share_directory('ros_launcher')
     
     # Full path to configuration files
-    ekf_config = os.path.join(config_dir, 'ekf_config.yaml')
-    slam_config = os.path.join(config_dir, 'slam_config.yaml')
-    amcl_config = os.path.join(config_dir, 'amcl_config.yaml')
+    ekf_config = os.path.join(pkg_share, 'configs', 'ekf_config.yaml')
+    slam_config = os.path.join(pkg_share, 'configs', 'slam_config.yaml')
+    amcl_config = os.path.join(pkg_share, 'configs', 'amcl_config.yaml')
 
     return LaunchDescription([
         # World frame - parent of odom (always available, even without SLAM)
