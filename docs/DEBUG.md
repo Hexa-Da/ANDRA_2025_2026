@@ -119,3 +119,18 @@ echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide =
 ```
 
 **Important** : Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne.
+
+### Prendre le contrôle manuel
+
+Pour controler les roues :
+```bash
+ros2 run teleop_twist_keyboard teleop_twist_keyboard
+```
+
+Pour obtenir les informations de la zed2i :
+```bash
+# à ajuster selon le dossier courant
+source dependencies/zed-sdk/install/setup.sh
+
+ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2i
+```
