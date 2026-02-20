@@ -17,9 +17,11 @@ def generate_launch_description():
     enable_zed = LaunchConfiguration('enable_zed', default='true')
     enable_ptz = LaunchConfiguration('enable_ptz', default='true')
     enable_image_transfer = LaunchConfiguration('enable_image_transfer', default='true')
+    enable_video_publisher = LaunchConfiguration('enable_video_publisher', default='true')
     ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.0')
     ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.0')
     ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
+    video_extract_rate = LaunchConfiguration('video_extract_rate', default='10.0')
     
     # Config directory
     config_dir = 'configs'
@@ -28,14 +30,6 @@ def generate_launch_description():
     ekf_config = os.path.join(config_dir, 'ekf_config.yaml')
     slam_config = os.path.join(config_dir, 'slam_config.yaml')
     amcl_config = os.path.join(config_dir, 'amcl_config.yaml')
-    
-   # YDLidar configuration (DEBUG) 
-    ydlidar_params_dir = os.path.join(
-        get_package_share_directory('ydlidar_ros2_driver'),
-        'params'
-    )
-    # Tester avec différents modèles : G2.yaml, G4.yaml, X4.yaml, etc.
-    ydlidar_config = os.path.join(ydlidar_params_dir, 'G4.yaml') 
 
     return LaunchDescription([
         # World frame - parent of odom (always available, even without SLAM)
@@ -63,25 +57,29 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_ptz', default_value='true',
                              description='Enable PTZ camera'),
         DeclareLaunchArgument('enable_image_transfer', default_value='true',
-                             description='Enable image transfer nodes (image_subscriber, position_publisher)'),
+                             description='Enable image transfer node'),
+        DeclareLaunchArgument('enable_video_publisher', default_value='true',
+                             description='Enable video publisher node'),
         DeclareLaunchArgument('ptz_brightness', default_value='1.0',
                              description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)'),
         DeclareLaunchArgument('ptz_contrast', default_value='1.0',
                              description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)'),
         DeclareLaunchArgument('ptz_gamma', default_value='1.0',
                              description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
-     
-        
+        DeclareLaunchArgument('video_extract_rate', default_value='10.0',
+                             description='Extract rate for video publisher (images per second)'),
+
+
         # YDLIDAR - conditionnel
         Node(
-    	    package='ydlidar_ros2_driver',
-    	    executable='ydlidar_ros2_driver_node',
-    	    name='ydlidar_ros2_driver_node',
-    	    parameters=[ydlidar_config, {'port': '/dev/ttyTHS1', 'baudrate': 230400}],
+            package='ydlidar_ros2_driver',
+            executable='ydlidar_ros2_driver_node',
+            name='ydlidar_ros2_driver_node',
+            parameters=[os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'params', 'TG.yaml')],
             output='screen',
             condition=IfCondition(enable_lidar),
         ),
-        
+     
         # Scout base - conditionnel
         ExecuteProcess(
             cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 
@@ -99,17 +97,14 @@ def generate_launch_description():
         
         # Image transfer nodes - conditionnel
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'image_subscriber'],
+            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
             output='screen',
             condition=IfCondition(enable_image_transfer),
         ),
         ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
-            output='screen',
-        ),
-        ExecuteProcess(
             cmd=['ros2', 'run', 'navigation_utils', 'report_fissures'],
             output='screen',
+            condition=IfCondition(enable_image_transfer),
         ),
         # Conversion odométrie vers Path pour visualisation
         Node(
@@ -118,6 +113,7 @@ def generate_launch_description():
             name='odom_to_path',
             output='screen',
         ),
+
         # PTZ camera publisher - conditionnel et configurable
         Node(
             package='image_transfer',
@@ -132,6 +128,18 @@ def generate_launch_description():
             }],
             output='screen',
             condition=IfCondition(enable_ptz),
+        ),
+
+        # Video file publisher - alternative à la PTZ (lit video/video_output/)
+        Node(
+            package='image_transfer',
+            executable='video_publisher',
+            name='video_file_publisher',
+            parameters=[{
+                'extract_rate': PythonExpression(['float(', video_extract_rate, ')']),
+            }],
+            output='screen',
+            condition=IfCondition(enable_video_publisher),
         ),
         
         # PTZ controller - conditionnel

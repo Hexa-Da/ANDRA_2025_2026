@@ -27,6 +27,7 @@ setup(
             'position_publisher = image_transfer.position_publisher:main',
             'test_image_publisher = image_transfer.test_image_publisher:main',
             'ptz_controller = image_transfer.ptz_controller:main',
+            'video_publisher = image_transfer.video_publisher:main',
         ],
     },
 )

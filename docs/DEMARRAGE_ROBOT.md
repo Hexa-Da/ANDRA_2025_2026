@@ -156,6 +156,45 @@ ros2 launch navigation_stack.launch.py \
   map_path:=ros_launcher/andra.yaml 
 ```
 
+### 7. Lancer le nœud image_subscriber avec GPU (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+./scripts/pytorch.sh
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/pytorch.sh`)
+
+### 8. Lancer le nœud sequence_photo (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run navigation_utils sequence_photo
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `sequence_photo` (`ros2 run navigation_utils sequence_photo`)
+
+### 9. Lancer le nœud sequence_video (dans un terminal séparé)
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run navigation_utils sequence_video
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
+2. **Terminal 2** : Lancer `sequence_video` (`ros2 run navigation_utils sequence_video`)
+
 ## Nœuds lancés automatiquement
 
 Que vous utilisiez `scripts/launch.sh` ou `navigation_stack.launch.py` directement, les mêmes nœuds sont lancés (car `launch.sh` appelle `navigation_stack.launch.py` en interne).
@@ -179,10 +218,15 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Gère les commandes de mouvement via `/ptz/cmd_vel` (geometry_msgs/Twist)
   - Gère le preset Home (-1) via `/ptz/preset` (std_msgs/Int32)
   - Communication VISCA avec la caméra (192.168.5.163:1259)
-- **`image_subscriber`** : Détection YOLO des fissures, sauvegarde des images détectées
-  - Reçoit les images depuis `/photo_topic`
-  - Applique la détection YOLO avec le modèle `ros2_ws/models/best.pt`
-  - Sauvegarde uniquement les images avec détection dans `ros2_ws/images_detectees/`
+- **`video_publisher`** : Traitement des vidéos enregistrées et extraction d'images
+  - Surveille le dossier `video/video_output/` toutes les 5 secondes pour détecter de nouvelles vidéos `.mp4`
+  - Vérifie que les vidéos sont stables (pas en cours d'écriture) avant traitement
+  - Valide les vidéos avant traitement (vérifie FPS et capacité de lecture)
+  - Extrait des images à un taux configurable (`extract_rate`, défaut: 30 images/seconde)
+  - Sauvegarde les images extraites dans `ros2_ws/images_capturees/` avec le préfixe `from_vid_`
+  - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
+  - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
+  - Déplace les vidéos corrompues vers `video/video_output/failed/` pour éviter les traitements répétés
 - **`position_publisher`** : Affichage de la position du robot lors des détections
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - S'abonne au topic `detection_status` (Bool) pour être notifié lorsqu'une fissure est détectée
@@ -199,8 +243,6 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
   - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
-
-**Note** : Le nœud `sequence_photo` n'est **pas** lancé automatiquement. Il doit être lancé manuellement pour automatiser la séquence de mouvement et captures PTZ.
 
 ### Localisation et cartographie
 
@@ -262,11 +304,11 @@ ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
 ```bash
 source scripts/setup.sh
 
-# Publisher d'images
+# Publisher d'images depuis la caméra PTZ
 ros2 run image_transfer image_publisher
 
-# Subscriber d'images (détection YOLO)
-ros2 run image_transfer image_subscriber
+# Publisher de vidéos (traitement des vidéos enregistrées)
+ros2 run image_transfer video_publisher
 
 # Publisher de position
 ros2 run image_transfer position_publisher
@@ -274,8 +316,11 @@ ros2 run image_transfer position_publisher
 # Controle de la PTZ
 ros2 run image_transfer ptz_controller
 
-# Séquence de base
+# Séquence photo (Step-and-Go, 5 captures PTZ)
 ros2 run navigation_utils sequence_photo
+
+# Séquence vidéo (enregistrement continu + balayage PTZ)
+ros2 run navigation_utils sequence_video
 
 # Rapport des fissures (trace sur la carte)
 ros2 run navigation_utils report_fissures

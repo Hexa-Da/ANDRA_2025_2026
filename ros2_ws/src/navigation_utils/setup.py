@@ -29,6 +29,7 @@ setup(
             'show_pos = navigation_utils.show_pos:main',
             'test = navigation_utils.test:main',
             'sequence_photo = navigation_utils.sequence_photo:main',
+            'sequence_video = navigation_utils.sequence_video:main',
         ],
     },
 )

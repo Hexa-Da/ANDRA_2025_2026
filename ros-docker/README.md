@@ -1,120 +1,82 @@
 # ROS2 Docker - Guide d'utilisation
 
-## Objectif
+## Vue d'ensemble
 
-**Avantage principal de ce dossier : Utiliser RViz2 et ROS2 sans installation native !**
+Ce dossier contient les environnements Docker pour le projet. **Tout est déjà configuré** : les images Docker sont construites et prêtes à l'emploi.
 
-C'est l'environnement de développement local qui vous permet de :
-- **Visualiser avec RViz2** les cartes SLAM et les données du robot **sans installer ROS2** sur votre système
-- **Développer et tester vos nœuds ROS2** sur votre machine personnelle 
-- **Vérifier que votre code compile** avant de le déployer sur le robot
+**Deux environnements disponibles** :
+1. **PC de développement** : Visualiser avec RViz2 les cartes SLAM et les données du robot
+2. **Jetson Orin** : Exécuter le nœud `image_subscriber` avec PyTorch et GPU pour la détection YOLO
 
-## Prérequis
+---
 
-- **Docker** installé et fonctionnel
-- **Linux** avec environnement X11 (pour RViz2)
-- **Git** installé
-- **Pas besoin d'installer ROS2 nativement** sur votre système
-- **Même réseau WiFi** : Votre ordinateur doit être connecté au même réseau que le robot pour que RViz2 puisse recevoir les données du robot
-- **Configuration DDS cohérente** : Le robot et le conteneur Docker doivent utiliser le même `ROS_DOMAIN_ID` (généralement `0`) et le même middleware DDS (`rmw_fastrtps_cpp` pour FastRTPS)
+## Environnement 1 : PC de développement (RViz2)
 
-## Installation (une seule fois)
+### À quoi ça sert
 
-```bash
-cd ros-docker
-docker build -t ros2-humble-custom .
-```
+**Visualiser le robot à distance sans installer ROS2 sur votre PC.**
 
-Cette commande va :
-- Télécharger l'image de base `ros:humble-ros-core-jammy` (Ubuntu 22.04)
-- Installer tous les outils de développement ROS2
-- Installer les dépendances Python (numpy<2, ultralytics, pillow, matplotlib)
-- Installer les paquets ROS2 nécessaires (cv-bridge, image-geometry, rviz2)
+Permet de :
+- Visualiser les cartes SLAM créées par le robot
+- Voir les données du robot (LIDAR, position, trajectoire) en temps réel
+- Déboguer visuellement le système robotique
 
-## Structure des fichiers
+### Utilisation
 
-### `Dockerfile`
-Crée une image Docker complète avec :
-- **Image de base** : `ros:humble-ros-core-jammy` (Ubuntu 22.04 + ROS2 Humble core)
-- **Outils de développement** : build-essential, git, colcon, rosdep, vcstool
-- **Paquets ROS2** : ros-base, cv-bridge, image-geometry, rviz2
-- **Dépendances Python** : numpy<2 (compatibilité cv_bridge), ultralytics (YOLOv11), pillow, matplotlib
-- **Outils multimédias** : opencv, ffmpeg
-
-### Scripts de lancement
-
-#### `launch.sh`
-Script de lancement du conteneur Docker pour Linux avec :
-- **Accès X11** : pour afficher RViz2 (`xhost +local:`)
-- **Réseau hôte** : `--net=host` pour communiquer avec le robot (si sur le même réseau)
-- **Volumes montés** :
-  - `/tmp/.X11-unix` → accès à l'affichage graphique
-  - `../ros2_ws` → workspace ROS2 (monté en `/workspace/ros2_ws`)
-  - `../ros_launcher` → fichiers de lancement (monté en `/workspace/ros_launcher`)
-
-## Utilisation
-
-**Lancer le conteneur :**
+**Lancer le conteneur** :
 ```bash
 cd ros-docker
 ./launch.sh
 ```
 
-### Dans le conteneur
-
-**Workflow de développement :**
-
+**Dans le conteneur** :
 ```bash
 # Compiler le workspace (si nécessaire)
-# Équivalent à ./scripts/build.sh andra sur le robot
 colcon build
 
-# Sourcer le workspace compilé
+# Sourcer le workspace
 source install/setup.bash
 
-# Lancer RViz2 pour visualiser les cartes SLAM
+# Lancer RViz2
 rviz2 -d /workspace/ros_launcher/config.rviz
-
-# Ou ester vos nodes ROS2 individuellement
-ros2 run image_transfer image_publisher
-ros2 run image_transfer image_subscriber
-# etc.
 ```
 
-**Utilisation principale : Visualiser les cartes SLAM avec RViz2**
+**Prérequis** :
+- Docker installé
+- Linux avec X11 (pour RViz2)
+- Même réseau WiFi que le robot
+- Workspace ROS2 compilé sur le robot
 
-Le fichier `config.rviz` est automatiquement monté depuis `ros_launcher/config.rviz` et contient toute la configuration nécessaire pour visualiser :
-- La carte (`/map`) générée par SLAM
-- Les scans LIDAR (`/scan`)
-- Les transformations TF
-- La position du robot
-- Le trajet du robot (`/robot_path`) via le display Path
-- Les particules AMCL (en mode localisation)
+---
 
-**Note** : Dans Docker, vous devez compiler manuellement avec `colcon build`. Car les scripts `scripts/build.sh` et `scripts/setup.sh` sont conçus pour fonctionner directement sur le robot.
+## Environnement 2 : Jetson Orin (PyTorch + GPU)
 
-## Cas d'utilisation
+### À quoi ça sert
 
-### Utilisation recommandée
+**Exécuter le nœud `image_subscriber` avec GPU pour la détection YOLO des fissures.**
 
-- **Visualiser les cartes SLAM** créées par le robot depuis votre machine Linux (ou une du TechLab)
-- **Déboguer visuellement** le système robotique avec RViz2
-- **Tester la compilation** de votre code avant de le déployer sur le robot
+### Utilisation
 
-### Limitations
+**Lancer le nœud** (depuis la racine du projet) :
+```bash
+./scripts/pytorch.sh
+```
 
-- Développer dans un conteneur Docker offre des possibilités limitées par rapport à un accès direct au robot via SSH
-- Pour le développement complet, il est recommandé d'utiliser SSH directement sur le robot
-- Certaines fonctionnalités matérielles (accès direct aux périphériques) ne sont pas disponibles dans Docker
+**Remarque importante** :  
+L'utilisation de cet environnement ne se fait **pas** en lançant des commandes depuis ce dossier `ros-docker/`, mais via le script `./scripts/pytorch.sh`. Ce script utilise les fichiers Docker présents dans ce dossier pour démarrer (`launch_jetson.sh`) un conteneur adapté à Jetson (`Dockerfile.jetson`), permettant l'exécution du nœud `image_subscriber` avec GPU.
 
-**Recommandation** : Utilisez ce conteneur principalement pour la **visualisation avec RViz2**. Pour le développement complet, connectez-vous directement au robot via SSH.
+---
 
-## Note technique
+## Structure des fichiers
 
-Il est possible d'utiliser une machine macOS ou Windows pour tester vos nœuds ROS2 via l'image Docker créée, mais la configuration de l'interface graphique pour RViz2 afin de visualiser le robot dépend grandement de votre plateforme et est très complexe et fastidieuse hors Linux.
+### Dockerfiles
 
-## Liens utiles
+- **`Dockerfile`** : Image pour PC de développement (ROS2 + RViz2)
+- **`Dockerfile.jetson`** : Image pour Jetson (PyTorch + ROS2 + GPU)
 
-- [Documentation ROS2 Humble](https://docs.ros.org/en/humble/)
-- [Documentation Docker](https://docs.docker.com/)
+**Note** : Les images sont déjà construites. Vous n'avez normalement pas besoin de les reconstruire.
 
+### Scripts de lancement
+
+- **`launch.sh`** : Lance le conteneur PC pour RViz2
+- **`launch_jetson.sh`** : Lance le nœud `image_subscriber` avec GPU sur Jetson

@@ -5,8 +5,9 @@ Ce guide explique comment contrôler la caméra PTZ Marshall CV-605 via les comm
 ## Spécifications Marshall CV605 (manuel CV605-BK/WH)
 
 - **Pan** : ±135° (270° au total)
-- **Tilt** : -30° à +30° (60° au total)
-- **Presets** : 0–9 sur la télécommande, jusqu’à 255 en VISCA
+- **Tilt constructeur** : -30° à +30° (60° au total)
+- **Tilt réel** : -90° à +90° (180° au total) 
+- **Presets** : 0 & -1 (voir ci-dessous)
 
 ## Contrôle manuel de la caméra
 
@@ -67,36 +68,77 @@ ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: -1}"
 ros2 topic pub --once /ptz/preset std_msgs/Int32 "{data: 0}"
 ```
 
-**Note** : Le script `sequence_photo` utilise automatiquement le preset Home (-1) pour revenir au centre après chaque capture. Le nœud `ptz_controller` gère ce topic et envoie la commande VISCA appropriée à la caméra.
-
-
-**Important** : Le topic `/ptz/preset` n'est plus géré automatiquement par le système. Si vous voulez utiliser des presets, vous devez créer un nœud personnalisé qui écoute ce topic et envoie les commandes VISCA appropriées à la caméra.
-
 ### Utilisation dans sequence_photo
 
-Le script `sequence_photo` utilise **uniquement les commandes de base `/ptz/cmd_vel`** et le preset Home (-1) pour contrôler la PTZ car beaucoup plus simple a configurer :
+Le script `sequence_photo` exécute un cycle "Step-and-Go" : le robot avance d'un mètre, s'immobilise, puis réalise la capture. À chaque arrêt, la caméra est pilotée via `/ptz/cmd_vel` et le preset Home (preset -1).
 
 ```bash
 ros2 run navigation_utils sequence_photo
 ```
 
-La séquence suit une séquence précise avec durées fixes :
+Voici la sequence la plus rapide efficace qu'il est possible de faire d'apres nos tests :
 
 1. **Gauche** :
-   - Mouvement pan gauche (3.5s) → Stabilisation (0.5s) → Capture → Attendre (0.5s) → Retour Home (3.5s)
+   - Mouvement pan gauche (3.6s) → Stabilisation (0.5s) → Capture → Attendre (0.5s)
 
-2. **Haut** :
-   - Mouvement tilt haut (5.5s) → Stabilisation (0.5s) → Capture → Attendre (0.5s) → Retour Home (5.5s)
+2. **Haut #1** :
+   - Mouvement tilt haut (3.0s) → Stabilisation (0.5s) → Capture → Attendre (0.5s)
 
-3. **Droite** :
-   - Mouvement pan droite (3.5s) → Stabilisation (0.5s) → Capture → Attendre (0.5s) → Retour Home (3.5s)
+3. **Haut #2** :
+   - Mouvement tilt haut (4.0s) → Stabilisation (0.5s) → Capture → Attendre (0.5s) → Retour Home (4.5s)
+
+4. **Droite** :
+   - Mouvement pan droite (3.6s) → Stabilisation (0.5s) → Capture → Attendre (0.5s)
+
+5. **Haut #3** :
+   - Mouvement tilt haut (3.0s) → Stabilisation (0.5s) → Capture → Attendre (0.5s) → Retour Home (1.5s)
 
 **Paramètres configurables** :
-- `ptz_move_90_duration:=3.5` : Durée du mouvement pan (gauche/droite) en secondes
-- `ptz_move_up_duration:=5.5` : Durée du mouvement tilt (haut) en secondes
+- `ptz_move_90_duration:=3.6` : Durée du mouvement pan (gauche/droite) en secondes
+- `ptz_move_up_short_duration:=3.0` : Durée du mouvement tilt court (haut) en secondes
+- `ptz_move_up_long_duration:=4.0` : Durée du mouvement tilt long (haut) en secondes
 - `ptz_stable_duration:=0.5` : Durée de stabilisation avant capture en secondes
-- `delay_after_capture:=0.5` : Attente après capture avant retour home en secondes
-- `ptz_center_duration_pan:=3.5` : Durée pour retour home depuis pan (gauche/droite) en secondes
-- `ptz_center_duration_tilt:=5.5` : Durée pour retour home depuis tilt (haut) en secondes
+- `delay_after_capture:=0.5` : Attente après capture avant mouvement suivant en secondes
+- `ptz_home_duration_mid:=4.5` : Durée pour retour home après capture 3 (haut #2) en secondes
+- `ptz_home_duration_final:=1.5` : Durée pour retour home final après capture 5 (haut #3) en secondes
+
+**Arrêt (Ctrl+C)** : Le script envoie STOP puis HOME directement via socket VISCA, indépendant de ROS2, pour garantir le retour au centre même si le contexte ROS2 est invalidé.
 
 ---
+
+### Utilisation dans sequence_video
+
+Le script `sequence_video` automatise l'acquisition de données pour l'inspection des parois. Il synchronise l'avance lente du robot avec un balayage PTZ optimisé pour la détection.
+
+```bash
+ros2 run navigation_utils sequence_video
+
+```
+
+**Pattern "Scanner de Voûte" (Recommandé pour l'IA)** :
+
+Ce pattern utilise un **balayage sinusoïdal horizontal**. Il permet de transformer la caméra en un scanner de ligne haute qui "déroule" la surface du tunnel pendant que le robot avance.
+
+1. **Axe Pan (Horizontal)** : Oscillation continue entre l'extrême gauche (`-1.0`) et l'extrême droite 
+(`1.0`). La vitesse suit une courbe en cosinus : elle ralentit aux extrémités pour stabiliser l'image 
+avant l'inversion du mouvement.
+2. **Axe Tilt (Vertical)** : Fixe pendant le balayage. Une légère poussée (0.1) est appliquée uniquement au début du premier cycle pour positionner vers la voûte.
+3. **Avance Robot** : Le robot maintient une vitesse constante (`0.06 m/s`). Chaque passage 
+horizontal de la caméra couvre une nouvelle section de tunnel avec un léger recouvrement (*overlap*) 
+nécessaire à la reconstruction post-traitement.
+
+**Arrêt (Ctrl+C)** : Le script envoie STOP puis HOME directement via socket VISCA, indépendant de ROS2, pour garantir le retour au centre même si le contexte ROS2 est invalidé.
+
+**Paramètres configurables** :
+
+| Paramètre | Valeur par défaut | Description |
+| --- | --- | --- |
+| `robot_speed` | `0.06` | Vitesse d'avance du robot (m/s) |
+| `ptz_sweep_duration` | `30.0` | Temps pour un aller-retour horizontal complet |
+| `ptz_start_pan` | `-1.0` | Limite gauche du balayage |
+| `ptz_end_pan` | `0.0` | Limite droite du balayage (centre) |
+| `ptz_start_tilt` | `0.0` | Tilt de départ |
+| `ptz_end_tilt` | `1.0` | Tilt cible (poussée au 1er cycle uniquement) |
+| `ptz_speed_factor` | `10.0` | Gain appliqué aux commandes de vitesse PTZ |
+| `rtsp_url` | `rtsp://...` | Flux source de la Marshall CV605 |
+| `enable_video_adjustment` | `false` | Activer le traitement logiciel (Luminosité/Contraste) |

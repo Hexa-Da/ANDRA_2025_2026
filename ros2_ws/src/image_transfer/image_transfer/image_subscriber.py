@@ -1,28 +1,29 @@
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Bool
 from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
 from ultralytics import YOLO
 from geometry_msgs.msg import Point
 import cv2
-import numpy as np
 import os
 import time
+import torch
+
 
 class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('image_subscriber')
         self.position_pub = self.create_publisher(Point, 'position_detectee', 10)
         self.position = None
-        # Abonnement au topic 'photo_topic' pour recevoir les images
         self.subscription = self.create_subscription(
             Image,
             'photo_topic',
             self.listener_callback,
             10
         )
+        self.get_logger().info("Abonne au topic /photo_topic")
+        self.image_count = 0
 
         self.odom_subscription = self.create_subscription(
             Odometry,
@@ -33,83 +34,187 @@ class ImageSubscriber(Node):
 
         self.bridge = CvBridge()
 
-        # Charger le modèle YOLO
-        # model_path = '/home/techlab/dossier_oriana/package1/models/tags_model.pt'
-        model_path = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt' 
-        self.model = YOLO(model_path)
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if torch.cuda.is_available():
+            try:
+                gpu_name = torch.cuda.get_device_name(0)
+                self.get_logger().info(f"CUDA disponible: {gpu_name}")
+                # Garder une marge memoire sur Jetson pour eviter les erreurs NvMap.
+                torch.cuda.set_per_process_memory_fraction(0.5)
+            except Exception as e:
+                self.get_logger().warn(f"Probleme CUDA: {e}, fallback CPU")
+                self.device = 'cpu'
+        else:
+            self.get_logger().warn("CUDA non disponible, fallback CPU")
 
-        # Création du dossier de stockage des images détectées
-        project_root = os.path.expanduser("~/Documents/ANDRA_2025-2026")
-        self.output_dir = os.path.join(project_root, "ros2_ws", "images_detectees")
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-            self.get_logger().info(f'Dossier créé : {self.output_dir}')
+        # Chercher d'abord TensorRT (.engine), puis PyTorch (.pt)
+        # TensorRT est beaucoup plus rapide sur Jetson
+        docker_engine = '/ros2_ws/models/best.engine'
+        docker_pt = '/ros2_ws/models/best.pt'
+        local_engine = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.engine'
+        local_pt = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt'
+        
+        if os.path.exists(docker_engine):
+            self.model_path = docker_engine
+            self.use_tensorrt = True
+            self.get_logger().info(f"🚀 Modele TensorRT trouve: {self.model_path}")
+        elif os.path.exists(docker_pt):
+            self.model_path = docker_pt
+            self.use_tensorrt = False
+            self.get_logger().info(f"📦 Modele PyTorch trouve: {self.model_path}")
+        elif os.path.exists(local_engine):
+            self.model_path = local_engine
+            self.use_tensorrt = True
+            self.get_logger().info(f"🚀 Modele TensorRT trouve: {self.model_path}")
+        elif os.path.exists(local_pt):
+            self.model_path = local_pt
+            self.use_tensorrt = False
+            self.get_logger().info(f"💻 Modele PyTorch trouve: {self.model_path}")
+        else:
+            error_msg = f"Modele non trouve. Chemins testes:\n- {docker_engine}\n- {docker_pt}\n- {local_engine}\n- {local_pt}"
+            self.get_logger().error(error_msg)
+            raise FileNotFoundError(error_msg)
+        
+        self.model = None
+        self._model_loaded = False
+        self.get_logger().info("Modele charge au premier callback (lazy loading)")
+        # Reglages d'inference conservateurs pour tenir sur GPU Jetson.
+        self.gpu_imgsz = 640
+        # Option pour dessiner les boxes (desactivable pour performance)
+        self.draw_boxes = True
 
-        self.get_logger().info('Nœud 5 démarré et prêt à recevoir les images.')
+        # Dans Docker, toujours ecrire dans le volume monte /ros2_ws
+        # pour retrouver les images detectees cote hote.
+        if os.path.isdir('/ros2_ws') or os.path.exists('/.dockerenv'):
+            self.output_dir = '/ros2_ws/images_detectees'
+        else:
+            project_root = os.path.expanduser("~/Documents/ANDRA_2025-2026")
+            self.output_dir = os.path.join(project_root, "ros2_ws", "images_detectees")
+        
+        os.makedirs(self.output_dir, exist_ok=True)
+        self.get_logger().info(f"Dossier detections: {self.output_dir}")
+
+        self.get_logger().info('image_subscriber pret')
     
     def odom_callback(self, msg: Odometry):
         self.position = msg.pose.pose.position
 
     def listener_callback(self, msg):
-        """Récupère l'image, applique l'IA, publie si une étiquette est détectée"""
+        """Recoit une image sur /photo_topic puis lance YOLO."""
+        self.image_count += 1
+        if self.image_count == 1:
+            self.get_logger().info("Premiere image recue sur /photo_topic")
+        elif self.image_count % 50 == 0:
+            self.get_logger().info(f"{self.image_count} images recues")
+        
         try:
-            # Convertir l'image ROS en image OpenCV
             img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         except Exception as e:
-            self.get_logger().error(f"Erreur de conversion d'image : {e}")
+            self.get_logger().error(f"Erreur conversion image: {e}")
             return
 
-        # Appliquer la détection
         detected, img_with_boxes = self.detect_tags(img)
 
-        # Afficher et enregistrer l'image si une détection est faite
         if detected:
-            self.get_logger().info("✅ Étiquette détectée.")
-            
-            # Sauvegarde de l'image avec timestamp
+            self.get_logger().info("Detection fissure")
+            # Timestamp haute resolution pour eviter l'ecrasement (plusieurs detections/s)
             timestamp = time.strftime("%Y%m%d_%H%M%S")
-            image_path = os.path.join(self.output_dir, f"detection_{timestamp}.jpg")
+            ms = int((time.time() % 1) * 1000)
+            image_path = os.path.join(
+                self.output_dir,
+                f"detection_{timestamp}_{ms:03d}_{self.image_count:06d}.jpg"
+            )
             cv2.imwrite(image_path, img_with_boxes)
-            self.get_logger().info(f"🖼️ Image sauvegardée : {image_path}")
-            self.get_logger().info(f"Voici la position du robot : {self.position}")
-            # Publier la position détectée
+            self.get_logger().info(f"Image sauvegardee: {image_path}")
             if self.position is not None:
                 point_msg = Point()
                 point_msg.x = self.position.x
                 point_msg.y = self.position.y
                 point_msg.z = self.position.z
                 self.position_pub.publish(point_msg)
-                self.get_logger().info("📡 Position publiée à un autre nœud.")
-            
-        else:
-            self.get_logger().info("❌ Aucune étiquette détectée.")
+                self.get_logger().info("Position detectee publiee")
 
-    def detect_tags(self, img):
-        """Applique le modèle YOLO et retourne l'image annotée"""
+    def _load_model(self):
+        """Charge YOLO au premier callback."""
+        if self._model_loaded:
+            return
+        
         try:
-            results = self.model(img)
-            img_with_boxes = img.copy()
-            detected = False
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                try:
+                    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
+                    gpu_allocated = torch.cuda.memory_allocated(0) / 1024**3
+                    gpu_free = gpu_memory - gpu_allocated
+                    self.get_logger().info(f"Memoire GPU libre: {gpu_free:.2f} / {gpu_memory:.2f} GB")
+                    if gpu_free < 1.0:
+                        self.get_logger().warn("Memoire GPU insuffisante (<1GB), fallback CPU")
+                        self.device = 'cpu'
+                except Exception as e:
+                    self.get_logger().warn(f"Impossible de lire la memoire GPU: {e}, fallback CPU")
+                    self.device = 'cpu'
 
-            for result in results:
-                if result.boxes is not None and len(result.boxes) > 0:
-                    for detection in result.boxes:
-                        # Correction pour récupérer les valeurs correctement
-                        x1, y1, x2, y2 = map(int, detection.xyxy[0].cpu().numpy())
-                        conf = detection.conf[0].item()
-                        cls = int(detection.cls[0].item())
-                        label = f"Classe {cls}: {conf:.2f}"
-
-                        # Dessiner la bounding box
-                        cv2.rectangle(img_with_boxes, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(img_with_boxes, label, (x1, y1 - 10),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
-                        detected = True  # Au moins une détection trouvée
-
-            return detected, img_with_boxes
+            self.get_logger().info("Chargement modele YOLO...")
+            self.model = YOLO(self.model_path)
+            self._model_loaded = True
+            self.get_logger().info(f"Modele charge. Device inference cible: {self.device}")
+            time.sleep(0.2)
         except Exception as e:
-            self.get_logger().error(f"Erreur dans detect_tags : {e}")
+            self.get_logger().error(f"Erreur chargement modele: {e}")
+            raise
+    
+    def detect_tags(self, img):
+        """Applique YOLO et retourne (detected, image_annotee)."""
+        try:
+            if not self._model_loaded:
+                self._load_model()
+
+            device_id = 0 if self.device == 'cuda' and torch.cuda.is_available() else 'cpu'
+            try:
+                if device_id == 0:
+                    if self.use_tensorrt:
+                        # TensorRT: deja optimise pour GPU, pas besoin de half/imgsz
+                        results = self.model(img, device=0, verbose=False)
+                    else:
+                        # PyTorch: FP16 + image plus petite pour reduire memoire CUDA
+                        results = self.model(
+                            img,
+                            device=0,
+                            imgsz=self.gpu_imgsz,
+                            half=True,
+                            verbose=False
+                        )
+                else:
+                    results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
+            except Exception as e:
+                # Fallback robuste en cas de crash/erreur CUDA a l'inference.
+                if device_id != 'cpu':
+                    self.get_logger().warn(f"Erreur inference GPU ({e}), fallback CPU")
+                    self.device = 'cpu'
+                    try:
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                    results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
+                else:
+                    raise
+
+            detected = len(results[0].boxes) > 0
+            
+            # plot() dessine les bounding boxes sur l'image (operation CPU)
+            # Si draw_boxes=False, on retourne l'image originale (plus rapide)
+            if detected:
+                if self.draw_boxes:
+                    img_with_boxes = results[0].plot()  # Dessine les boxes (CPU)
+                else:
+                    img_with_boxes = img  # Pas de dessin = plus rapide
+            else:
+                img_with_boxes = img
+                
+            return detected, img_with_boxes
+            
+        except Exception as e:
+            self.get_logger().error(f"Erreur detect_tags: {e}")
             return False, img
 
 def main(args=None):

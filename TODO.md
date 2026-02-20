@@ -44,15 +44,17 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
 - [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
 - [x] Documentation des nœuds ROS2
+- [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
 
-### Verification des nœuds ROS2  
+### Verification/Implémentation des nœuds ROS2  
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
+- [x] `video_publisher` : Traitement des vidéos enregistrées, extraction d'images et publication sur `/photo_topic`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
 - [x] `position_publisher` : Affichage de la position du robot
 - [x] `report_fissures` : Traçage des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
-- [x] `sequence_robot` : Automatisation de la séquence de mouvement et captures PTZ en boucle
-- [x] Correction des erreurs de shutdown dans les nœuds Python 
+- [x] `sequence_photo` : Automatisation de la séquence de mouvement et captures PTZ en boucle (5 captures)
+- [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
 
 ### Configuration navigation
 - [x] Configuration SLAM Toolbox (`ros_launcher/slam_config.yaml`)
@@ -68,24 +70,35 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Réinstallation complète du robot
 - [ ] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
-- [ ] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
+- [x] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
 - [ ] **Objectif** : Atteindre les résultats finaux de l'année dernière
 
 ### Problème LIDAR
 - [x] Connexion au port série (`/dev/ttyTHS1`)
-- [x] **Diagnostic chipset (Carte Radar_Con)** : ✅ Chipset opérationnel
-  - Test loopback réussi (TX/RX fonctionnels)
-- [x] **Diagnostic communication LiDAR** : ❌ Pas de réponse du processeur
+- [x] **Diagnostic communication LiDAR** : 
   - Scan de baudrates effectués : 115200, 128000 (X4), 230400 (G4) sans réponse
   - Tentative activation forcée via DTR/RTS sans succès
   - LED s'allume brièvement puis s'éteint (mise en sécurité ou coupure alimentation)
-- [ ] **Erreurs persistantes** :
-  - `Error, cannot retrieve Lidar health code -1`
-  - `Fail to get baseplate device information!`
-  - `Failed to start scan mode -1`
-- [ ] **Hypothèses matérielles** :
-  - **Alimentation** : Port Micro-USB avec source externe suspecté instable
-  - **État actuel** : LiDAR s'initialise au branchement mais s'arrête sans commande "Start Scan" valide
+- [x] **Diagnostic du chipset (Carte Radar_Con)** : 
+  - Le port Micro USB est arraché, ce qui empêche l’alimentation du moteur et donc le lancement du scan
+  - Test de loopback concluant (TX/RX opérationnels), le reste des composants fonctionne donc correctement
+  - Un branchement de secours via le port USB-C a été tenté et s’est avéré fonctionnel
+- [x] **Problème résolu après intervention sur le chipset** : ✅ **RÉSOLU**
+  - **Modification de l’alimentation** : Passage au port USB-C `/dev/ttyUSB0` pour fournir suffisamment de puissance au LIDAR.
+  - **Correction de la configuration** : Le mauvais fichier de configuration (G4.yaml) était utilisé alors que le LIDAR est en réalité un modèle TG15.
+  - **Actions menées** :
+    - Remplacement du port `/dev/ttyTHS1` par `/dev/ttyUSB0`
+    - Suppression de l’ancien fichier de configuration local (`ros_launcher/ydlidar_config.yaml`)
+    - Adoption du fichier officiel `TG.yaml` du package `ydlidar_ros2_driver`
+    - Simplification du launch file afin d’utiliser directement la configuration officielle fournie par le package
+  - **Résultat** : Le LIDAR démarre normalement et publie sur `/scan` avec les paramètres attendus.
+- [x] **État actuel** : ✅ LIDAR en service
+  - Modèle : TG15 (Model Code 100)
+  - Port utilisé : `/dev/ttyUSB0` (détection automatique)
+  - Baudrate : 512000
+  - Fréquence de balayage : 10 Hz
+  - Taux d’échantillonnage : 20 kHz
+  - Publication sur `/scan` : ✅ Ok
 
 ### Problème Zed 2
 - [x] **zed_wrapper** : Package installé et fonctionnel
@@ -122,22 +135,19 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
   - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
   - **Topics** :
-    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_robot`)
+    - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_photo` et `sequence_video`)
     - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre et Reset (0) pour le recallibrage
   - **Format VISCA** : Implémentation selon documentation Marshall CV-605
     - Header : `0x80 + camera_address` (adresse 1 par défaut)
     - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
     - Home : `0x01 0x06 0x04` pour retour au centre
   - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset
-- [x] **Automatisation séquence robot** : Création du nœud `sequence_robot`
-  - **Fonctionnalités** :
-    - Avance le robot de 1m, s'arrête 30s pour captures PTZ, puis repart en boucle
-    - Séquence PTZ précise : gauche(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-    - → haut(5.5s) → stab(0.5s) → capture → attendre(0.5s) → home(5.5s)
-    - → droite(3.5s) → stab(0.5s) → capture → attendre(0.5s) → home(3.5s)
-  - **Contrôle PTZ** : Utilise `/ptz/cmd_vel` pour les mouvements et preset Home (-1) pour retour au centre
+- [x] **Automatisation séquence robot** : Création des nœuds `sequence_photo` et `sequence_video`
+  - **sequence_photo** : Avance 1m, arrêt 30s, 5 captures PTZ (Gauche, Haut×3, Droite, Haut), boucle
+  - **sequence_video** : Vidéo continue + balayage PTZ horizontal sinusoïdal + robot à 0.06 m/s
+  - **Contrôle PTZ** : `/ptz/cmd_vel` pour les mouvements ; preset Home (-1) ou socket VISCA direct à l'arrêt (Ctrl+C)
   - **Paramètres configurables** : Durées de mouvement, stabilisation, retour au centre
-  - **État actuel** : ✅ Séquence automatique fonctionnelle avec captures PTZ
+  - **État actuel** : ✅ Séquence automatique fonctionnelle, arrêt propre avec STOP puis HOME via socket
 
 ### Améliorations du système de lancement
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
@@ -184,7 +194,6 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Familiarisation avec RViz2 en cours
   - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
   - **Caméra ZED2** : Cohérence des données pas encore vérifiée
-  - **Lidar** : Lidar toujours hors service, ce qui empêche la création de la carte pour le moment
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
@@ -217,16 +226,25 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
     - Revoir l'enchaînement des positions de la PTZ
     - Essayer d'utiliser le script video à très basse vitesse
 
+- [x] **Optimisation de la détection YOLO avec Docker et TensorRT** :
+  - **Recherche et construction de l'image Docker** : Création d'une image Docker spécialisée pour Jetson Orin (`Dockerfile.jetson`) basée sur `dustynv/l4t-pytorch:r36.2.0` pour bénéficier du support GPU natif. L'image intègre ROS 2 Humble, PyTorch avec CUDA, et toutes les dépendances nécessaires (Ultralytics, OpenCV, NumPy < 2.0 pour compatibilité avec cv_bridge). Cette approche permet d'isoler l'environnement de détection YOLO et d'utiliser efficacement le GPU du Jetson.
+  - **Optimisation par conversion TensorRT** : Création du script `scripts/convert_to_tensorrt.sh` pour convertir le modèle PyTorch `best.pt` en format TensorRT `best.engine`, permettant une accélération significative de l'inférence sur Jetson (jusqu'à 3-5x plus rapide). Le script utilise le conteneur Docker pour effectuer la conversion avec les paramètres optimaux (half precision, device GPU, taille d'image 640x640).
+  - **Adaptation et création des scripts** : 
+    - `scripts/pytorch.sh` : Script unifié qui délègue à `ros-docker/launch_jetson.sh` pour lancer le nœud `image_subscriber` dans le conteneur Docker avec accès GPU
+    - `ros-docker/launch_jetson.sh` : Script de lancement du conteneur Docker avec configuration réseau host, montage des volumes, et vérification automatique des dépendances (ROS 2, Ultralytics, modèles YOLO)
+    - `ros-docker/Dockerfile.jetson` : Dockerfile optimisé pour Jetson avec installation de ROS 2 Humble et dépendances Python pour YOLO
+  - **Adaptation du code Python** : Modification de `ros2_ws/src/image_transfer/image_transfer/image_subscriber.py` pour détecter et utiliser automatiquement le modèle TensorRT (`best.engine`) s'il est disponible, avec fallback sur `best.pt` si nécessaire. 
+
 ---
 
 ## À faire - Court terme (avant première descente debut février)
 
 ### Configuration et installation
-- [ ] Finaliser la réinstallation de l'image du robot
+- [x] Finaliser la réinstallation de l'image du robot
 - [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [ ] Installer/configurer le driver `zed_wrapper`
+- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
 - [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
-- [ ] Résoudre le problème LIDAR ou documenter la décision de continuer sans
+- [x] Résoudre le problème LIDAR ✅ (Résolu le 18 février 2026)
 
 ### Test et compréhension du projet
 - [x] Tester la configuration de la navigation
@@ -239,7 +257,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ### Reproduire les résultats de l'année dernière
 - [x] Robot capable d'avancer en ligne droite pendant 1 mètre
 - [x] Robot capable de s'arrêter pour prendre une image
-- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_robot`)
+- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_photo` ou `sequence_video`)
   - Séquence PTZ : gauche → haut → droite avec captures
   - Retour au centre via preset Home (-1)
   - Boucle automatique de la séquence complète
@@ -332,4 +350,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 10 Février 2026
+**Dernière mise à jour** : 19 Février 2026

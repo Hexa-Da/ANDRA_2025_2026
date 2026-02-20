@@ -41,7 +41,8 @@ class RobotSequence(Node):
         self.initial_position = None
         self.current_position = None
         self.state = 'WAITING_START'  # WAITING_START, MOVING, STOPPED, PTZ_MOVING, WAITING_STABLE, RESETTING
-        
+        self.shutdown_requested = False
+
         # Paramètres
         self.target_distance = 1.0  # 1 mètre
         self.stop_duration = 30.0  # 30 secondes
@@ -123,22 +124,31 @@ class RobotSequence(Node):
         return ((pos2[0] - pos1[0])**2 + (pos2[1] - pos1[1])**2)**0.5
     
     def move_robot(self, linear_x, angular_z=0.0):
-        """Publie une commande de vitesse pour le robot"""
-        twist = Twist()
-        twist.linear.x = float(linear_x)
-        twist.angular.z = float(angular_z)
-        self.cmd_vel_pub.publish(twist)
+        """Publie une commande de vitesse avec sécurité contextuelle"""
+        if self.shutdown_requested:
+            return
+        try:
+            twist = Twist()
+            twist.linear.x = float(linear_x)
+            twist.angular.z = float(angular_z)
+            self.cmd_vel_pub.publish(twist)
+        except Exception:
+            pass
     
     def stop_robot(self):
         """Arrête le robot"""
         self.move_robot(0.0, 0.0)
     
     def move_ptz(self, pan, tilt):
-        """Publie une commande de mouvement pour la PTZ"""
-        twist = Twist()
-        twist.angular.z = float(pan)
-        twist.linear.y = float(tilt)
-        self.ptz_cmd_vel_pub.publish(twist)
+        if self.shutdown_requested:
+            return
+        try:
+            twist = Twist()
+            twist.angular.z = float(pan)
+            twist.linear.y = float(tilt)
+            self.ptz_cmd_vel_pub.publish(twist)
+        except Exception:
+            pass
     
     def stop_ptz(self):
         """Arrête le mouvement de la PTZ immédiatement
@@ -147,6 +157,30 @@ class RobotSequence(Node):
         stop_ptz() est appelé pour arrêter la caméra à sa position actuelle.
         """
         self.move_ptz(0.0, 0.0)
+    
+    def stop_then_home_ptz(self):
+        """Arrête tout et force le Home via socket (interruption)"""
+
+        self.shutdown_requested = True
+        print("\nArrêt PTZ et retour Home matériel...\n\n")
+
+        try:
+            import socket
+            cam_ip = '192.168.5.163'
+            cam_port = 1259 
+            
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(1.0)
+                sock.connect((cam_ip, cam_port))
+                
+                # A. STOP (Crucial : annule les cmd_vel en cours dans le buffer caméra)
+                sock.sendall(bytes([0x81, 0x01, 0x06, 0x01, 0x03, 0x03, 0x03, 0x03, 0xFF]))
+                time.sleep(0.1)
+                
+                # B. HOME
+                sock.sendall(bytes([0x81, 0x01, 0x06, 0x04, 0xFF]))
+        except Exception as e:
+            print(f"Erreur Socket: {e}")
     
     def start_ptz_movement(self, pan, tilt, duration):
         """Démarre un mouvement PTZ pendant une durée donnée
@@ -168,28 +202,16 @@ class RobotSequence(Node):
         self.get_logger().info(f"PTZ: Mouvement vers {'-'.join(direction)} pendant {duration}s")
     
     def return_ptz_to_center(self, duration=None, allow_robot_move=False):
-        """Retourne la PTZ au centre en utilisant le preset Home (-1)
-        
-        Args:
-            duration: Durée d'attente pour le retour au centre (None = utiliser durée par défaut)
-            allow_robot_move: Si True, le robot peut repartir pendant le retour au centre
-        """
-        # D'abord arrêter tout mouvement en cours
         self.stop_ptz()
-        
-        # Utiliser le preset Home (-1) pour revenir au centre
-        msg = Int32()
-        msg.data = -1  # -1 = Home (position centrale)
-        self.ptz_preset_pub.publish(msg)
-        
-        # Passer en état d'attente pour le retour au centre
+        time.sleep(0.1)
+        if not self.shutdown_requested:
+            msg = Int32()
+            msg.data = -1
+            self.ptz_preset_pub.publish(msg)
         self.state = 'WAITING_STABLE'
         self.stable_start_time = time.time()
         self.center_wait_duration = duration if duration is not None else 5.0
         self.robot_can_move = allow_robot_move
-        self.get_logger().info(f"PTZ: Commande Home (position centrale) - attente {self.center_wait_duration}s")
-        if allow_robot_move:
-            self.get_logger().info("Robot peut repartir pendant le retour au centre")
     
     def trigger_capture(self, description=""):
         """Déclenche une capture via le topic /trigger_capture (std_msgs/String)"""
@@ -201,7 +223,7 @@ class RobotSequence(Node):
     
     def sequence_loop(self):
         """Boucle principale de la séquence"""
-        if self.state == 'WAITING_START':
+        if self.state == 'WAITING_START' or self.shutdown_requested:
             return
         
         elif self.state == 'MOVING':
@@ -405,19 +427,26 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info("Arrêt de la séquence...")
-        node.stop_robot()
-        node.stop_ptz()
-    except Exception as e:
-        node.get_logger().error(f"Erreur dans la séquence: {e}")
+        print("\nInterruption détectée...")
     finally:
+        # ÉTAPE 1: On bloque toutes les futures publications ROS
+        node.shutdown_requested = True
+        
+        # ÉTAPE 2: On tente l'arrêt du robot avant que le contexte ne meure totalement
+        # On utilise un try/except car le contexte ROS est déjà fragile ici
         try:
-            if rclpy.ok():
-                node.stop_robot()
-                node.destroy_node()
-                rclpy.shutdown()
+            print("[CLEANUP] Arrêt du robot...")
+            node.stop_robot()
         except Exception:
-            pass
+            print("[CLEANUP] Note: ROS2 n'a pas pu envoyer le stop_robot (contexte expiré).")
+        
+        # ÉTAPE 3: On exécute le HOME via Socket (indépendant de ROS2)
+        node.stop_then_home_ptz()
+        
+        # ÉTAPE 4: Fermeture propre
+        time.sleep(0.2) # Laisser le temps aux derniers paquets de sortir
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
