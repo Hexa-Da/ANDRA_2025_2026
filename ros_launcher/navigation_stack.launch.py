@@ -67,7 +67,7 @@ def generate_launch_description():
         DeclareLaunchArgument('ptz_gamma', default_value='1.0',
                              description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
         DeclareLaunchArgument('video_extract_rate', default_value='10.0',
-                             description='Extract rate for video publisher (images per second)'),
+                             description='Extract rate for video publisher'),
 
 
         # YDLIDAR - conditionnel
@@ -99,6 +99,7 @@ def generate_launch_description():
         ExecuteProcess(
             cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
             output='screen',
+            emulate_tty=True,
             condition=IfCondition(enable_image_transfer),
         ),
         ExecuteProcess(
@@ -124,9 +125,10 @@ def generate_launch_description():
                 'contrast': PythonExpression(['float(', ptz_contrast, ')']),
                 'gamma': PythonExpression(['float(', ptz_gamma, ')']),
                 'images_output_dir': 'ros2_ws/images_capturees',
-                'enable_capture_auto': False,  # Désactivé par défaut pour permettre le contrôle via /trigger_capture
+                'enable_capture_auto': False,
             }],
             output='screen',
+            emulate_tty=True,
             condition=IfCondition(enable_ptz),
         ),
 
@@ -139,6 +141,7 @@ def generate_launch_description():
                 'extract_rate': PythonExpression(['float(', video_extract_rate, ')']),
             }],
             output='screen',
+            emulate_tty=True,
             condition=IfCondition(enable_video_publisher),
         ),
         
@@ -148,6 +151,7 @@ def generate_launch_description():
             executable='ptz_controller',
             name='ptz_controller',
             output='screen',
+            emulate_tty=True,
             condition=IfCondition(enable_ptz),
         ),
         

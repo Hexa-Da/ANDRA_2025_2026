@@ -54,26 +54,30 @@ class ImageSubscriber(Node):
         local_engine = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.engine'
         local_pt = '/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/models/best.pt'
         
-        if os.path.exists(docker_engine):
-            self.model_path = docker_engine
-            self.use_tensorrt = True
-            self.get_logger().info(f"🚀 Modele TensorRT trouve: {self.model_path}")
-        elif os.path.exists(docker_pt):
-            self.model_path = docker_pt
-            self.use_tensorrt = False
-            self.get_logger().info(f"📦 Modele PyTorch trouve: {self.model_path}")
-        elif os.path.exists(local_engine):
-            self.model_path = local_engine
-            self.use_tensorrt = True
-            self.get_logger().info(f"🚀 Modele TensorRT trouve: {self.model_path}")
-        elif os.path.exists(local_pt):
-            self.model_path = local_pt
-            self.use_tensorrt = False
-            self.get_logger().info(f"💻 Modele PyTorch trouve: {self.model_path}")
-        else:
-            error_msg = f"Modele non trouve. Chemins testes:\n- {docker_engine}\n- {docker_pt}\n- {local_engine}\n- {local_pt}"
-            self.get_logger().error(error_msg)
-            raise FileNotFoundError(error_msg)
+        # Recherche du modele YOLO (TensorRT prioritaire)
+        model_candidates = [
+            (docker_engine, "TensorRT"), (docker_pt, "PyTorch"),
+            (local_engine, "TensorRT"), (local_pt, "PyTorch")
+        ]
+        
+        # Priorite: TensorRT (.engine) avant PyTorch (.pt)
+        force_pytorch = os.environ.get('FORCE_PYTORCH', '0') == '1'
+        if force_pytorch:
+            self.get_logger().warn("FORCE_PYTORCH=1: TensorRT desactive")
+        
+        self.model_path = None
+        self.use_tensorrt = False
+        for path, model_type in model_candidates:
+            if force_pytorch and model_type == "TensorRT":
+                continue
+            if os.path.exists(path) and os.access(path, os.R_OK):
+                self.model_path = path
+                self.use_tensorrt = (model_type == "TensorRT")
+                self.get_logger().info(f"Modele {model_type}: {path}")
+                break
+        
+        if self.model_path is None:
+            raise FileNotFoundError("Modele YOLO non trouve (best.engine ou best.pt)")
         
         self.model = None
         self._model_loaded = False
@@ -82,6 +86,9 @@ class ImageSubscriber(Node):
         self.gpu_imgsz = 640
         # Option pour dessiner les boxes (desactivable pour performance)
         self.draw_boxes = True
+        # Compteur d'erreurs consecutives pour fallback automatique
+        self._consecutive_errors = 0
+        self._max_errors_before_fallback = 5
 
         # Dans Docker, toujours ecrire dans le volume monte /ros2_ws
         # pour retrouver les images detectees cote hote.
@@ -186,10 +193,25 @@ class ImageSubscriber(Node):
                         )
                 else:
                     results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
+                
+                # Reset compteur si inference reussie
+                self._consecutive_errors = 0
+                
             except Exception as e:
+                self._consecutive_errors += 1
+                
+                # Si trop d'erreurs consecutives avec TensorRT, basculer sur CPU
+                if self.use_tensorrt and self._consecutive_errors >= self._max_errors_before_fallback:
+                    self.get_logger().error(
+                        f"{self._consecutive_errors} erreurs TensorRT consecutives - "
+                        "regenerer .engine avec: model.export(format='engine', device=0)"
+                    )
+                    self.device = 'cpu'
+                    self._consecutive_errors = 0
+                
                 # Fallback robuste en cas de crash/erreur CUDA a l'inference.
                 if device_id != 'cpu':
-                    self.get_logger().warn(f"Erreur inference GPU ({e}), fallback CPU")
+                    self.get_logger().warn(f"Erreur inference GPU ({type(e).__name__}: {e}), fallback CPU")
                     self.device = 'cpu'
                     try:
                         torch.cuda.empty_cache()
@@ -214,7 +236,9 @@ class ImageSubscriber(Node):
             return detected, img_with_boxes
             
         except Exception as e:
-            self.get_logger().error(f"Erreur detect_tags: {e}")
+            import traceback
+            self.get_logger().error(f"Erreur detect_tags: {type(e).__name__}: {e}")
+            self.get_logger().debug(f"Traceback: {traceback.format_exc()}")
             return False, img
 
 def main(args=None):

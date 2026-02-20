@@ -27,6 +27,7 @@ video/video_output/
 *.pt
 *.pth
 *.onnx
+*.engine
 ros2_ws/models/
 
 # Images générées par report_fissures
@@ -58,3 +59,7 @@ ros-docker/*.tar
 
 # Dependance des capteurs
 /dependencies
+
+# ros-docker build artifacts
+ros-docker/build/
+ros-docker/log/

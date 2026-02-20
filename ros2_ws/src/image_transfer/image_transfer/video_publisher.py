@@ -185,14 +185,12 @@ class VideoFilePublisher(Node):
                     # 1. Sauvegarde physique dans images_capturees
                     cv2.imwrite(img_path, frame)
                     
-                    # 2. Publication ROS sur /photo_topic pour image_subscriber (YOLO)
+                    # Publication ROS sur /photo_topic pour image_subscriber (YOLO)
                     try:
                         ros_img = self.bridge.cv2_to_imgmsg(frame, "bgr8")
                         self.publisher.publish(ros_img)
-                        if saved_count % 10 == 0:  # Log toutes les 10 images pour éviter le spam
-                            self.get_logger().info(f"📤 Image {saved_count} sauvegardée et publiée sur /photo_topic")
                     except Exception as e:
-                        self.get_logger().warn(f"Erreur lors de la publication de l'image {saved_count}: {e}")
+                        self.get_logger().warn(f"Erreur publication image {saved_count}: {e}")
                     
                     saved_count += 1
 

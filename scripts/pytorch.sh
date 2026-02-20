@@ -10,7 +10,7 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 ROS_DOCKER_SCRIPT="$PROJECT_DIR/ros-docker/launch_jetson.sh"
 
 if [ -f "$ROS_DOCKER_SCRIPT" ]; then
-    echo "🔄 Utilisation de l'infrastructure Docker unifiée..."
+    echo "Utilisation de l'infrastructure Docker unifiée..."
     exec "$ROS_DOCKER_SCRIPT"
 else
     echo "❌ Erreur: Script ros-docker/launch_jetson.sh non trouvé!"
