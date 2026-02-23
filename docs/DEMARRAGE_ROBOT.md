@@ -159,12 +159,12 @@ ros2 launch ros_launcher navigation_stack.launch.py \
 # Dans un nouveau terminal (après avoir lancé le système principal)
 cd ~/Documents/ANDRA_2025-2026
 source scripts/setup.sh
-./scripts/pytorch.sh
+./scripts/image_subscriber_gpu.sh
 ```
 
 **Ordre de lancement recommandé** :
 1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
-2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/pytorch.sh`)
+2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/image_subscriber_gpu.sh`)
 
 ### 8. Lancer le nœud sequence_photo (dans un terminal séparé)
 

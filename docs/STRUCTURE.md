@@ -7,7 +7,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ```
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
-├── ros-docker/                  # Environnement Docker ROS2 pour developper sans avoir accès au robot
+├── ros2_docker/                 # Environnement Docker ROS2 pour visualiser le robot et traiter les images
 ├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
@@ -35,13 +35,13 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 ---
 
-### `ros-docker/`
+### `ros2_docker/`
 **Rôle** : Environnements Docker pour développement et exécution GPU
 
 **Contenu** :
-- `Dockerfile` : Image Docker avec ROS2 et RViz2 (pour PC de développement)
+- `Dockerfile.rviz` : Image Docker avec ROS2 et RViz2 (pour PC de développement)
 - `Dockerfile.jetson` : Image Docker avec PyTorch + ROS2 pour Jetson Orin (GPU)
-- `launch.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
+- `launch_rviz.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
 - `launch_jetson.sh` : Script de lancement du nœud `image_subscriber` avec GPU sur Jetson
 
 **Intérêt** : 
@@ -126,7 +126,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `build.sh` : Compile les workspaces ROS2 (tous ou un spécifique)
 - `launch.sh` : Lance le système complet (mode SLAM ou AMCL)
 - `ptz-network-setup.sh` : Configure le réseau Ethernet pour accéder à la caméra PTZ
-- `pytorch.sh` : Lance le nœud `image_subscriber` avec GPU dans Docker
+- `image_subscriber_gpu.sh` : Lance le nœud `image_subscriber` avec GPU dans Docker
 - `convert_to_tensorrt.sh` : Convertit le modèle PyTorch (`best.pt`) en TensorRT (`best.engine`) pour améliorer les performances
 
 **Intérêt** : Simplifie grandement l'utilisation du projet. Au lieu de se souvenir de multiples commandes ROS2, vous utilisez des scripts simples. Facilite l'onboarding de nouveaux utilisateurs.

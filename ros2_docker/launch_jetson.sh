@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script pour lancer le nœud image_subscriber avec PyTorch sur Jetson
-# Usage: ./ros-docker/launch_jetson.sh
+# Usage: ./ros2_docker/launch_jetson.sh
 
 # Obtenir le répertoire du script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

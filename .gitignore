@@ -48,10 +48,12 @@ ros2_ws/src/ros_launcher/map_with_point_*.png
 .idea/
 *.code-workspace
 
-# Docker images (trop volumineuses)
+# Docker images et build artifacts 
 *.tar
-ros-docker/*.tar
+ros2_docker/*.tar
 *.dockerignore.bak
+ros2_docker/build/
+ros2_docker/log/
 
 # Dossiers de compilation
 /build
@@ -61,6 +63,3 @@ ros-docker/*.tar
 # Dependance des capteurs
 /dependencies
 
-# ros-docker build artifacts
-ros-docker/build/
-ros-docker/log/

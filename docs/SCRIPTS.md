@@ -87,12 +87,12 @@ Ce script :
 
 **Note** : À exécuter après chaque redémarrage du robot pour accéder à la caméra PTZ.
 
-### `scripts/pytorch.sh` - Lancement du nœud image_subscriber avec GPU
+### `scripts/image_subscriber_gpu.sh` - Lancement du nœud image_subscriber avec GPU
 
 Lance le nœud `image_subscriber` dans un conteneur Docker avec accès GPU pour la détection YOLO :
 
 ```bash
-./scripts/pytorch.sh
+./scripts/image_subscriber_gpu.sh
 ```
 
 ### `scripts/convert_to_tensorrt.sh` - Conversion du modèle en TensorRT
