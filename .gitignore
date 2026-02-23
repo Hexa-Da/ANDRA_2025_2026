@@ -61,5 +61,6 @@ ros2_docker/log/
 /log
 
 # Dependance des capteurs
-/dependencies
-
+dependencies/ydlidar_ros2_ws/
+dependencies/scout_base/
+dependencies/zed-ros2-wrapper/

@@ -67,31 +67,21 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
   - `show_pos` : Affiche la position du robot (odométrie)
   - `test` : Outil de test pour vérifier la disponibilité de la carte
-- `src/slam_andra_package/` : Package de configuration SLAM
-- `src/ydlidar_nav2_slam/` : Configuration SLAM pour le LIDAR
+- `src/ros_launcher/` : Package ROS2 de configuration et de lancement (SLAM, AMCL, EKF, Nav2)
+  - `navigation_stack.launch.py` : Fichier de lancement principal 
+  - `configs/` : Fichiers de configuration YAML
+    - `ekf_config.yaml` : Configuration du filtre EKF (fusion des capteurs)
+    - `slam_config.yaml` : Configuration SLAM (cartographie)
+    - `amcl_config.yaml` : Configuration AMCL (localisation)
+  - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
+  - `package.xml` : Manifest du package ROS2
+  - `CMakeLists.txt` : Configuration de build
+  - `config.rviz` : Configuration pré-définie pour RViz2 
 - `images_capturees/` : Images brutes capturées par la caméra PTZ
 - `images_detectees/` : Images avec détections de fissures
 - `models/` : Modèles YOLO
 
-**Intérêt** : Contient tout le code source du projet. C'est ici que vous développez et modifiez les fonctionnalités du robot.
-
----
-
-### `ros2_ws/src/ros_launcher/`
-**Rôle** : Package ROS2 de configuration et de lancement du système
-
-**Contenu** :
-- `navigation_stack.launch.py` : Fichier de lancement principal (lance tous les nœuds)
-- `configs/` : Fichiers de configuration YAML
-  - `ekf_config.yaml` : Configuration du filtre EKF (fusion des capteurs)
-  - `slam_config.yaml` : Configuration SLAM (cartographie)
-  - `amcl_config.yaml` : Configuration AMCL (localisation)
-- `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
-- `package.xml` : Manifest du package ROS2
-- `CMakeLists.txt` : Configuration de build
-- `config.rviz` : Configuration pré-définie pour RViz2 
-
-**Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL. Le fichier `config.rviz` peut être utilisé avec ou sans Docker pour visualiser le robot et la carte.
+**Intérêt** : Regroupe l'ensemble du code source du projet (packages dans `src/`, dont `ros_launcher` pour le lancement et les configs). C'est ici que vous développez et modifiez les fonctionnalités du robot.
 
 ---
 
