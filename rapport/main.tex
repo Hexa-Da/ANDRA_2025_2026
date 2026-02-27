@@ -132,7 +132,7 @@ Les limitations actuelles de ce système sont :
 
 \subsection{Positionnement et navigation}
 
-Le positionnement en milieu souterrain (sans GPS) reste le défi majeur. Si les modèles haut de gamme utilisent des solutions onéreuses combinant LiDAR 3D et centrales inertielles de précision pour éviter le dérapage (« drift »), notre plateforme repose sur un Agilex Scout Mini équipé d'un LiDAR 2D et d'une caméra stéréoscopique ZED2i.
+Le positionnement en milieu souterrain (sans GPS) reste le défi majeur. Si les modèles haut de gamme utilisent des solutions onéreuses combinant LiDAR 3D et centrales inertielles de précision pour éviter le dérapage (« drift »), notre plateforme repose sur un Agilex Scout Mini équipé d'un LiDAR 2D et d'une caméra stéréoscopique ZED2.
 
 Depuis 2025, l'architecture logicielle est entièrement portée sur le framework \textbf{ROS2 (Humble)}, standard industriel actuel, abandonnant les API propriétaires précédentes pour gagner en modularité.
 
@@ -144,19 +144,19 @@ L'état actuel de la solution de navigation repose donc sur l'algorithme AMCL (A
 % --- Travail Semestre 1 ---
 \section{Semestre 1}
 
-\subsection{Prise en main du robot}
+\subsection{Assemblage du robot}
 
 \subsubsection{Présentation des parties indépendantes}
-Notre robot est constitué de 5 parties indépendantes que nous allons détailler ci-dessous. 
+Notre robot autonome est constitué de 5 parties indépendantes que nous allons détailler ci-dessous. 
 
 \paragraph{Caméra PTZ}
-Une caméra Pan-Tilt-Zoom motorisée offrant une rotation panoramique de ±135°, une inclinaison de ±90° et un zoom adaptatif en temps réel. Il s'agit du même modèle utilisé les années précédentes, offrant une résolution de 1080p à 60 fps, mais elle ne dispose pas de stabilisateur d'image intégré. Il est donc crucial de minimiser les vibrations pendant son utilisation pour garantir la netteté de l'image. Autrement dit, le robot devra se déplacer à une vitesse modérée, ce qui ne pose pas de problème en soi, mais doit être pris en compte pour assurer des prises de vue claires et précises.
+Une caméra PTZ (Pan-Tilt-Zoom) capable de pivoter sur 360° et d'ajuster son angle et son zoom de manière dynamique. Il s'agit du même modèle utilisé les années précédentes, offrant une résolution de 1080p à 60 fps, mais elle ne dispose pas de stabilisateur d'image intégré. Il est donc crucial de minimiser les vibrations pendant son utilisation pour garantir la netteté de l'image. Autrement dit, le robot devra se déplacer à une vitesse modérée, ce qui ne pose pas de problème en soi, mais doit être pris en compte pour assurer des prises de vue claires et précises.
 
-\paragraph{LiDAR 2D}
-Un LiDAR (Light Detection and Ranging) qui utilise des impulsions laser pour mesurer des distances avec une grande précision. En émettant des faisceaux lumineux et en calculant le temps qu'ils mettent à revenir après avoir réfléchi sur des objets, ce genre de capteur est capable de reconstituer en deux ou trois dimensions l’environnement, même dans des conditions de faible luminosité. 
+\paragraph{LiDAR}
+Un LiDAR (Light Detection and Ranging) qui utilise des impulsions laser pour mesurer des distances avec une grande précision. En émettant des faisceaux lumineux et en calculant le temps qu'ils mettent à revenir après avoir réfléchi sur des objets, un LiDAR est capable de reconstituer en deux ou trois dimensions (ici notre LiDAR est 2D) l’environnement, même dans des conditions de faible luminosité. 
 
-\paragraph{ZED2i}
-Cette caméra est une caméra de profondeur, ce qui lui permet d'estimer si le robot se déplace en avant, en arrière ou s'il effectue une rotation. Ces informations seront essentielles lors de la phase de localisation. De plus, cette caméra possède une unité de mesure inertielle (IMU), un capteur capable de mesurer les accélérations linéaires et les vitesses angulaires grâce à des accéléromètres et des gyroscopes. L'IMU permet ainsi d'estimer la position, l'orientation et les mouvements du robot dans l'espace.
+\paragraph{ZED2}
+La caméra ZED2 est une caméra de profondeur, ce qui lui permet d'estimer si le robot se déplace en avant, en arrière ou s'il effectue une rotation. Ces informations seront essentielles lors de la phase de localisation. De plus, cette caméra possède une unité de mesure inertielle (IMU), un capteur capable de mesurer les accélérations linéaires et les vitesses angulaires grâce à des accéléromètres et des gyroscopes. L'IMU permet ainsi d'estimer la position, l'orientation et les mouvements du robot dans l'espace.
 
 \begin{figure}[H]
   \centering
@@ -169,15 +169,15 @@ Cette caméra est une caméra de profondeur, ce qui lui permet d'estimer si le r
   \hspace*{\fill}
   \begin{minipage}[b]{0.28\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{images/ydlidar-tg15.jpg}
-    \captionof{figure}\\{Ydlidar TG15}
+    \includegraphics[width=\textwidth]{images/lidar.jpg}
+    \captionof{figure}\\{Ydlidar G4}
     \label{fig:lidar}
   \end{minipage}
   \hspace*{\fill}
   \begin{minipage}[b]{0.28\textwidth}
     \centering
     \includegraphics[width=\textwidth]{images/zed2.jpg}
-    \captionof{figure}\\{Stereolabs ZED2i}
+    \captionof{figure}\\{Stereolabs ZED2}
     \label{fig:zed2}
   \end{minipage}
 \end{figure}
@@ -185,10 +185,10 @@ Cette caméra est une caméra de profondeur, ce qui lui permet d'estimer si le r
 \vspace{1cm}
 
 \paragraph{Jetson Orin Nano}
-Microcontrôleur équipé d'un GPU intégré, offrant ainsi une capacité de traitement suffisamment puissante pour exécuter des tâches complexes, telles que la reconnaissance basée sur l'intelligence artificielle, directement sur le robot. Cette architecture permet d'éviter le recours à des solutions de edge ou cloud computing, qui pourraient introduire des latences.
+La Jetson Nano est un microcontrôleur équipé d'un GPU intégré, offrant ainsi une capacité de traitement suffisamment puissante pour exécuter des tâches complexes, telles que la reconnaissance basée sur l'intelligence artificielle, directement sur le robot. Cette architecture permet d'éviter le recours à des solutions de edge ou cloud computing, qui pourraient introduire des latences.
 
 \paragraph{Agilex Scout Mini}
-Enfin, nous disposons d'une base mobile adaptée au terrain accidenté et pouvant se contrôler à l'aide d'une télécommande ou à partir d'un microcontrôleur connecté à un convertisseur analogique numérique (CAN).
+Enfin, la base de notre robot est un Agilex Scout Mini. Ce dernier peut se contrôler à l'aide d'une télécommande ou à partir d'un microcontroleur connecté à un convertisseur analogique numérique (CAN).
 
 \begin{figure}[H]
   \centering
@@ -211,15 +211,15 @@ Enfin, nous disposons d'une base mobile adaptée au terrain accidenté et pouvan
 
 \subsubsection{Remise en service et configuration matérielle}
 
-Contrairement à l'année dernière, l'équipe 2025-2026 n'a pas eu à construire la tourelle du robot, mais nous avons dû reconstitution l'architecture logicielle suite à la perte de l'image système du robot. La priorité a donc été de rétablir la communication entre l'unité de calcul (\textbf{Jetson Orin Nano}) et les différents actionneurs et capteurs.
+Contrairement à l'année dernière, l'équipe 2025-2026 ne s'est pas concentrée sur la construction mécanique de la tourelle, mais sur la reconstitution complète de l'architecture logicielle suite à la perte de l'image système du robot. La priorité a donc été de rétablir la communication entre l'unité de calcul (\textbf{Jetson Orin Nano}) et les différents actionneurs et capteurs.
 
-Premièrement, la connexion avec la base mobile \textbf{Agilex Scout Mini} a nécessité une reconfiguration de l'interface CAN. Une modification du code source a été nécessaire pour permettre la reconnaissance de l'interface nommée agilex (au lieu des interfaces standards can0) utilisée par le systemD des ingénieurs du Techlab, assurant désormais un pilotage fluide et la remontée des données odométriques sur le topic odom\_robot.
+Premièrement, la connexion avec la base mobile \textbf{Agilex Scout Mini} a nécessité une reconfiguration de l'interface CAN. Une modification du code source a été nécessaire pour permettre la reconnaissance de l'interface nommée agilex (au lieu des interfaces standards can0) utilisée par le système conseillé par les ingénieurs du Techlab, assurant désormais un pilotage fluide et la remontée des données odométriques sur le topic odom\_robot.
 
 Par la suite, l'intégration des capteurs a présenté des résultats contrastés : 
 \begin{itemize} 
-    \item \textbf{Caméra ZED2i :} La caméra est fonctionnelle et publie correctement les données visuelles et inertielles (IMU), qui ont été intégrées à la configuration du filtre de Kalman étendu (EKF). Le package est installé et la caméra est détectée, mais les tests ne sont pour l'instant pas concluant.
+    \item \textbf{Caméra ZED 2i :} La caméra est fonctionnelle et publie correctement les données visuelles et inertielles (IMU), qui ont été intégrées à la configuration du filtre de Kalman étendu (EKF). Le package est installé et la caméra est détectée, mais les tests ne sont pour l'instant pas concluant.
     \item \textbf{LiDAR 2D :} Bien que la connexion série soit établie et validée sur le port /dev/ttyTHS1, le capteur rencontre actuellement des erreurs d'initialisation empêchant le démarrage du scan. Des tests avec différents fichiers de configuration et différents baudrates ont été effectués sans succès, laissant penser qu'il s'agit d'une panne matérielle ou d'un problème de connexion physique. 
-    \item \textbf{Caméra PTZ :} La caméra était dans un premier temps inaccessible sur le réseau. Mais elle est désormais accessible via son adresse IP statique grâce à un script de configuration réseau. Les images sont capturées et publiées correctement, et le contrôle PTZ est fonctionnel via le protocole VISCA over IP.
+    \item \textbf{Caméra PTZ :} La caméra était dans un premier temps inaccessible sur le réseau. Mais elle est désormais accessible via son adresse IP statique grâce à la configuration réseau et à la création d'un script d'automatisation. Les images sont capturées et publiées correctement, et le contrôle PTZ est fonctionnel via le protocole VISCA over IP, permettant le contrôle continu de l'orientation de la caméra ainsi que l'appel de presets.
 \end{itemize}
 
 Cette phase de remise en service a permis de valider une architecture modulaire, où chaque capteur peut être activé ou désactivé via des arguments de lancement (enable\_lidar, enable\_zed, etc), garantissant la continuité des développements malgré les maintenances matérielles en cours.
@@ -254,69 +254,25 @@ L'équipe 2024-2025 avait donc pris la décision d'abandonner ce protocole et ce
 
 \subsection{Préparation de la première descente}
 
-Notre première descente au laboratoire de Bure, prévue pour le vendredi 6 février 2026, s'inscrit dans la continuité de la phase de reconstruction technique menée tout au long du premier semestre. Suite à la suppression accidentelle de l'image système du robot de l'année précédente, nous avons dû redéfinir nos priorités. L'objectif premier étant de rétablir une base de travail saine en recréant intégralement l'infrastructure logicielle (scripts d'installation, configuration ROS2) et en validant les pilotes des capteurs (Scout Base pour l'odométrie des roues, ZED Wrapper pour les données IMU, et ydlidar\_ros2\_driver pour la cartographie et la détection d'obstacles).
-
-\subsubsection{État du robot avant la descente}
-
-À l'approche de cette première descente, l'état du robot est le suivant :
-
-\begin{itemize}
-    \item \textbf{Base mobile Agilex Scout Mini :} Fonctionnelle. Le driver \texttt{scout\_base} communique avec le robot via l'interface CAN \texttt{agilex} et publie correctement les données odométriques sur \texttt{/odom\_robot}.
-    \item \textbf{Caméra PTZ Marshall CV-605 :} Fonctionnelle. La caméra est accessible via son adresse IP statique grâce au script \texttt{ptz-network-setup.sh}. Le contrôle pan/tilt/zoom est opérationnel via le protocole VISCA over IP, et les nœuds de séquence automatique (\texttt{sequence\_photo} et \texttt{sequence\_video}) sont en place.
-    \item \textbf{Caméra ZED2i :} Partiellement fonctionnelle. Le package \texttt{zed\_wrapper} est installé et la caméra est détectée, elle publie les données visuelles et inertielles (IMU). Cependant, la cohérence des données renvoyées n'a pas encore été vérifiée.
-    \item \textbf{LiDAR 2D :} Non résolu. Le diagnostic a identifié un port micro USB arraché sur la carte Radar\_Con. Un branchement de secours via USB-C pour assurer le rôle de ce branchement arraché va être tenté.
-    \item \textbf{Hotspot Jetson :} Configuré et validé. Le robot crée automatiquement un réseau Wi-Fi \texttt{JetsonWIFI} lorsqu'il ne capte pas le réseau du TechLab, permettant la connexion SSH en galerie via \texttt{ssh techlab@orin2.local}.
-\end{itemize}
-
-\subsubsection{Objectifs de la descente}
+Notre première descente au laboratoire de Bure, prévue pour le début du mois de février 2026, s'inscrit dans la continuité de la phase de reconstruction technique menée tout au long du premier semestre. Suite à la suppression accidentelle de l'image système du robot de l'année précédente, nous avons dû redéfinir nos priorités. L'objectif premier étant de rétablir une base de travail saine en recréant intégralement l'infrastructure logicielle (scripts d'installation, configuration ROS2) et en validant les pilotes des capteurs (Scout Base pour l'odométrie des roues, ZED Wrapper pour les données IMU, et ydlidar\_ros2\_driver pour la cartographie et la détection d'obstacles).
 
 L'objectif principal de cette échéance de février est double :
 \begin{enumerate}
-    \item \textbf{Validation système :} Reproduire les résultats de l'équipe 2024-2025 en conditions réelles avec le robot fraîchement reconfiguré, notamment sa capacité à effectuer des cycles simples (avancer, s'arrêter, prendre une photo).
-    \item \textbf{Acquisition de données 360° :} Capturer un nouveau jeu de données à l'aide d'une caméra 360° prêtée par l'ANDRA. Cette acquisition est indispensable pour entraîner notre nouveau modèle de détection afin qu'il puisse, à terme, analyser l'ensemble de la voûte et non plus uniquement les murs verticaux.
+    \item \textbf{Validation système :} Essayer de reproduire les test réalisé par l'équipe 2024-2025 en conditions réelles avec le robot fraîchement reconfiguré, notamment sa capacité à effectuer des cycles simples (avancer, s'arrêter, prendre une photo) malgré les instabilités matérielles identifiées (problèmes de connexion LIDAR et caméra PTZ).
+    \item \textbf{Acquisition de données 360° :} Contrairement aux approches précédentes, nous profiterons de cette descente pour capturer un nouveau jeu de données à l'aide d'une caméra 360°. Cette acquisition est indispensable pour entraîner notre nouveau modèle de détection afin qu'il puisse, à terme, analyser l'ensemble de la voûte et non plus uniquement les murs verticaux.
 \end{enumerate}
 
 Cette descente permettra ainsi de vérifier la cohérence entre l'environnement de simulation du TechLab et la réalité des tunnels, tout en fournissant à l'équipe IA les données nécessaires à l'amélioration du modèle de détection.
 
-\paragraph{Contraintes et limitations :} Malgré ces avancées, plusieurs défis subsistent à l'approche de cette première descente :
+\paragraph{Contraintes et limitations actuelles :} Malgré la définition de ces objectifs, plusieurs défis techniques et logistiques subsistent à l'approche de cette première descente :
 
 \begin{itemize}
-    \item \textbf{Absence du LiDAR :} Le capteur LiDAR n'étant pas encore fonctionnel, la navigation se fera sans cartographie ni détection d'obstacles laser, limitant les tests à la séquence de prise de photos.
-    \item \textbf{Disponibilité du matériel 360° :} L'équipe ne dispose pas de sa propre caméra 360° intégrée au robot. Pour cette session d'acquisition, nous nous appuierons sur un équipement fourni ponctuellement par l'ANDRA, ce qui repousse l'intégration matérielle définitive.
-    \item \textbf{Données ZED2i non vérifiées :} La cohérence des données inertielles et visuelles de la caméra ZED2i n'a pas encore été validée, ce qui limite la fiabilité du filtre de Kalman étendu pour le positionnement.
+    \item \textbf{Disponibilité du matériel 360° :} L'équipe ne dispose pas encore de sa propre caméra 360° intégrée au robot. Pour cette session d'acquisition, nous nous appuierons sur un équipement fourni ponctuellement par l'ANDRA, ce qui nous permet de réaliser les prises de vues mais repousse l'intégration matérielle définitive.
+    \item \textbf{Communication en tunnel :} La problématique de la connexion sans fil au robot au sein des galeries n'a pas encore été traitée. L'absence de solution validée pour le monitoring et le contrôle à distance dans cet environnement confiné reste une inconnue technique pour cette première intervention.
+    \item \textbf{Maturité du système :} En raison de la perte des données de l'année précédente et du temps consacré à la reconstruction de l'infrastructure, l'état actuel du robot reste en retrait par rapport au système final de 2024-2025. Nous ne serons donc pas en mesure de tester l'architecture complète en conditions réelles comme nous l'aurions souhaité, nous limitant pour l'instant à la validation des briques logicielles restaurées.
 \end{itemize}
 
-\subsection{Résultats de la première descente}
-
-La première descente dans les galeries de l'ANDRA s'est déroulée le vendredi 6 février 2026. Cette intervention a permis de confronter pour la première fois le système reconstruit aux conditions réelles du site de Bure.
-
-\subsubsection{Succès opérationnels}
-
-L'ensemble du système logiciel s'est montré fonctionnel en conditions réelles :
-
-\begin{itemize}
-    \item \textbf{Séquence de prise de photos :} La séquence automatique de capture via la caméra PTZ a fonctionné comme prévu. Le robot a pu effectuer des cycles complets (avancer, s'arrêter, prendre des photos) dans une galerie de longueur suffisante.
-    \item \textbf{Hotspot opérationnel :} Le système de hotspot de la Jetson s'est activé automatiquement en l'absence du réseau du TechLab, permettant la connexion SSH et le contrôle à distance du robot depuis un PC portable, validant ainsi la solution de communication en galerie.
-    \item \textbf{Nœuds ROS2 fonctionnels :} L'ensemble des nœuds ROS2 déployés ont fonctionné correctement, confirmant la robustesse de l'architecture reconstruite.
-    \item \textbf{Acquisition du dataset 360° :} Grâce à la caméra 360° prêtée par l'ANDRA, un jeu de données panoramiques a été capturé dans les galeries. Ce dataset constitue la base de travail pour l'entraînement du futur modèle de détection adapté aux images grand angle.
-\end{itemize}
-
-\subsubsection{Incident matériel}
-
-Un incident est survenu lors de la descente : l'alimentation de la Jetson Orin Nano a été arrachée suite à une mauvaise manipulation. Cette panne a interrompu les tests en cours. Cependant, la carte a été réparée par Paul-Antoine le week-end suivant, avec un changement du connecteur d'alimentation, rendant le robot de nouveau opérationnel la semaine suivante.
-
-\subsubsection{Constats et axes d'amélioration}
-
-La descente a également mis en lumière plusieurs points à améliorer :
-
-\begin{itemize}
-    \item \textbf{Couverture PTZ insuffisante :} La séquence actuelle de 3 photos ne couvre pas l'intégralité de l'arche de la galerie. Plusieurs solutions sont envisagées : passer à une séquence de 5 photos, revoir l'enchaînement des positions PTZ ou utiliser le script vidéo à très basse vitesse.
-    \item \textbf{Trajectoire RViz non-planaire :} Les premières visualisations dans RViz2 ont révélé que la trajectoire du robot ne s'affiche pas sur un plan horizontal, indiquant un problème dans les transformations TF à investiguer.
-\end{itemize}
-
-Cette première descente a permis de valider les briques logicielles fondamentales du système et d'identifier clairement les axes de travail prioritaires pour le second semestre.
-
-% --- Travail Semestre 2 ---
+% --- Travail Smestre 2 ---
 \section{Semestre 2}
 
 Le second semestre s'ouvre sur les enseignements tirés de la première descente et vise à faire progresser le robot vers un système pleinement opérationnel. Les travaux se structurent autour de trois axes : la résolution des problèmes matériels restants, l'amélioration du modèle de détection et la compréhension du système de navigation.
