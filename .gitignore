@@ -50,10 +50,10 @@ ros2_ws/src/ros_launcher/map_with_point_*.png
 
 # Docker images et build artifacts 
 *.tar
-ros2_docker/*.tar
+docker/*.tar
 *.dockerignore.bak
-ros2_docker/build/
-ros2_docker/log/
+docker/build/
+docker/log/
 
 # Dossiers de compilation
 /build
