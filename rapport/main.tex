@@ -364,8 +364,9 @@ Le second semestre vise également à faire progresser le système de navigation
 \begin{itemize}
     \item \textbf{Validation des transformations TF :} Corriger le problème de trajectoire non planaire observé dans RViz2, qui traduit une incohérence dans l'arbre des transformations géométriques.
     \item \textbf{Vérification de la ZED2i :} Valider la cohérence des données inertielles et visuelles de la caméra stéréoscopique, condition préalable à un filtre de Kalman étendu fiable.
-    \item \textbf{Cartographie via SLAM :} La création de carte via SLAM est déjà implémentée, cependant nous ne maîtrisons pas encore pleinement son fonctionnement et son paramétrage.
-    \item \textbf{Positionnement par AMCL :} D'après l'équipe 2024-2025, l'utilisation d'AMCL pour la localisation du robot sur une carte préétablie est la solution appropriée, à mettre en place maintenant que le LiDAR est opérationnel.
+    \item \textbf{Analyse des données LiDAR :} Une étape clé consiste à approfondir la compréhension des données générées par le LiDAR, afin de garantir la fiabilité des mesures utilisées pour la navigation et l’élaboration des cartes.
+    \item \textbf{Cartographie et réglages SLAM :} La génération de cartes par SLAM est fonctionnelle, mais il reste à en maîtriser parfaitement le paramétrage et l’interprétation, afin d’optimiser la qualité des cartes produites et d’assurer leur cohérence avec l’environnement réel.
+    \item \textbf{Localisation AMCL sur cartes SLAM :} L’exploitation des cartes obtenues via SLAM pour la localisation avec AMCL constitue la prochaine étape. Maintenant que le LiDAR est pleinement opérationnel, la mise en œuvre et l’ajustement d’AMCL doivent permettre une localisation précise du robot lors de ses déplacements, conformément aux recommandations de l’équipe 2024-2025.
 \end{itemize}
 
 % --- Gestion de projet ---
