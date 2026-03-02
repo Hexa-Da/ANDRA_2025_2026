@@ -7,7 +7,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ```
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
-├── ros2_docker/                 # Environnement Docker ROS2 pour visualiser le robot et traiter les images
+├── docker/                 # Environnement Docker ROS2 pour visualiser le robot et traiter les images
 ├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
@@ -35,7 +35,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 ---
 
-### `ros2_docker/`
+### `docker/`
 **Rôle** : Environnements Docker pour développement et exécution GPU
 
 **Contenu** :
