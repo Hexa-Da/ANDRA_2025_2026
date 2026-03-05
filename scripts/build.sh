@@ -19,21 +19,25 @@ case "$BUILD_TARGET" in
         echo "Compilation du workspace YDLidar..."
         cd "$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
         colcon build
+        cd "$PROJECT_DIR"
         ;;
     ros2_ws)
         echo "Compilation du workspace ros2_ws..."
         cd "$PROJECT_DIR/ros2_ws"
         colcon build
+        cd "$PROJECT_DIR"
         ;;
     scout_base)
         echo "Compilation du workspace scout_base..."
         cd "$PROJECT_DIR/dependencies/scout_base"
         colcon build
+        cd "$PROJECT_DIR"
         ;;
     zed)
         echo "Compilation du workspace ZED Wrapper..."
         cd "$PROJECT_DIR/dependencies/zed-ros2-wrapper"
         colcon build
+        cd "$PROJECT_DIR"
         ;;
     all)
         echo "Compilation de tous les workspaces..."
@@ -57,6 +61,8 @@ case "$BUILD_TARGET" in
         echo "ros2_ws..."
         cd "$PROJECT_DIR/ros2_ws"
         colcon build
+
+        cd "$PROJECT_DIR"
         ;;
     *)
         exit 1

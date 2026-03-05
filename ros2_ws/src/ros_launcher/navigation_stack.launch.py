@@ -8,31 +8,84 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-    # Launch arguments
-    use_slam = LaunchConfiguration('use_slam', default='true')
-    use_amcl = LaunchConfiguration('use_amcl', default='false')
-    map_path = LaunchConfiguration('map_path', default='')
-    enable_lidar = LaunchConfiguration('enable_lidar', default='true') 
-    enable_scout = LaunchConfiguration('enable_scout', default='true')
-    enable_zed = LaunchConfiguration('enable_zed', default='true')
-    enable_ptz = LaunchConfiguration('enable_ptz', default='true')
-    enable_image_transfer = LaunchConfiguration('enable_image_transfer', default='true')
-    enable_video_publisher = LaunchConfiguration('enable_video_publisher', default='true')
-    ptz_brightness = LaunchConfiguration('ptz_brightness', default='1.0')
-    ptz_contrast = LaunchConfiguration('ptz_contrast', default='1.0')
-    ptz_gamma = LaunchConfiguration('ptz_gamma', default='1.0')
-    video_extract_rate = LaunchConfiguration('video_extract_rate', default='10.0')
-    
-    # Get package share directory for config files
     pkg_share = get_package_share_directory('ros_launcher')
-    
-    # Full path to configuration files
     ekf_config = os.path.join(pkg_share, 'configs', 'ekf_config.yaml')
     slam_config = os.path.join(pkg_share, 'configs', 'slam_config.yaml')
     amcl_config = os.path.join(pkg_share, 'configs', 'amcl_config.yaml')
 
+    # --- Declare all launch arguments FIRST ---
+    declare_use_slam = DeclareLaunchArgument(
+        'use_slam', default_value='true',
+        description='Use SLAM for mapping')
+    declare_use_amcl = DeclareLaunchArgument(
+        'use_amcl', default_value='false',
+        description='Use AMCL for localization')
+    declare_map_path = DeclareLaunchArgument(
+        'map_path', default_value='',
+        description='Full path to map yaml file')
+    declare_enable_lidar = DeclareLaunchArgument(
+        'enable_lidar', default_value='true',
+        description='Enable YDLIDAR driver')
+    declare_enable_scout = DeclareLaunchArgument(
+        'enable_scout', default_value='true',
+        description='Enable Scout base driver')
+    declare_enable_zed = DeclareLaunchArgument(
+        'enable_zed', default_value='true',
+        description='Enable ZED camera')
+    declare_enable_ptz = DeclareLaunchArgument(
+        'enable_ptz', default_value='true',
+        description='Enable PTZ camera')
+    declare_enable_image_transfer = DeclareLaunchArgument(
+        'enable_image_transfer', default_value='true',
+        description='Enable image transfer node')
+    declare_enable_video_publisher = DeclareLaunchArgument(
+        'enable_video_publisher', default_value='true',
+        description='Enable video publisher node')
+    declare_ptz_brightness = DeclareLaunchArgument(
+        'ptz_brightness', default_value='1.0',
+        description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)')
+    declare_ptz_contrast = DeclareLaunchArgument(
+        'ptz_contrast', default_value='1.0',
+        description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)')
+    declare_ptz_gamma = DeclareLaunchArgument(
+        'ptz_gamma', default_value='1.0',
+        description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)')
+    declare_video_extract_rate = DeclareLaunchArgument(
+        'video_extract_rate', default_value='10.0',
+        description='Extract rate for video publisher')
+
+    # --- Resolve launch configurations AFTER declarations ---
+    use_slam = LaunchConfiguration('use_slam')
+    use_amcl = LaunchConfiguration('use_amcl')
+    map_path = LaunchConfiguration('map_path')
+    enable_lidar = LaunchConfiguration('enable_lidar')
+    enable_scout = LaunchConfiguration('enable_scout')
+    enable_zed = LaunchConfiguration('enable_zed')
+    enable_ptz = LaunchConfiguration('enable_ptz')
+    enable_image_transfer = LaunchConfiguration('enable_image_transfer')
+    enable_video_publisher = LaunchConfiguration('enable_video_publisher')
+    ptz_brightness = LaunchConfiguration('ptz_brightness')
+    ptz_contrast = LaunchConfiguration('ptz_contrast')
+    ptz_gamma = LaunchConfiguration('ptz_gamma')
+    video_extract_rate = LaunchConfiguration('video_extract_rate')
+
     return LaunchDescription([
-        # World frame - parent of odom (always available, even without SLAM)
+        # 1. Declarations 
+        declare_use_slam,
+        declare_use_amcl,
+        declare_map_path,
+        declare_enable_lidar,
+        declare_enable_scout,
+        declare_enable_zed,
+        declare_enable_ptz,
+        declare_enable_image_transfer,
+        declare_enable_video_publisher,
+        declare_ptz_brightness,
+        declare_ptz_contrast,
+        declare_ptz_gamma,
+        declare_video_extract_rate,
+
+        # 2. Static TF: world → map
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
@@ -40,37 +93,10 @@ def generate_launch_description():
             arguments=['0', '0', '0', '0', '0', '0', 'world', 'map'],
             output='screen',
         ),
-        
-        # Launch arguments
-        DeclareLaunchArgument('use_slam', default_value='true',
-                             description='Use SLAM for mapping'),
-        DeclareLaunchArgument('use_amcl', default_value='false',
-                             description='Use AMCL for localization'),
-        DeclareLaunchArgument('map_path', default_value='',
-                             description='Full path to map yaml file'),
-        DeclareLaunchArgument('enable_lidar', default_value='true',
-                             description='Enable YDLIDAR driver'),
-        DeclareLaunchArgument('enable_scout', default_value='true',
-                             description='Enable Scout base driver'),
-        DeclareLaunchArgument('enable_zed', default_value='true',
-                             description='Enable ZED camera'),
-        DeclareLaunchArgument('enable_ptz', default_value='true',
-                             description='Enable PTZ camera'),
-        DeclareLaunchArgument('enable_image_transfer', default_value='true',
-                             description='Enable image transfer node'),
-        DeclareLaunchArgument('enable_video_publisher', default_value='true',
-                             description='Enable video publisher node'),
-        DeclareLaunchArgument('ptz_brightness', default_value='1.0',
-                             description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)'),
-        DeclareLaunchArgument('ptz_contrast', default_value='1.0',
-                             description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)'),
-        DeclareLaunchArgument('ptz_gamma', default_value='1.0',
-                             description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)'),
-        DeclareLaunchArgument('video_extract_rate', default_value='10.0',
-                             description='Extract rate for video publisher'),
 
+        # 3. Drivers matériels (conditionnels)
 
-        # YDLIDAR - conditionnel
+        # YDLIDAR
         Node(
             package='ydlidar_ros2_driver',
             executable='ydlidar_ros2_driver_node',
@@ -79,23 +105,24 @@ def generate_launch_description():
             output='screen',
             condition=IfCondition(enable_lidar),
         ),
-     
-        # Scout base - conditionnel
+
+        # Scout base
         ExecuteProcess(
-            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py', 
+            cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py',
                  'port_name:=agilex', 'is_scout_mini:=True', 'odom_topic_name:=odom_robot'],
             output='screen',
             condition=IfCondition(enable_scout),
         ),
 
-        # ZED Camera - conditionnel
+        # ZED Camera
         ExecuteProcess(
             cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2i'],
             output='screen',
             condition=IfCondition(enable_zed),
         ),
-        
-        # Image transfer nodes - conditionnel
+
+        # 4. Nœuds applicatifs (conditionnels)
+
         ExecuteProcess(
             cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
             output='screen',
@@ -107,6 +134,7 @@ def generate_launch_description():
             output='screen',
             condition=IfCondition(enable_image_transfer),
         ),
+
         # Conversion odométrie vers Path pour visualisation
         Node(
             package='navigation_utils',
@@ -115,7 +143,7 @@ def generate_launch_description():
             output='screen',
         ),
 
-        # PTZ camera publisher - conditionnel et configurable
+        # PTZ camera publisher
         Node(
             package='image_transfer',
             executable='image_publisher',
@@ -132,7 +160,7 @@ def generate_launch_description():
             condition=IfCondition(enable_ptz),
         ),
 
-        # Video file publisher - alternative à la PTZ (lit video/video_output/)
+        # Video file publisher
         Node(
             package='image_transfer',
             executable='video_publisher',
@@ -144,8 +172,8 @@ def generate_launch_description():
             emulate_tty=True,
             condition=IfCondition(enable_video_publisher),
         ),
-        
-        # PTZ controller - conditionnel
+
+        # PTZ controller
         Node(
             package='image_transfer',
             executable='ptz_controller',
@@ -154,30 +182,32 @@ def generate_launch_description():
             emulate_tty=True,
             condition=IfCondition(enable_ptz),
         ),
-        
-        # Static transform publishers
+
+        # 5. Static transforms (capteurs)
+
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_zed_tf',
             arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'zed_camera_link']
         ),
-       Node(
-           package='tf2_ros',
-           executable='static_transform_publisher',
-           name='base_to_laser_tf',
-           arguments=['0', '0', '0', '1.57', '0', '0', 'base_link', 'laser_frame']
-       ),
-        
-        # Robot localization node
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_to_laser_tf',
+            arguments=['0', '0', '0', '1.57', '0', '0', 'base_link', 'laser_frame']
+        ),
+
+        # 6. Localisation et cartographie
+
         Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
             parameters=[ekf_config]
         ),
-        
-        # SLAM Toolbox (mapping mode)
+
+        # SLAM Toolbox (mode cartographie)
         Node(
             package='slam_toolbox',
             executable='sync_slam_toolbox_node',
@@ -185,10 +215,9 @@ def generate_launch_description():
             parameters=[slam_config],
             condition=IfCondition(use_slam)
         ),
-        
-        # AMCL navigation stack (localization mode)
+
+        # AMCL (mode localisation avec carte existante)
         GroupAction([
-            # Map server
             Node(
                 package='nav2_map_server',
                 executable='map_server',
@@ -198,7 +227,6 @@ def generate_launch_description():
                 condition=IfCondition(use_amcl)
             ),
             
-            # AMCL localizer
             Node(
                 package='nav2_amcl',
                 executable='amcl',
@@ -213,7 +241,6 @@ def generate_launch_description():
                 condition=IfCondition(use_amcl)
             ),
             
-            # Nav2 lifecycle manager - this is critical for AMCL and map_server
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
@@ -226,14 +253,11 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_amcl)
             ),
-            
-            # Transform publisher between map and odom frames
             Node(
                 package='tf2_ros',
                 executable='static_transform_publisher',
                 name='map_to_odom_fallback',
                 arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                # This will be overridden by AMCL once it starts publishing
                 condition=IfCondition(use_amcl)
             )
         ])
