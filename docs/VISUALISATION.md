@@ -134,11 +134,10 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr√
 
 2. **Lancer RViz2 sur votre PC Linux** :
    ```bash
-   # Avec l'image Docker (sur une machine Linux du TechLab)
+   # Sur une machine Linux du TechLab
    cd docker
    ./launch_rviz.sh  # Lance le conteneur Docker avec --net=host
-   # Dans le conteneur :
-   cd /workspace
+   # Puis dans le conteneur 
    rviz2 -d ros2_ws/src/ros_launcher/config.rviz
    ```
 
