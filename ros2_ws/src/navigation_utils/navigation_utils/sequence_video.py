@@ -21,13 +21,15 @@ Pattern de balayage quart de sphère :
 
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Int32
-import time
+import math
 import subprocess
 import os
 import signal
+import time as _time
 from pathlib import Path
 
 
@@ -53,16 +55,16 @@ class RobotSequenceVideo(Node):
         # État du robot
         self.initial_position = None
         self.current_position = None
-        self.state = 'WAITING_START'  # WAITING_START, RECORDING
+        self.state = 'WAITING_START'
         self.shutdown_requested = False
         
         # Paramètres
-        self.declare_parameter('robot_speed', 0.06)  # Vitesse de déplacement (m/s) - très lent
+        self.declare_parameter('robot_speed', 0.06)
         
         # Configuration RTSP et vidéo
         self.declare_parameter('rtsp_url', 'rtsp://admin:admin@192.168.5.163:554/live/av0')
         self.declare_parameter('video_output_dir', str(Path.home() / 'Documents' / 'ANDRA_2025-2026' / 'video' / 'video_output'))
-        self.declare_parameter('enable_video_adjustment', False)  # Activer retouches vidéo
+        self.declare_parameter('enable_video_adjustment', False)
         self.declare_parameter('video_brightness', 1.0)
         self.declare_parameter('video_contrast', 1.0)
         self.declare_parameter('video_gamma', 1.0)
@@ -75,17 +77,15 @@ class RobotSequenceVideo(Node):
         self.video_contrast = self.get_parameter('video_contrast').get_parameter_value().double_value
         self.video_gamma = self.get_parameter('video_gamma').get_parameter_value().double_value
         
-        # Créer le répertoire de sortie
         os.makedirs(self.video_output_dir, exist_ok=True)
         
         # Configuration PTZ - Balayage quart de sphère
-        # Balayage continu répétitif qui couvre un quart de sphère devant la caméra
-        self.declare_parameter('ptz_sweep_duration', 30.0)  # Durée d'un cycle de balayage complet (secondes)
-        self.declare_parameter('ptz_start_pan', -1.0)  # Position pan de départ (gauche = -1.0, centre = 0.0)
-        self.declare_parameter('ptz_end_pan', 0.0)  # Position pan d'arrivée (centre = 0.0)
-        self.declare_parameter('ptz_start_tilt', 0.0)  # Position tilt de départ (bas = 0.0)
-        self.declare_parameter('ptz_end_tilt', 1.0)  # Position tilt d'arrivée (haut = 1.0)
-        self.declare_parameter('ptz_speed_factor', 10.0)  # Facteur multiplicateur pour les vitesses PTZ (augmenté pour mouvement visible)
+        self.declare_parameter('ptz_sweep_duration', 30.0)
+        self.declare_parameter('ptz_start_pan', -1.0)
+        self.declare_parameter('ptz_end_pan', 0.0)
+        self.declare_parameter('ptz_start_tilt', 0.0)
+        self.declare_parameter('ptz_end_tilt', 1.0)
+        self.declare_parameter('ptz_speed_factor', 10.0)
         
         self.ptz_sweep_duration = self.get_parameter('ptz_sweep_duration').get_parameter_value().double_value
         self.ptz_start_pan = self.get_parameter('ptz_start_pan').get_parameter_value().double_value
@@ -94,8 +94,8 @@ class RobotSequenceVideo(Node):
         self.ptz_end_tilt = self.get_parameter('ptz_end_tilt').get_parameter_value().double_value
         self.ptz_speed_factor = self.get_parameter('ptz_speed_factor').get_parameter_value().double_value
         
-        # Timer pour la séquence
-        self.timer = self.create_timer(0.02, self.sequence_loop)  # 50 Hz
+        # Timer pour la séquence (50 Hz)
+        self.timer = self.create_timer(0.02, self.sequence_loop)
         
         self.get_logger().info("=== Enregistrement vidéo continu avec balayage ===")
         self.get_logger().info(f"Vitesse robot: {self.robot_speed} m/s")
@@ -104,27 +104,35 @@ class RobotSequenceVideo(Node):
         self.get_logger().info(f"Sortie vidéo: {self.video_output_dir}")
         self.get_logger().info("Enregistrement de la vidéo en continu jusqu'à l'arrêt manuel (Ctrl+C)")
         
-        # Temps de démarrage et gestion des états
-        self.record_start_time = None
+        # Timestamps ROS
+        self.record_start_time: Time = None
         self.ffmpeg_process = None
         self.video_filename = None
         
-        # État du balayage PTZ (balayage répétitif)
-        self.ptz_sweep_start_time = None
-        self.ptz_sweep_progress = 0.0  # 0.0 à 1.0 pour chaque cycle
-        self.ptz_sweep_cycle = 0  # Numéro du cycle de balayage
+        # État du balayage PTZ
+        self.ptz_sweep_start_time: Time = None
+        self.ptz_sweep_progress = 0.0
+        self.ptz_sweep_cycle = 0
         self.ptz_positioning_done = False
-        
+        self.positioning_start_time: Time = None
+        self._last_ptz_log_time: Time = None
+
+    def _now(self) -> Time:
+        return self.get_clock().now()
+
+    def _elapsed_sec(self, since: Time) -> float:
+        """Retourne les secondes écoulées depuis un timestamp ROS."""
+        if since is None:
+            return 0.0
+        return (self._now() - since).nanoseconds / 1e9
+
     def odom_callback(self, msg):
         """Callback pour recevoir l'odométrie"""
         self.current_position = msg.pose.pose.position
         
-        # Initialiser et démarrer l'enregistrement au premier message
         if self.state == 'WAITING_START':
             self.state = 'RECORDING'
-            # Activer l'auto-exposure avant de commencer
             self.set_auto_exposure()
-            # Démarrer l'enregistrement vidéo (sans limite de durée)
             if not self.start_video_recording():
                 self.get_logger().error("Échec du démarrage de l'enregistrement")
                 return
@@ -147,28 +155,26 @@ class RobotSequenceVideo(Node):
     def move_ptz(self, pan_speed, tilt_speed):
         """Publie une commande de vitesse pour la PTZ via /ptz/cmd_vel"""
         twist = Twist()
-        twist.angular.z = float(pan_speed)  # Pan (rotation horizontale)
-        twist.linear.y = float(tilt_speed)  # Tilt (rotation verticale)
+        twist.angular.z = float(pan_speed)
+        twist.linear.y = float(tilt_speed)
         self.ptz_cmd_vel_pub.publish(twist)
-        # Log périodique pour déboguer
-        if hasattr(self, '_last_ptz_log_time'):
-            if time.time() - self._last_ptz_log_time > 2.0:  # Log toutes les 2 secondes
+        if self._last_ptz_log_time is not None:
+            if self._elapsed_sec(self._last_ptz_log_time) > 2.0:
                 self.get_logger().debug(f"PTZ cmd_vel: pan={pan_speed:.3f}, tilt={tilt_speed:.3f}")
-                self._last_ptz_log_time = time.time()
+                self._last_ptz_log_time = self._now()
         else:
-            self._last_ptz_log_time = time.time()
+            self._last_ptz_log_time = self._now()
     
     def stop_ptz(self):
         """Arrête le mouvement de la PTZ"""
         self.move_ptz(0.0, 0.0)
 
     def stop_then_home_ptz(self):
-        """
-        Arrête la PTZ et force le retour HOME via socket direct.
-        """
+        """Arrête la PTZ et force le retour HOME via socket direct.
+        Utilise un socket direct car le contexte ROS peut être invalide à ce stade."""
         self.shutdown_requested = True
         
-        print("Envoi de l'ordre HOME via Socket Direct (VISCA)...\n\n")
+        self.get_logger().warn("Envoi de l'ordre HOME via Socket Direct (VISCA)...")
 
         try:
             import socket
@@ -179,17 +185,12 @@ class RobotSequenceVideo(Node):
                 sock.settimeout(1.0)
                 sock.connect((cam_ip, cam_port))
                 
-                # A. STOP (Vitesse à 0) - Indispensable pour que la caméra accepte le preset
-                # Commande : 81 01 06 01 03 03 03 03 FF
                 sock.sendall(bytes([0x81, 0x01, 0x06, 0x01, 0x03, 0x03, 0x03, 0x03, 0xFF]))
-                time.sleep(0.1) # Petit délai pour que le firmware traite le stop
+                _time.sleep(0.1)
                 
-                # B. HOME (Position par défaut)
-                # Commande : 81 01 06 04 FF
                 sock.sendall(bytes([0x81, 0x01, 0x06, 0x04, 0xFF]))
-                
         except Exception as e:
-            print(f"Erreur Socket: {e}")
+            self.get_logger().error(f"Erreur Socket: {e}")
     
     def set_auto_exposure(self):
         """Active l'auto-exposure matériel via VISCA"""
@@ -201,7 +202,6 @@ class RobotSequenceVideo(Node):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(5.0)
                 sock.connect((cam_ip, cam_port))
-                # Commande VISCA Full Auto: 81 01 04 39 00 FF
                 command = bytes([0x81, 0x01, 0x04, 0x39, 0x00, 0xFF])
                 sock.sendall(command)
             self.get_logger().info("Auto-exposure matériel activé")
@@ -216,23 +216,19 @@ class RobotSequenceVideo(Node):
             self.get_logger().warn("Enregistrement déjà en cours")
             return False
         
-        # Générer le nom de fichier avec timestamp
-        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = _time.strftime("%Y-%m-%d_%H-%M-%S")
         self.video_filename = os.path.join(
             self.video_output_dir,
             f"video_continuous_{timestamp}.mp4"
         )
         
-        # Construire la commande ffmpeg (sans limite de durée - s'arrête avec Ctrl+C)
         ffmpeg_cmd = [
             'ffmpeg',
-            '-y',  # Écraser si existe
+            '-y',
             '-rtsp_transport', 'tcp',
             '-i', self.rtsp_url,
-            # Pas de '-t' pour permettre l'enregistrement continu jusqu'à l'arrêt manuel
         ]
         
-        # Ajouter les filtres vidéo si activés
         if self.enable_video_adjustment:
             brightness_ffmpeg = max(-1.0, min(1.0, (self.video_brightness - 1.0) / 2.0))
             ffmpeg_cmd.extend([
@@ -240,16 +236,14 @@ class RobotSequenceVideo(Node):
                 '-c:v', 'libx264',
                 '-preset', 'medium',
                 '-crf', '23',
-                '-movflags', '+faststart',  # Écrire le moov atom au début pour robustesse
+                '-movflags', '+faststart',
             ])
         else:
-            # Utiliser un réencodage léger avec faststart pour éviter les vidéos corrompues
-            # même sans ajustements vidéo
             ffmpeg_cmd.extend([
                 '-c:v', 'libx264',
-                '-preset', 'ultrafast',  # Réencodage très rapide
+                '-preset', 'ultrafast',
                 '-crf', '23',
-                '-movflags', '+faststart',  # Écrire le moov atom au début pour robustesse
+                '-movflags', '+faststart',
             ])
         
         ffmpeg_cmd.append(self.video_filename)
@@ -260,7 +254,7 @@ class RobotSequenceVideo(Node):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
-            self.record_start_time = time.time()
+            self.record_start_time = self._now()
             self.get_logger().info(f"Démarrage enregistrement vidéo: {self.video_filename}")
             return True
         except FileNotFoundError:
@@ -276,7 +270,6 @@ class RobotSequenceVideo(Node):
             return
         
         try:
-            # Envoyer SIGINT pour terminer proprement ffmpeg
             self.ffmpeg_process.send_signal(signal.SIGINT)
             self.ffmpeg_process.wait(timeout=5)
             self.get_logger().info(f"Enregistrement vidéo terminé: {self.video_filename}")
@@ -297,40 +290,26 @@ class RobotSequenceVideo(Node):
         Pattern Scanner de Voûte : Balayage horizontal (Pan) de gauche à droite.
         Le Tilt reste fixé vers le haut pour inspecter la voûte.
         """
-        import math
-
-        elapsed = time.time() - self.ptz_sweep_start_time
+        elapsed = self._elapsed_sec(self.ptz_sweep_start_time)
         current_cycle = int(elapsed / self.ptz_sweep_duration)
 
-        # On utilise une fonction Sinus pour un mouvement de va-et-vient fluide
-        # ptz_sweep_duration est le temps pour un aller-retour complet
         frequence = (2 * math.pi) / self.ptz_sweep_duration
         
-        # 1. Calcul du PAN (Balayage latéral)
-        # On veut que le pan oscille entre ptz_start_pan et ptz_end_pan
-        # Position théorique pour le log (optionnel)
         amplitude_pan = (self.ptz_end_pan - self.ptz_start_pan) / 2
         
-        # Calcul de la vitesse du Pan (Dérivée du mouvement sinusoïdal)
-        # v = A * w * cos(w*t)
         pan_speed = amplitude_pan * frequence * math.cos(frequence * elapsed)     
         
-        # Si on est au début du premier cycle, on positionne le tilt
-        current_cycle = int(elapsed / self.ptz_sweep_duration)
         tilt_speed = 0.0
         if self.ptz_sweep_progress < 0.1 and current_cycle == 0:
             tilt_speed = 0.1
             
-        # Application du facteur de vitesse pour ROS
         final_pan_speed = pan_speed * self.ptz_speed_factor
         final_tilt_speed = tilt_speed * self.ptz_speed_factor
 
-        # Sécurité limites
         final_pan_speed = max(-1.0, min(1.0, final_pan_speed))
         
         self.move_ptz(final_pan_speed, final_tilt_speed)
         
-        # Mise à jour du progrès pour le cycle
         self.ptz_sweep_progress = (elapsed % self.ptz_sweep_duration) / self.ptz_sweep_duration
     
     def sequence_loop(self):
@@ -342,40 +321,29 @@ class RobotSequenceVideo(Node):
             if self.current_position is None:
                 return
             
-            # Le robot avance EN CONTINU à vitesse minimale
             self.move_robot(self.robot_speed)
             
-            # Positionner la PTZ au point de départ si pas encore fait
             if not self.ptz_positioning_done:
-                # Aller rapidement à la position de départ avec une vitesse élevée
-                # Calculer la vitesse nécessaire pour aller rapidement à la position de départ
-                # On utilise une vitesse fixe pour le positionnement initial
-                pan_to_start = self.ptz_start_pan - 0.0  # Depuis le centre (0.0)
-                tilt_to_start = self.ptz_start_tilt - 0.0  # Depuis le centre (0.0)
-                # Vitesse rapide pour le positionnement initial (0.5 unités/seconde)
+                pan_to_start = self.ptz_start_pan
+                tilt_to_start = self.ptz_start_tilt
                 pan_speed_init = 0.5 if pan_to_start > 0 else -0.5 if pan_to_start < 0 else 0.0
                 tilt_speed_init = 0.5 if tilt_to_start > 0 else -0.5 if tilt_to_start < 0 else 0.0
                 self.move_ptz(pan_speed_init, tilt_speed_init)
                 
-                # Attendre un court instant pour le positionnement
-                if self.ptz_sweep_start_time is None:
-                    self.ptz_sweep_start_time = time.time()
-                    self.positioning_start_time = time.time()
+                if self.positioning_start_time is None:
+                    self.ptz_sweep_start_time = self._now()
+                    self.positioning_start_time = self._now()
                 
-                # Après 2 secondes, arrêter le positionnement et commencer le balayage
-                if time.time() - self.positioning_start_time >= 2.0:
+                if self._elapsed_sec(self.positioning_start_time) >= 2.0:
                     self.stop_ptz()
                     self.ptz_positioning_done = True
-                    self.ptz_sweep_start_time = time.time()  # Réinitialiser pour le balayage
+                    self.ptz_sweep_start_time = self._now()
                     self.get_logger().info("PTZ positionnée, début du balayage...")
             
-            # Mettre à jour le balayage PTZ en continu (répétitif)
             if self.ptz_positioning_done and not self.shutdown_requested:
                 self.update_ptz_sweep()
             
-            # Vérifier si l'enregistrement est toujours actif
             if self.ffmpeg_process is not None and self.ffmpeg_process.poll() is not None:
-                # FFmpeg s'est arrêté (ne devrait pas arriver normalement)
                 self.get_logger().warn("FFmpeg s'est arrêté de manière inattendue")
                 self.stop_video_recording()
 
@@ -387,16 +355,14 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        # On ne passe plus par le logger ROS ici
-        print("\nArrêt manuel détecté...")
+        node.get_logger().warn("Arrêt manuel détecté...")
     finally:
-        # On exécute les arrêts CRITIQUES en premier
-        node.stop_then_home_ptz() 
+        node.stop_then_home_ptz()
         node.stop_robot()
         node.stop_video_recording()
         
-        # On laisse une demi-seconde pour que les paquets réseau (Socket + FFmpeg) partent
-        time.sleep(0.5)
+        # Délai court pour que les paquets réseau (Socket + FFmpeg) partent
+        _time.sleep(0.5)
         
         if rclpy.ok():
             node.destroy_node()

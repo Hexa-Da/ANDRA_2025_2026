@@ -5,8 +5,8 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Aller dans le répertoire de lancement
-cd "$PROJECT_DIR/ros_launcher"
+# Aller dans le répertoire du projet
+cd "$PROJECT_DIR"
 
 # Lancer selon le mode (par default slam)
 MODE="${1:-slam}"
@@ -30,10 +30,10 @@ case "$MODE" in
         
         # Passer les arguments supplémentaires à ros2 launch
         shift  # Retirer le premier argument (slam)
-        ros2 launch navigation_stack.launch.py use_slam:=true "$@"
+        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=true "$@"
 
         echo ""
-        echo "--> executé : ros2 run nav2_map_server map_saver  -f ~/Documents/ANDRA_2025-2026/ros_launcher/ma_carte"
+        echo "--> executé : ros2 run nav2_map_server map_saver -f ~/Documents/ANDRA_2025-2026/ros2_ws/src/ros_launcher/map_results/ma_carte"
         echo "pour sauvegarder la carte créer"
         echo ""
         ;;
@@ -45,7 +45,7 @@ case "$MODE" in
             echo "❌ Carte non specifier ou erreur sur le chemin de la carte"
             exit 1
         fi
-        ros2 launch navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:="$2"
+        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:="$2"
         ;;
     *)
         echo "Option non reconnue. Choisissez slam ou amcl. Par défaut : slam"

@@ -53,7 +53,7 @@ Lancer le système complet :
 # Lancer sans Scout Base 
 ./scripts/launch.sh slam enable_scout:=false
 
-# Lancer sans ZEDs
+# Lancer sans ZED
 ./scripts/launch.sh slam enable_zed:=false
 
 # Lancer sans caméra PTZ
@@ -68,7 +68,7 @@ Lancer le système complet :
 
 **Mode AMCL** (pour utiliser une carte existante) :
 ```bash
-./scripts/launch.sh amcl ros_launcher/andra.yaml
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/andra.yaml
 ```
 
 ### `scripts/ptz-network-setup.sh` - Configuration réseau PTZ
@@ -87,12 +87,12 @@ Ce script :
 
 **Note** : À exécuter après chaque redémarrage du robot pour accéder à la caméra PTZ.
 
-### `scripts/pytorch.sh` - Lancement du nœud image_subscriber avec GPU
+### `scripts/image_subscriber_gpu.sh` - Lancement du nœud image_subscriber avec GPU
 
 Lance le nœud `image_subscriber` dans un conteneur Docker avec accès GPU pour la détection YOLO :
 
 ```bash
-./scripts/pytorch.sh
+./scripts/image_subscriber_gpu.sh
 ```
 
 ### `scripts/convert_to_tensorrt.sh` - Conversion du modèle en TensorRT

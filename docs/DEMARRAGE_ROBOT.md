@@ -126,7 +126,7 @@ Il existe deux façons de lancer le système :
 ./scripts/launch.sh slam enable_lidar:=false enable_zed:=false
 
 # Mode AMCL (vérifie automatiquement que la carte est fournie)
-./scripts/launch.sh amcl ros_launcher/andra.yaml
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/andra.yaml
 ```
 
 #### `navigation_stack.launch.py` (pour configuration avancée)
@@ -137,11 +137,8 @@ Il existe deux façons de lancer le système :
 - Utile pour le débogage et les tests
 
 ```bash
-# Depuis le répertoire ros_launcher
-cd ros_launcher
-
 # Mode SLAM avec paramètres PTZ personnalisés
-ros2 launch navigation_stack.launch.py \
+ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=true \
   enable_ptz:=true \
   ptz_brightness:=2.0 \
@@ -150,10 +147,10 @@ ros2 launch navigation_stack.launch.py \
   enable_image_transfer:=true
 
 # Mode AMCL avec configuration personnalisée
-ros2 launch navigation_stack.launch.py \
+ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=false \
   use_amcl:=true \
-  map_path:=ros_launcher/andra.yaml 
+  map_path:=ros2_ws/src/ros_launcher/map_results/andra.yaml 
 ```
 
 ### 7. Lancer le nœud image_subscriber avec GPU (dans un terminal séparé)
@@ -162,12 +159,12 @@ ros2 launch navigation_stack.launch.py \
 # Dans un nouveau terminal (après avoir lancé le système principal)
 cd ~/Documents/ANDRA_2025-2026
 source scripts/setup.sh
-./scripts/pytorch.sh
+./scripts/image_subscriber_gpu.sh
 ```
 
 **Ordre de lancement recommandé** :
 1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
-2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/pytorch.sh`)
+2. **Terminal 2** : Lancer `image_subscriber` avec GPU (`./scripts/image_subscriber_gpu.sh`)
 
 ### 8. Lancer le nœud sequence_photo (dans un terminal séparé)
 
@@ -204,7 +201,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 ### Drivers matériels
 - **LIDAR** : `ydlidar_ros2_driver` (scans laser) 
 - **Robot Scout** : `scout_base` (odométrie des roues) 
-- **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
+- **Caméra ZED2i** : `zed_wrapper` (images et données de profondeur) 
 
 ### Nœuds de traitement d'images (image_transfer)
 - **`image_publisher`** : Capture des images depuis la caméra PTZ
@@ -241,14 +238,14 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **`report_fissures`** : Trace les positions détectées sur la carte
   - Reçoit les positions depuis le topic `/position_detectee`
   - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
-  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros_launcher/map_results/andra.yaml`)
+  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros2_ws/src/ros_launcher/map_results/andra.yaml`)
   - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
 
 ### Localisation et cartographie
 
 - **EKF** (`ekf_filter_node`) : Filtre de Kalman étendu pour fusionner les données des capteurs
   - Publie la transformation `odom` → `base_link`
-  - Fusionne : odométrie des roues (`/odom_robot`), odométrie ZED2 (`/zed/zed_node/odom`), IMU ZED2 (`/zed/zed_node/imu/data`)
+  - Fusionne : odométrie des roues (`/odom_robot`), odométrie ZED2i (`/zed/zed_node/odom`), IMU ZED2i (`/zed/zed_node/imu/data`)
   
 - **SLAM Toolbox** (`slam_toolbox`) : En mode SLAM, construit la carte
   - Publie la transformation `map` → `odom`
@@ -265,7 +262,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 
 Les transformations statiques sont publiées par des nœuds `static_transform_publisher` :
 
-- **`base_to_zed_tf`** : Publie `base_link` → `zed_camera_link` (caméra ZED2)
+- **`base_to_zed_tf`** : Publie `base_link` → `zed_camera_link` (caméra ZED2i)
   - Transformation : (0, 0, 0, 0, 0, 0) - pas de translation ni rotation
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
@@ -292,7 +289,7 @@ source scripts/setup.sh
 ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex is_scout_mini:=True odom_topic_name:=odom_robot
 ```
 
-### Terminal 3 : Caméra ZED2 
+### Terminal 3 : Caméra ZED2i
 
 ```bash
 source scripts/setup.sh

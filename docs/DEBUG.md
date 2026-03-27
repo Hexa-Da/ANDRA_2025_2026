@@ -84,31 +84,6 @@ ros2 run tf2_ros tf2_echo base_link zed_camera_link
 ros2 run tf2_ros tf2_echo map odom
 ```
 
-### Explication des transformations TF
-
-Les transformations TF (Transform) dans ROS2 représentent les relations géométriques entre les repères de coordonnées du robot. Elles permettent de convertir les coordonnées d'un capteur à un autre et de localiser le robot dans la carte.
-
-**Structure de l'arbre TF :**
-```
-map → odom → base_link → {laser_frame, zed_camera_link}
-```
-
-**Frames utilisés :**
-- **`world`** : Repère d'origine correspondant au point de départ du robot
-- **`map`** : Repère de la carte globale (publié par SLAM/AMCL)
-- **`odom`** : Repère d'odométrie (publié par EKF, fusion des capteurs)
-- **`base_link`** : Centre du robot (repère de référence)
-- **`laser_frame`** : Repère du LIDAR (rotation de 90° par rapport à `base_link`)
-- **`zed_camera_link`** : Repère de la caméra ZED2 (coïncide avec `base_link`)
-
-**Transformations statiques** (fixes, position physique des capteurs) :
-- `base_link` → `zed_camera_link` : (0, 0, 0, 0, 0, 0)
-- `base_link` → `laser_frame` : (0, 0, 0, 0, 0, 1.57) - rotation de 90°
-
-**Transformations dynamiques** (changent avec le mouvement) :
-- `map` → `odom` : publiée par SLAM/AMCL
-- `odom` → `base_link` : publiée par EKF et `odom_to_path`
-
 ## Vérifier la configuration DDS et la communication réseau
 
 ### Vérifier ROS_DOMAIN_ID
@@ -133,6 +108,11 @@ echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide =
 
 **Important** : Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne.
 
+
+
+
+
+
 ### Prendre le contrôle manuel
 
 Pour controler les roues :
@@ -140,10 +120,7 @@ Pour controler les roues :
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-Pour obtenir les informations de la zed2i :
+Pour visioner les informations de la zed2i dans RViz :
 ```bash
-# à ajuster selon le dossier courant
-source dependencies/zed-sdk/install/setup.sh
-
 ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2i
 ```

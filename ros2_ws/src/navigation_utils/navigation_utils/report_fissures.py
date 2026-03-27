@@ -60,7 +60,7 @@ class MapPointPlotter(Node):
         
         # Déclarer le paramètre pour le chemin du fichier YAML
         self.declare_parameter('map_yaml_path', 
-                              'ros_launcher/map_results/andra.yaml')
+                              'ros2_ws/src/ros_launcher/map_results/andra.yaml')
         
         # Obtenir le chemin du fichier YAML
         yaml_path_param = self.get_parameter('map_yaml_path').get_parameter_value().string_value

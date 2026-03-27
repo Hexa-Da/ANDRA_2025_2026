@@ -23,7 +23,7 @@ ekf_filter_node:
     odom0_pose_rejection_threshold: 5.0
     odom0_twist_rejection_threshold: 1.0
 
-    # ZED2 odometry input
+    # ZED2i odometry input
     odom1: /zed/zed_node/odom
     odom1_config: [true, true, false,
                   false, false, false,
@@ -34,13 +34,13 @@ ekf_filter_node:
     odom1_pose_rejection_threshold: 5.0
     odom1_twist_rejection_threshold: 1.0
     
-    # ZED2 IMU input
+    # ZED2i IMU input
     imu0: /zed/zed_node/imu/data
     imu0_config: [false, false, false,
-                 false, false, true,
+                 false, false, true, # Use yaw
                  false, false, false,
-                 false, false, true,  # Use yaw
-                 false, false, false]  # Use yaw rate
+                 false, false, true,  # Use yaw rate
+                 false, false, false]  
     imu0_queue_size: 10
     imu0_removal_threshold: 0.5
     
@@ -48,6 +48,13 @@ ekf_filter_node:
     use_control: false
     smooth_lagged_data: true
     history_length: 5.0
+
+    # signification des éléments de configuration :
+    # X, Y, Z,
+    # roll, pitch, yaw,
+    # X˙, Y˙, Z˙, # vitesse linéaire
+    # roll˙, pitch˙, yaw˙, # vitesse angulaire
+    # X¨, Y¨, Z¨ # accélération linéaire
 
     # Confiance plus élevée dans l'odométrie des roues pour la position
     # odom0_pose_covariance_diagonal: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]

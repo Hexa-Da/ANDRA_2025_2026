@@ -21,17 +21,19 @@ video/video_output/
 
 # Note: Les cartes .pgm sont importantes, on les garde
 # Si vous voulez les ignorer, décommentez la ligne suivante :
-# ros_launcher/*.pgm
+# ros2_ws/src/ros_launcher/map_results/*.pgm
 
 # Modèles YOLO (trop volumineux)
 *.pt
 *.pth
 *.onnx
+*.engine
 ros2_ws/models/
 
 # Images générées par report_fissures
 map_with_point_*.png
 map_with_points_*.png
+ros2_ws/src/ros_launcher/map_with_point_*.png
 
 # Fichiers temporaires
 *.swp
@@ -46,10 +48,12 @@ map_with_points_*.png
 .idea/
 *.code-workspace
 
-# Docker images (trop volumineuses)
+# Docker images et build artifacts 
 *.tar
-ros-docker/*.tar
+docker/*.tar
 *.dockerignore.bak
+docker/build/
+docker/log/
 
 # Dossiers de compilation
 /build
@@ -57,4 +61,6 @@ ros-docker/*.tar
 /log
 
 # Dependance des capteurs
-/dependencies
+dependencies/ydlidar_ros2_ws/
+dependencies/scout_base/
+dependencies/zed-ros2-wrapper/

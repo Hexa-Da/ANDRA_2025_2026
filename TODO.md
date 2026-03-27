@@ -108,7 +108,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
   - Configuration EKF mise à jour pour utiliser les données ZED
-- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2 pas encore vérifiée
+- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2i pas encore vérifiée
 
 ### Problèmes scout_base
 - [x] **Package** : Package non trouvé (nécessaire pour l'odométrie des roues)
@@ -193,7 +193,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] **Navigation et visualisation** (etat de la prise en main après première descente) :
   - Familiarisation avec RViz2 en cours
   - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
-  - **Caméra ZED2** : Cohérence des données pas encore vérifiée
+  - **Caméra ZED2i** : Cohérence des données pas encore vérifiée
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
@@ -230,9 +230,9 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - **Recherche et construction de l'image Docker** : Création d'une image Docker spécialisée pour Jetson Orin (`Dockerfile.jetson`) basée sur `dustynv/l4t-pytorch:r36.2.0` pour bénéficier du support GPU natif. L'image intègre ROS 2 Humble, PyTorch avec CUDA, et toutes les dépendances nécessaires (Ultralytics, OpenCV, NumPy < 2.0 pour compatibilité avec cv_bridge). Cette approche permet d'isoler l'environnement de détection YOLO et d'utiliser efficacement le GPU du Jetson.
   - **Optimisation par conversion TensorRT** : Création du script `scripts/convert_to_tensorrt.sh` pour convertir le modèle PyTorch `best.pt` en format TensorRT `best.engine`, permettant une accélération significative de l'inférence sur Jetson (jusqu'à 3-5x plus rapide). Le script utilise le conteneur Docker pour effectuer la conversion avec les paramètres optimaux (half precision, device GPU, taille d'image 640x640).
   - **Adaptation et création des scripts** : 
-    - `scripts/pytorch.sh` : Script unifié qui délègue à `ros-docker/launch_jetson.sh` pour lancer le nœud `image_subscriber` dans le conteneur Docker avec accès GPU
-    - `ros-docker/launch_jetson.sh` : Script de lancement du conteneur Docker avec configuration réseau host, montage des volumes, et vérification automatique des dépendances (ROS 2, Ultralytics, modèles YOLO)
-    - `ros-docker/Dockerfile.jetson` : Dockerfile optimisé pour Jetson avec installation de ROS 2 Humble et dépendances Python pour YOLO
+    - `scripts/image_subscriber_gpu.sh` : Script unifié qui délègue à `docker/launch_jetson.sh` pour lancer le nœud `image_subscriber` dans le conteneur Docker avec accès GPU
+    - `docker/launch_jetson.sh` : Script de lancement du conteneur Docker avec configuration réseau host, montage des volumes, et vérification automatique des dépendances (ROS 2, Ultralytics, modèles YOLO)
+    - `docker/Dockerfile.jetson` : Dockerfile optimisé pour Jetson avec installation de ROS 2 Humble et dépendances Python pour YOLO
   - **Adaptation du code Python** : Modification de `ros2_ws/src/image_transfer/image_transfer/image_subscriber.py` pour détecter et utiliser automatiquement le modèle TensorRT (`best.engine`) s'il est disponible, avec fallback sur `best.pt` si nécessaire. 
 
 ---
@@ -241,10 +241,10 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Configuration et installation
 - [x] Finaliser la réinstallation de l'image du robot
-- [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
-- [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
-- [x] Résoudre le problème LIDAR ✅ (Résolu le 18 février 2026)
+- [x] Installer/configurer le driver `scout_base` (Installé, configuré et fonctionnel)
+- [x] Installer/configurer le driver `zed_wrapper` (Installé et fonctionnel)
+- [x] Configurer la caméra PTZ (Réseau configuré, nœuds fonctionnels)
+- [x] Résoudre le problème LIDAR (Résolu le 18 février 2026)
 
 ### Test et compréhension du projet
 - [x] Tester la configuration de la navigation
@@ -307,7 +307,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] Intégrer la cartographie dans le système de navigation
 
 ### Navigation avancée
-- [ ] Navigation autonome avec ligne jaune au sol (détection via ZED2)
+- [ ] Navigation autonome avec ligne jaune au sol (détection via ZED2i)
 - [ ] Navigation avec étiquettes au mur pour repérage dans les tunnels
 - [ ] Système de localisation robuste combinant plusieurs méthodes
 

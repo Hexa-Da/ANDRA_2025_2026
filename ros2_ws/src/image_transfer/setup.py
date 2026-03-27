@@ -15,17 +15,14 @@ setup(
     zip_safe=True,
     maintainer='techlab',
     maintainer_email='antoine.richard@depinfonancy.net',
-    description='TODO: Package description',
+    description='Nœuds pour la capture et la transmission d\'images',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'image_publisher = image_transfer.image_publisher:main',
             'image_subscriber = image_transfer.image_subscriber:main',
-            'test = image_transfer.test:main',
-            'show_pos = image_transfer.show_pos:main',
             'position_publisher = image_transfer.position_publisher:main',
-            'test_image_publisher = image_transfer.test_image_publisher:main',
             'ptz_controller = image_transfer.ptz_controller:main',
             'video_publisher = image_transfer.video_publisher:main',
         ],

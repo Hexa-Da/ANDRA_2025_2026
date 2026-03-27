@@ -1,34 +1,27 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry, Path
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import PoseStamped
 import math
-import tf2_ros
+
 
 class OdomToPath(Node):
     def __init__(self):
         super().__init__('odom_to_path')
         
-        # Abonnement à l'odométrie (essayer d'abord filtered, puis odom_robot)
         self.subscription = self.create_subscription(
             Odometry,
-            '/odometry/filtered',  # Ou '/odom_robot' si EKF désactivé
+            '/odometry/filtered',
             self.odom_callback,
             10
         )
         
-        # Publication du Path
         self.path_publisher = self.create_publisher(Path, '/robot_path', 10)
         
-        # NOUVEAU : Broadcaster TF pour publier odom -> base_link
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
-        
-        # Initialisation du Path
         self.path = Path()
-        self.path.header.frame_id = 'odom'  # Frame de référence
+        self.path.header.frame_id = 'odom'
         
-        # Paramètres
-        self.min_distance = 0.1  # Ajouter un point tous les 10 cm minimum
+        self.min_distance = 0.1
         
         self.get_logger().info('Nœud odom_to_path démarré.')
         

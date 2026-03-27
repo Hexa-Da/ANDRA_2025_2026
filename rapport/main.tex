@@ -275,6 +275,56 @@ Cette descente permettra ainsi de vérifier la cohérence entre l'environnement 
 % --- Travail Smestre 2 ---
 \section{Semestre 2}
 
+Le second semestre s'ouvre sur les enseignements tirés de la première descente et vise à faire progresser le robot vers un système pleinement opérationnel. Les travaux se structurent autour de trois axes : la résolution des problèmes matériels restants, l'amélioration du modèle de détection et la compréhension du système de navigation.
+
+\subsection{Résolution du problème LiDAR}
+
+Le problème LiDAR, identifié depuis le premier semestre, a été définitivement résolu le 18 février 2026. Le diagnostic avait révélé que le port micro USB de la carte Radar\_Con était arraché, empêchant l'alimentation du moteur nécessaire à la rotation continue du Lidar. Un branchement de secours via le port USB-C s'est avéré fonctionnel.
+
+La résolution a nécessité deux corrections :
+\begin{itemize}
+    \item \textbf{Changement de port :} Passage de \texttt{/dev/ttyTHS1} à \texttt{/dev/ttyUSB0} pour exploiter le branchement USB-C.
+    \item \textbf{Correction de la configuration :} L'ancien fichier de configuration (\texttt{G4.yaml}) était inadapté au modèle réel du capteur. Le LiDAR est un TG15, et l'adoption du fichier officiel \texttt{TG.yaml} du package \texttt{ydlidar\_ros2\_driver} a permis un fonctionnement normal.
+\end{itemize}
+
+\subsection{Amélioration du modèle de détection}
+
+Le dataset de la caméra 360° capturé lors de la première descente constitue la matière première du travail d'amélioration du modèle de détection mené par Lucas et Adrien. Les étapes en cours sont :
+
+\begin{enumerate}
+    \item \textbf{Tri et annotation du dataset :} Les images panoramiques capturées dans les galeries doivent être triées pour ne conserver que les prises exploitables, puis annotées manuellement pour identifier les fissures.
+    \item \textbf{Entraînement d'un modèle adapté :} Un nouveau modèle de détection sera entraîné spécifiquement sur ces images 360°, afin de permettre une analyse continue de l'ensemble de la voûte pendant les déplacements du robot.
+\end{enumerate}
+
+\subsection{Amélioration de la séquence de capture}
+
+Les constats de la première descente ont mis en évidence que la séquence de 3 photos PTZ ne couvre pas l'intégralité de l'arche de la galerie. Plusieurs pistes sont explorées pour améliorer la couverture :
+\begin{itemize}
+    \item Augmenter le nombre de captures par arrêt (passage de 3 à 5 positions PTZ).
+    \item Revoir l'enchaînement des positions de la caméra pour maximiser la couverture.
+    \item Expérimenter le script vidéo à très basse vitesse.
+\end{itemize}
+
+\subsection{Optimisation YOLO avec Docker et TensorRT}
+
+Afin d'exploiter pleinement le GPU de la Jetson Orin Nano pour la détection de fissures, une chaîne d'optimisation complète a été mise en place. Une image Docker spécialisée (\texttt{Dockerfile.jetson}), basée sur \texttt{dustynv/l4t-pytorch:r36.2.0}, a été construite pour isoler l'environnement de détection. Cette image intègre ROS~2 Humble, PyTorch avec CUDA et la bibliothèque Ultralytics, garantissant la compatibilité GPU native sur la plateforme Jetson.
+
+Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch original grâce à l'optimisation en demi-précision (half precision). Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli transparent sur le modèle PyTorch.
+
+L'ensemble est orchestré par le script \texttt{docker/launch\_jetson.sh}, qui lance le conteneur avec la configuration réseau host, le montage des volumes nécessaires et la vérification automatique des dépendances.
+
+\subsection{Amélioration du positionnement et de la navigation}
+
+Le second semestre vise également à faire progresser le système de navigation autonome et de positionnement. Les axes de travail sont :
+
+\begin{itemize}
+    \item \textbf{Validation des transformations TF :} Corriger le problème de trajectoire non planaire observé dans RViz2, qui traduit une incohérence dans l'arbre des transformations géométriques.
+    \item \textbf{Vérification de la ZED2i :} Valider la cohérence des données inertielles et visuelles de la caméra stéréoscopique, condition préalable à un filtre de Kalman étendu fiable.
+    \item \textbf{Analyse des données LiDAR :} Une étape clé consiste à approfondir la compréhension des données générées par le LiDAR, afin de garantir la fiabilité des mesures utilisées pour la navigation et l’élaboration des cartes.
+    \item \textbf{Cartographie et réglages SLAM :} La génération de cartes par SLAM est fonctionnelle, mais il reste à en maîtriser parfaitement le paramétrage et l’interprétation, afin d’optimiser la qualité des cartes produites et d’assurer leur cohérence avec l’environnement réel.
+    \item \textbf{Localisation AMCL sur cartes SLAM :} L’exploitation des cartes obtenues via SLAM pour la localisation avec AMCL constitue la prochaine étape. Maintenant que le LiDAR est pleinement opérationnel, la mise en œuvre et l’ajustement d’AMCL doivent permettre une localisation précise du robot lors de ses déplacements, conformément aux recommandations de l’équipe 2024-2025.
+\end{itemize}
+
 % --- Gestion de projet ---
 \section{Gestion de projet}
 

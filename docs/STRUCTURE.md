@@ -7,13 +7,12 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ```
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
-├── ros-docker/                  # Environnement Docker ROS2 pour developper sans avoir accès au robot
-├── ros2_ws/                     # Workspace principal (code robot, navigation, etc)
-├── ros_launcher/                # Fichiers de lancement ROS2 (scripts .launch.py et cartes)
+├── docker/                      # Environnement Docker ROS2 pour visualiser le robot et traiter les images
+├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
 │   ├── scout_base/              # Workspace ROS2 pour le robot Scout
-│   └── zed-ros2-wrapper/        # Workspace ROS2 pour la caméra ZED2
+│   └── zed-ros2-wrapper/        # Workspace ROS2 pour la caméra ZED2i
 ├── video/                       # Script d'enregistrement vidéo depuis la caméra PTZ
 └── scripts/                     # Scripts d'initialisation et gestion du projet
 ```
@@ -36,13 +35,13 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 
 ---
 
-### `ros-docker/`
+### `docker/`
 **Rôle** : Environnements Docker pour développement et exécution GPU
 
 **Contenu** :
-- `Dockerfile` : Image Docker avec ROS2 et RViz2 (pour PC de développement)
+- `Dockerfile.rviz` : Image Docker avec ROS2 et RViz2 (pour PC de développement)
 - `Dockerfile.jetson` : Image Docker avec PyTorch + ROS2 pour Jetson Orin (GPU)
-- `launch.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
+- `launch_rviz.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
 - `launch_jetson.sh` : Script de lancement du nœud `image_subscriber` avec GPU sur Jetson
 
 **Intérêt** : 
@@ -68,29 +67,21 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
   - `show_pos` : Affiche la position du robot (odométrie)
   - `test` : Outil de test pour vérifier la disponibilité de la carte
-- `src/slam_andra_package/` : Package de configuration SLAM
-- `src/ydlidar_nav2_slam/` : Configuration SLAM pour le LIDAR
+- `src/ros_launcher/` : Package ROS2 de configuration et de lancement (SLAM, AMCL, EKF, Nav2)
+  - `navigation_stack.launch.py` : Fichier de lancement principal 
+  - `configs/` : Fichiers de configuration YAML
+    - `ekf_config.yaml` : Configuration du filtre EKF (fusion des capteurs)
+    - `slam_config.yaml` : Configuration SLAM (cartographie)
+    - `amcl_config.yaml` : Configuration AMCL (localisation)
+  - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
+  - `package.xml` : Manifest du package ROS2
+  - `CMakeLists.txt` : Configuration de build
+  - `config.rviz` : Configuration pré-définie pour RViz2 
 - `images_capturees/` : Images brutes capturées par la caméra PTZ
 - `images_detectees/` : Images avec détections de fissures
 - `models/` : Modèles YOLO
 
-**Intérêt** : Contient tout le code source du projet. C'est ici que vous développez et modifiez les fonctionnalités du robot.
-
----
-
-### `ros_launcher/`
-**Rôle** : Fichiers de configuration et de lancement du système ROS2
-
-**Contenu** :
-- `navigation_stack.launch.py` : Fichier de lancement principal (lance tous les nœuds)
-- `configs/` : Fichiers de configuration YAML
-  - `ekf_config.yaml` : Configuration du filtre EKF (fusion des capteurs)
-  - `slam_config.yaml` : Configuration SLAM (cartographie)
-  - `amcl_config.yaml` : Configuration AMCL (localisation)
-- `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)
-- `config.rviz` : Configuration pré-définie pour RViz2 
-
-**Intérêt** : Centralise toutes les configurations et permet de lancer le système complet avec une seule commande. Les cartes sont sauvegardées ici pour être réutilisées en mode AMCL. Le fichier `config.rviz` peut être utilisé avec ou sans Docker pour visualiser le robot et la carte.
+**Intérêt** : Regroupe l'ensemble du code source du projet (packages dans `src/`, dont `ros_launcher` pour le lancement et les configs). C'est ici que vous développez et modifiez les fonctionnalités du robot.
 
 ---
 
@@ -100,7 +91,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Contenu** :
 - `ydlidar_ros2_ws/` : Driver ROS2 pour le LIDAR YDLidar
 - `scout_base/` : Driver ROS2 pour le robot Agilex Scout Mini (odométrie des roues)
-- `zed-ros2-wrapper/` : Driver ROS2 pour la caméra ZED2 (images et profondeur)
+- `zed-ros2-wrapper/` : Driver ROS2 pour la caméra ZED2i (images et profondeur)
 
 **Intérêt** : Sépare les dépendances externes du code principal. Ces workspaces sont compilés séparément et sourcés par `scripts/setup.sh`. Facilite la mise à jour des drivers sans toucher au code principal.
 
@@ -125,7 +116,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `build.sh` : Compile les workspaces ROS2 (tous ou un spécifique)
 - `launch.sh` : Lance le système complet (mode SLAM ou AMCL)
 - `ptz-network-setup.sh` : Configure le réseau Ethernet pour accéder à la caméra PTZ
-- `pytorch.sh` : Lance le nœud `image_subscriber` avec GPU dans Docker
+- `image_subscriber_gpu.sh` : Lance le nœud `image_subscriber` avec GPU dans Docker
 - `convert_to_tensorrt.sh` : Convertit le modèle PyTorch (`best.pt`) en TensorRT (`best.engine`) pour améliorer les performances
 
 **Intérêt** : Simplifie grandement l'utilisation du projet. Au lieu de se souvenir de multiples commandes ROS2, vous utilisez des scripts simples. Facilite l'onboarding de nouveaux utilisateurs.

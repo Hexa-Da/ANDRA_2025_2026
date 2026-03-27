@@ -14,8 +14,8 @@ setup(
     install_requires=['setuptools', 'pillow', 'matplotlib'],
     zip_safe=True,
     maintainer='techlab',
-    maintainer_email='techlab@robot-andra',
-    description='TODO: Package description',
+    maintainer_email='antoine.richard@depinfonancy.net',
+    description='Utilitaires de navigation et visualisation',
     license='TODO: License declaration',
     extras_require={
         'test': [
