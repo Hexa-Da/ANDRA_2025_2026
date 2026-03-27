@@ -9,8 +9,6 @@ docker run -it --rm \
     -e QT_X11_NO_MITSHM=1 \
     -e ROS_DOMAIN_ID=0 \
     -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
-    -e NVIDIA_DRIVER_CAPABILITIES=all \
-    --gpus all \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v $(pwd)/../ros2_ws:/workspace/ros2_ws \
     -v $(pwd)/../ros_launcher:/workspace/ros_launcher \
@@ -23,3 +21,6 @@ docker run -it --rm \
         export ROS_DOMAIN_ID=0 && \
         exec /bin/bash
     "
+
+    # -e NVIDIA_DRIVER_CAPABILITIES=all \
+    # --gpus all \
