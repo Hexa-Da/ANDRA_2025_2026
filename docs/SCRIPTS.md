@@ -53,7 +53,7 @@ Lancer le système complet :
 # Lancer sans Scout Base 
 ./scripts/launch.sh slam enable_scout:=false
 
-# Lancer sans ZEDs
+# Lancer sans ZED
 ./scripts/launch.sh slam enable_zed:=false
 
 # Lancer sans caméra PTZ

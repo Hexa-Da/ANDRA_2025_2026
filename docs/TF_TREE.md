@@ -49,8 +49,8 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 | Source | Topic | Données |
 |--------|-------|---------|
 | Odométrie roues (Scout) | `/odom_robot` | X, Y + vit. linéaire |
-| Odométrie visuelle (ZED2) | `/zed/zed_node/odom` | X, Y + vit. linéaire |
-| IMU (ZED2) | `/zed/zed_node/imu/data` | Yaw + vit. angulaire |
+| Odométrie visuelle (ZED2i) | `/zed/zed_node/odom` | X, Y + vit. linéaire |
+| IMU (ZED2i) | `/zed/zed_node/imu/data` | Yaw + vit. angulaire |
 
 `publish_tf: true` dans `ekf_config.yaml`. Un seul nœud doit publier cette TF (conflit sinon).
 
@@ -64,7 +64,7 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 | **Publié par** | `navigation_stack.launch.py` (`base_to_zed_tf`) |
 
 **Problème** : identité → ZED 2i considérée au centre du robot (faux) → erreurs EKF.
-**Action** : mesurer position/orientation de la ZED 2i par rapport à `base_link`, renseigner en m et rad.
+**Action** : mesurer position/orientation de la ZED2i par rapport à `base_link`, renseigner en m et rad.
 
 ### 5. `base_link` → `laser_frame` (statique)
 

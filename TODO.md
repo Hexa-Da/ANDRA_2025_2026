@@ -108,7 +108,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
   - Configuration EKF mise à jour pour utiliser les données ZED
-- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2 pas encore vérifiée
+- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2i pas encore vérifiée
 
 ### Problèmes scout_base
 - [x] **Package** : Package non trouvé (nécessaire pour l'odométrie des roues)
@@ -193,7 +193,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] **Navigation et visualisation** (etat de la prise en main après première descente) :
   - Familiarisation avec RViz2 en cours
   - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
-  - **Caméra ZED2** : Cohérence des données pas encore vérifiée
+  - **Caméra ZED2i** : Cohérence des données pas encore vérifiée
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
@@ -241,10 +241,10 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Configuration et installation
 - [x] Finaliser la réinstallation de l'image du robot
-- [x] Installer/configurer le driver `scout_base` ✅ (Installé, configuré et fonctionnel)
-- [x] Installer/configurer le driver `zed_wrapper` ✅ (Installé et fonctionnel)
-- [x] Configurer la caméra PTZ ✅ (Réseau configuré, nœuds fonctionnels)
-- [x] Résoudre le problème LIDAR ✅ (Résolu le 18 février 2026)
+- [x] Installer/configurer le driver `scout_base` (Installé, configuré et fonctionnel)
+- [x] Installer/configurer le driver `zed_wrapper` (Installé et fonctionnel)
+- [x] Configurer la caméra PTZ (Réseau configuré, nœuds fonctionnels)
+- [x] Résoudre le problème LIDAR (Résolu le 18 février 2026)
 
 ### Test et compréhension du projet
 - [x] Tester la configuration de la navigation
@@ -307,7 +307,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] Intégrer la cartographie dans le système de navigation
 
 ### Navigation avancée
-- [ ] Navigation autonome avec ligne jaune au sol (détection via ZED2)
+- [ ] Navigation autonome avec ligne jaune au sol (détection via ZED2i)
 - [ ] Navigation avec étiquettes au mur pour repérage dans les tunnels
 - [ ] Système de localisation robuste combinant plusieurs méthodes
 

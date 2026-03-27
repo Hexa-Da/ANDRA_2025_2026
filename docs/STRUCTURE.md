@@ -7,12 +7,12 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ```
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
-├── docker/                 # Environnement Docker ROS2 pour visualiser le robot et traiter les images
+├── docker/                      # Environnement Docker ROS2 pour visualiser le robot et traiter les images
 ├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
 │   ├── ydlidar_ros2_ws/         # Workspace ROS2 pour le lidar YDLidar
 │   ├── scout_base/              # Workspace ROS2 pour le robot Scout
-│   └── zed-ros2-wrapper/        # Workspace ROS2 pour la caméra ZED2
+│   └── zed-ros2-wrapper/        # Workspace ROS2 pour la caméra ZED2i
 ├── video/                       # Script d'enregistrement vidéo depuis la caméra PTZ
 └── scripts/                     # Scripts d'initialisation et gestion du projet
 ```
@@ -91,7 +91,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Contenu** :
 - `ydlidar_ros2_ws/` : Driver ROS2 pour le LIDAR YDLidar
 - `scout_base/` : Driver ROS2 pour le robot Agilex Scout Mini (odométrie des roues)
-- `zed-ros2-wrapper/` : Driver ROS2 pour la caméra ZED2 (images et profondeur)
+- `zed-ros2-wrapper/` : Driver ROS2 pour la caméra ZED2i (images et profondeur)
 
 **Intérêt** : Sépare les dépendances externes du code principal. Ces workspaces sont compilés séparément et sourcés par `scripts/setup.sh`. Facilite la mise à jour des drivers sans toucher au code principal.
 

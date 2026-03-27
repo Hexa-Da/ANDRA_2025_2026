@@ -201,7 +201,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 ### Drivers matériels
 - **LIDAR** : `ydlidar_ros2_driver` (scans laser) 
 - **Robot Scout** : `scout_base` (odométrie des roues) 
-- **Caméra ZED2** : `zed_wrapper` (images et données de profondeur) 
+- **Caméra ZED2i** : `zed_wrapper` (images et données de profondeur) 
 
 ### Nœuds de traitement d'images (image_transfer)
 - **`image_publisher`** : Capture des images depuis la caméra PTZ
@@ -245,7 +245,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 
 - **EKF** (`ekf_filter_node`) : Filtre de Kalman étendu pour fusionner les données des capteurs
   - Publie la transformation `odom` → `base_link`
-  - Fusionne : odométrie des roues (`/odom_robot`), odométrie ZED2 (`/zed/zed_node/odom`), IMU ZED2 (`/zed/zed_node/imu/data`)
+  - Fusionne : odométrie des roues (`/odom_robot`), odométrie ZED2i (`/zed/zed_node/odom`), IMU ZED2i (`/zed/zed_node/imu/data`)
   
 - **SLAM Toolbox** (`slam_toolbox`) : En mode SLAM, construit la carte
   - Publie la transformation `map` → `odom`
@@ -262,7 +262,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 
 Les transformations statiques sont publiées par des nœuds `static_transform_publisher` :
 
-- **`base_to_zed_tf`** : Publie `base_link` → `zed_camera_link` (caméra ZED2)
+- **`base_to_zed_tf`** : Publie `base_link` → `zed_camera_link` (caméra ZED2i)
   - Transformation : (0, 0, 0, 0, 0, 0) - pas de translation ni rotation
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
@@ -289,7 +289,7 @@ source scripts/setup.sh
 ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex is_scout_mini:=True odom_topic_name:=odom_robot
 ```
 
-### Terminal 3 : Caméra ZED2 
+### Terminal 3 : Caméra ZED2i
 
 ```bash
 source scripts/setup.sh
