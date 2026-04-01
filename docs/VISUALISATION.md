@@ -36,6 +36,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 **Frames disponibles :**
 - `odom` : Repère de l'odométrie (publié par EKF)
 - `base_link` : Repère du robot (centre du robot)
+- `base_footprint` : Projection au sol du robot
 - `laser_frame` : Repère du LIDAR
 - `zed_camera_link` : Repère de la caméra ZED2i
 
@@ -60,6 +61,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - `map` : Repère de la carte globale (publié par SLAM/AMCL)
 - `odom` : Repère de l'odométrie (publié par EKF)
 - `base_link` : Repère du robot (centre du robot)
+- `base_footprint` : Projection au sol du robot 
 - `laser_frame` : Repère du LIDAR
 - `zed_camera_link` : Repère de la caméra ZED2i
 

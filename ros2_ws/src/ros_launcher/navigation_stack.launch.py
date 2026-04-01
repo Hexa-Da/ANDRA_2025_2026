@@ -9,9 +9,15 @@ import os
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('ros_launcher')
+    scout_urdf = os.path.join(
+        get_package_share_directory('scout_description'),
+        'urdf', 'scout_mini', 'scout_mini.urdf'
+    )
     ekf_config = os.path.join(pkg_share, 'configs', 'ekf_config.yaml')
     slam_config = os.path.join(pkg_share, 'configs', 'slam_config.yaml')
     amcl_config = os.path.join(pkg_share, 'configs', 'amcl_config.yaml')
+    with open(scout_urdf, 'r', encoding='utf-8') as f:
+        scout_robot_description = f.read()
 
     # --- Declare all launch arguments FIRST ---
     declare_use_slam = DeclareLaunchArgument(
@@ -101,6 +107,14 @@ def generate_launch_description():
         ExecuteProcess(
             cmd=['ros2', 'launch', 'scout_base', 'scout_mini_base.launch.py',
                  'port_name:=agilex', 'is_scout_mini:=True', 'odom_topic_name:=odom_robot'],
+            output='screen',
+            condition=IfCondition(enable_scout),
+        ),
+        Node(
+            package='robot_state_publisher',
+            executable='robot_state_publisher',
+            name='robot_state_publisher',
+            parameters=[{'robot_description': scout_robot_description}],
             output='screen',
             condition=IfCondition(enable_scout),
         ),

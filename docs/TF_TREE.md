@@ -8,6 +8,7 @@ L'arbre TF décrit les relations spatiales entre les repères (frames) du robot.
 map
   └── odom                                [SLAM ou AMCL]
         └── base_link                     [EKF publie odom → base_link]
+              ├── base_footprint          [URDF Scout via robot_state_publisher]
               ├── zed_camera_link         [static : mesures terrain]
               └── laser_frame             [static : mesures terrain + yaw 90°]
 ```
@@ -44,7 +45,18 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 
 `publish_tf: true` dans `ekf_config.yaml`. Un seul nœud doit publier cette TF (conflit sinon).
 
-### 3. `base_link` → `zed_camera_link` (statique)
+### 3. `base_link` → `base_footprint` (statique via URDF Scout)
+
+| Paramètre | Valeur |
+|-----------|--------|
+| **Type** | `robot_state_publisher` (à partir de l'URDF Scout Mini) |
+| **Translation** | (0, 0, -0.178) m |
+| **Rotation** | (0, 0, 0) |
+| **Publié par** | `robot_state_publisher` (`scout_mini.urdf`) |
+
+Ce lien vient de l'URDF officiel Agilex (`scout_description`) et fournit une frame de référence au sol utile en navigation 2D.
+
+### 4. `base_link` → `zed_camera_link` (statique)
 
 | Paramètre | Valeur actuelle |
 |-----------|-----------------|
@@ -56,7 +68,7 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 
 **ZED wrapper** : `publish_tf:=false` — pas de TF `odom -> zed_camera_link` ; seul le montage rigide sur `base_link` s’applique.
 
-### 4. `base_link` → `laser_frame` (statique)
+### 5. `base_link` → `laser_frame` (statique)
 
 | Paramètre | Valeur |
 |-----------|--------|
