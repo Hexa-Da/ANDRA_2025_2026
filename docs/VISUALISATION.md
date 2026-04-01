@@ -71,7 +71,9 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 
 #### 1. **Grille** (Grid)
 - Référence visuelle pour l'orientation
-- Grille 2D dans le plan XY
+- **Reference Frame** : suit `odom` ou `map` selon le **Fixed Frame** global
+- **Offset Z** : `-0.178` m (alignement visuel avec le plan **sol / empreinte** )
+- Grille 2D dans le plan XY du repère choisi, puis décalée selon l’offset
 
 #### 2. **TF (Transform)**
 - Affiche l'arbre de coordonnées du robot
@@ -82,6 +84,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - **Topic** : `/scan`
 - Affiche les données du LIDAR en temps réel
 - Points colorés selon l'intensité du signal
+- **Repère d’affichage** : avec RViz2 (plugin Humble), le scan est transformé dans le **Fixed Frame** (`odom` ou `map`).
 - **Utilité** : Vérifier que le LIDAR fonctionne correctement
 
 #### 4. **Path** (Trajet du robot)
