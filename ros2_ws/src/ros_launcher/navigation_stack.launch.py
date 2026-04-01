@@ -126,8 +126,6 @@ def generate_launch_description():
                 'ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py',
                 'camera_model:=zed2i',
                 'depth_mode:=NONE',
-                'pos_tracking.pos_tracking_mode:=GEN_3',
-                'pos_tracking.imu_fusion:=true',
                 'publish_tf:=false',
                 'publish_map_tf:=false',
             ],
