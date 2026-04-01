@@ -25,7 +25,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - Pour tester le système avant de créer une carte
 
 **Configuration :**
-- **Fixed Frame** : `world` (repère fixe absolu, ne bouge jamais)
+- **Fixed Frame** : `odom` (repère local continu, recommandé sans carte)
 - **Vue** : Ne suit pas le robot (reste centrée sur l'origine)
 
 **Ce que vous observez :**
@@ -34,7 +34,6 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - Les différences entre les frames (`odom`, `base_link`, etc.)
 
 **Frames disponibles :**
-- `world` : Repère fixe absolu (référence)
 - `odom` : Repère de l'odométrie (publié par EKF)
 - `base_link` : Repère du robot (centre du robot)
 - `laser_frame` : Repère du LIDAR

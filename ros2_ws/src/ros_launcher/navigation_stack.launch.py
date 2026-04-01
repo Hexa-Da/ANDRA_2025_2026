@@ -85,16 +85,7 @@ def generate_launch_description():
         declare_ptz_gamma,
         declare_video_extract_rate,
 
-        # 2. Static TF: world → map
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='world_to_map_tf',
-            arguments=['0', '0', '0', '0', '0', '0', 'world', 'map'],
-            output='screen',
-        ),
-
-        # 3. Drivers matériels (conditionnels)
+        # 2. Drivers matériels (conditionnels)
 
         # YDLIDAR
         Node(
@@ -116,7 +107,16 @@ def generate_launch_description():
 
         # ZED Camera
         ExecuteProcess(
-            cmd=['ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py', 'camera_model:=zed2i'],
+            # depth_mode:=NONE disables depth processing/publication while keeping RGB and IMU streams.
+            cmd=[
+                'ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py',
+                'camera_model:=zed2i',
+                'depth_mode:=NONE',
+                'pos_tracking.pos_tracking_mode:=GEN_3',
+                'pos_tracking.imu_fusion:=true',
+                'publish_tf:=false',
+                'publish_map_tf:=false',
+            ],
             output='screen',
             condition=IfCondition(enable_zed),
         ),
@@ -185,17 +185,23 @@ def generate_launch_description():
 
         # 5. Static transforms (capteurs)
 
+        # base_link -> zed_camera_link : x ≈ 18,5 cm, z ≈ 19,2 cm
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_zed_tf',
-            arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'zed_camera_link']
+            arguments=[
+                '0.185', '0.0', '0.192',
+                '0.0', '0.0', '0.0',
+                'base_link', 'zed_camera_link',
+            ],
         ),
+        # base_link -> laser_frame : x ≈ 8,5 cm, z ≈ 22,2 cm ; yaw = 1.57 (90°)
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_laser_tf',
-            arguments=['0', '0', '0', '1.57', '0', '0', 'base_link', 'laser_frame']
+            arguments=['0.085', '0.0', '0.222', '1.57', '0', '0', 'base_link', 'laser_frame'],
         ),
 
         # 6. Localisation et cartographie

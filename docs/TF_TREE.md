@@ -5,28 +5,18 @@
 L'arbre TF décrit les relations spatiales entre les repères (frames) du robot. Chaque transformation relie un repère parent à un repère enfant, avec une translation (x, y, z) et une rotation (roll, pitch, yaw).
 
 ```
-world
-  └── map                                 [static_transform_publisher : identité]
-        └── odom                          [EKF ou AMCL]
-              └── base_link               [EKF publie odom → base_link]
-                    ├── zed_camera_link   [static : à mesurer]
-                    └── laser_frame       [static : 90° yaw]
+map
+  └── odom                                [SLAM ou AMCL]
+        └── base_link                     [EKF publie odom → base_link]
+              ├── zed_camera_link         [static : mesures terrain]
+              └── laser_frame             [static : mesures terrain + yaw 90°]
 ```
+
+Le nœud ZED est lancé avec **`publish_tf:=false`** : il ne publie **pas** `odom -> zed_camera_link` ; la pose mécanique de la caméra est uniquement **`base_link -> zed_camera_link`** (statique).
 
 ## Détail des transformations
 
-### 1. `world` → `map` (statique, identité)
-
-| Paramètre | Valeur |
-|-----------|--------|
-| **Type** | `static_transform_publisher` |
-| **Translation** | (0, 0, 0) |
-| **Rotation** | (0, 0, 0) |
-| **Publié par** | `navigation_stack.launch.py` (`world_to_map_tf`) |
-
-Repère racine `world` ≡ `map`. Ancrage de la carte.
-
-### 2. `map` → `odom` (dynamique)
+### 1. `map` → `odom` (dynamique)
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -36,7 +26,7 @@ Repère racine `world` ≡ `map`. Ancrage de la carte.
 
 Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback identité si aucune map disponible.
 
-### 3. `odom` → `base_link` (dynamique, EKF)
+### 2. `odom` → `base_link` (dynamique, EKF)
 
 | Paramètre | Valeur |
 |-----------|--------|
@@ -54,25 +44,25 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 
 `publish_tf: true` dans `ekf_config.yaml`. Un seul nœud doit publier cette TF (conflit sinon).
 
-### 4. `base_link` → `zed_camera_link` (statique)
+### 3. `base_link` → `zed_camera_link` (statique)
 
 | Paramètre | Valeur actuelle |
 |-----------|-----------------|
 | **Type** | `static_transform_publisher` |
-| **Translation** | (0, 0, 0) |
-| **Rotation** | (0, 0, 0) |
+| **Translation** | **(0,185, 0, 0,192)** m — soit **x ≈ 18,5 cm, z ≈ 19,2 cm** |
+| **Rotation** | yaw (Z) = 0, pitch (Y) = 0, roll (X) = 0 |
+| **Ordre** | `static_transform_publisher` : x y z yaw pitch roll |
 | **Publié par** | `navigation_stack.launch.py` (`base_to_zed_tf`) |
 
-**Problème** : identité → ZED 2i considérée au centre du robot (faux) → erreurs EKF.
-**Action** : mesurer position/orientation de la ZED2i par rapport à `base_link`, renseigner en m et rad.
+**ZED wrapper** : `publish_tf:=false` — pas de TF `odom -> zed_camera_link` ; seul le montage rigide sur `base_link` s’applique.
 
-### 5. `base_link` → `laser_frame` (statique)
+### 4. `base_link` → `laser_frame` (statique)
 
 | Paramètre | Valeur |
 |-----------|--------|
 | **Type** | `static_transform_publisher` |
-| **Translation** | (0, 0, 0) |
-| **Rotation** | (1.57, 0, 0) → 90° yaw |
+| **Translation** | **(0,085, 0, 0,222)** m — soit **x ≈ 8,5 cm, z ≈ 22,2 cm** |
+| **Rotation** | yaw (Z) = **1,57 rad** (~90°) |
 | **Publié par** | `navigation_stack.launch.py` (`base_to_laser_tf`) |
 
-LIDAR YDLidar TG15 modélisé tourné de 90° par rapport à l'avant. **À vérifier** 
+LIDAR YDLidar TG15 modélisé tourné de 90° par rapport à l'avant. 
