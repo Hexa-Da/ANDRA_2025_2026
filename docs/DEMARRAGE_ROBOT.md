@@ -11,7 +11,7 @@ Pour vous connecter au robot, vous devez être sur le même réseau que lui (soi
 ## Au techlab (Techlab-wifi)
 
 ```bash
-ssh techlab@192.168.40.101
+ssh techlab@192.168.40.100
 # OU 
 ssh techlab@orin2.local
 
@@ -293,7 +293,7 @@ ros2 launch scout_base scout_mini_base.launch.py port_name:=agilex is_scout_mini
 
 ```bash
 source scripts/setup.sh
-ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i
+ros2 launch zed_wrapper zed_camera.launch.py camera_model:=zed2i depth_mode:=NONE publish_tf:=false publish_map_tf:=false
 ```
 
 ### Terminal 4 : Nœuds de traitement d'images ou de navigation

@@ -197,7 +197,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
 - [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
-- [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le Techlab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.101` en mode hotspot).
+- [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le Techlab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.100` en mode hotspot).
 - [x] **À tester** : Connexion et stabilité SSH depuis un PC portable connecté au hotspot du robot, dans un environnement extérieur au labo.
 - [x] **Référence** : Procédure détaillée dans `docs/HOTSPOT.md` (mode Terrain, commandes `nmcli`).
 

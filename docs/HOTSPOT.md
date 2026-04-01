@@ -10,7 +10,7 @@ Ce document explique comment se connecter au robot (Orin2) selon que vous êtes 
 2. **Le Robot :** Il est connecté au même réseau que vous (IP type `192.168.40.xxx`).
 3. **Connexion :**
 ```bash
-ssh techlab@192.168.40.101
+ssh techlab@192.168.40.100
 # OU 
 ssh techlab@orin2.local
 ```
@@ -28,7 +28,7 @@ ssh techlab@orin2.local
 ssh techlab@orin2.local
 
 ```
-**Important :** N'utilisez pas l'IP `192.168.40.101` ici. En mode Hotspot, le robot prend souvent l'IP `10.42.0.1`. L'adresse `.local` gère ce changement pour vous automatiquement.
+**Important :** N'utilisez pas l'IP `192.168.40.100` ici. En mode Hotspot, le robot prend souvent l'IP `10.42.0.1`. L'adresse `.local` gère ce changement pour vous automatiquement.
 
 ---
 
