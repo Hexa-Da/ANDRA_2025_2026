@@ -61,13 +61,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Configuration AMCL (`ros_launcher/amcl_config.yaml`)
 - [x] Configuration EKF pour fusion des capteurs (`ros_launcher/ekf_config.yaml`)
 - [x] Launch file principal (`ros_launcher/navigation_stack.launch.py`)
-- [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame)
+- [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame ; yaw LiDAR `laser_mount_yaw`, défaut π/2, `0.0` pour création de carte )
 - [x] Visualisation trajet en RViz (Fixed Frame `odom`, Path `/robot_path`, nœud `odom_to_path`)
 
 ### Mise à jour config LiDAR + EKF 
-- [x] LiDAR : `ydlidar_TG15.yaml` est le maintenant **fichier custom utilisé par défaut** du launch 
-- [x] TF laser : `base_link` → `laser_frame` sans rotation yaw π/2 (voir `navigation_stack.launch.py` et `docs/TF_TREE.md`).
-- [x] EKF : stabilisation `odom` → `base_link` — fusion **uniquement** `/odom_robot` pour pose X/Y/yaw et vitesses linéaires ; IMU ZED limitée au **vyaw** ; **plus** de `odom1` (VO ZED) dans le filtre ; fréquence 15 Hz, `history_length` 10, covariances / `process_noise` ajustés (détail dans `configs/ekf_config.yaml`, synthèse dans `docs/CONFIG_LIDAR_EKF.md`).
+- [x] LiDAR : fichier YAML driver via `ydlidar_params_file` (défaut dans `ros_launcher/configs/`, ex. profil TG15 custom).
+- [x] TF laser : `base_link` → `laser_frame` avec **yaw paramétrable au launch** (`laser_mount_yaw`, par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte).
+- [x] EKF : stabilisation `odom` → `base_link` — fusion **uniquement** `/odom_robot` pour pose X/Y/yaw et vitesses linéaires ; IMU ZED limitée au **vyaw** ; **plus** de `odom1` (VO ZED) dans le filtre ; fréquence 15 Hz, `history_length` 10, covariances / `process_noise` ajustés (détail dans `configs/ekf_config.yaml`).
 
 ---
 
@@ -105,6 +105,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Taux d’échantillonnage : 20 kHz
   - Publication sur `/scan` : ✅ Ok
   - Puis Création d'une Config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (`frequency` 5 Hz, `sample_rate` 0, `fixed_resolution` false, `range_min` 0.2 m). (Config ingénieurs TechLab)
+  - Montage / RViz : `laser_mount_yaw` — **défaut π/2** au launch ; **`laser_mount_yaw:=0.0`** pour **création de carte (SLAM)**.
 
 ### Problème Zed 2
 - [x] **zed_wrapper** : Package installé et fonctionnel

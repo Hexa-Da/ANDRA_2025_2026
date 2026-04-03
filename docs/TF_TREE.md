@@ -10,7 +10,7 @@ map
         └── base_link                     [EKF publie odom → base_link]
               ├── base_footprint          [URDF Scout via robot_state_publisher]
               ├── zed_camera_link         [static : mesures terrain]
-              └── laser_frame             [static : montage terrain, yaw 0]
+              └── laser_frame             [static : yaw au choix via launch]
 ```
 
 Le nœud ZED est lancé avec **`publish_tf:=false`** : il ne publie **pas** `odom -> zed_camera_link` ; la pose mécanique de la caméra est uniquement **`base_link -> zed_camera_link`** (statique).
@@ -74,8 +74,8 @@ Ce lien vient de l'URDF officiel Agilex (`scout_description`) et fournit une fra
 | Paramètre | Valeur |
 |-----------|--------|
 | **Type** | `static_transform_publisher` |
-| **Translation** | **(0,085, 0, 0,222)** m — soit **x ≈ 8,5 cm, z ≈ 22,2 cm** |
-| **Rotation** | yaw = pitch = roll = **0** |
+| **Translation** | **(0.085, 0, 0.222)** m — soit **x ≈ 8,5 cm, z ≈ 22,2 cm** |
+| **Rotation** | `yaw` = argument ROS `laser_mount_yaw` (par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte), pitch et roll = **0** |
 | **Publié par** | `navigation_stack.launch.py` (`base_to_laser_tf`) |
 
-LIDAR YDLidar TG15 : alignement du repère laser avec `base_link` sans rotation supplémentaire.
+Exemples : `laser_mount_yaw:=0.0` (avant du robot), `laser_mount_yaw:=1.570796327` (LiDAR tourné de 90° autour de Z).
