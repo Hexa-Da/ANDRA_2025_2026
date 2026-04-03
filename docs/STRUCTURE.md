@@ -25,11 +25,13 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Contenu** :
 - `DEMARRAGE_ROBOT.md` : Guide de démarrage des nœuds sur le robot
 - `DEBUG.md` : Commandes de débogage et vérification du système
+- `DETECTION_YOLO.md` : Nœud `image_subscriber` sur GPU, modèles PyTorch/TensorRT
+- `HOTSPOT.md` : Connexion réseau au robot (Techlab-wifi vs hotspot)
 - `PTZ_PRESETS.md` : Guide de contrôle PTZ et utilisation de la caméra
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
 - `STRUCTURE.md` : Ce fichier (structure du projet)
+- `TF_TREE.md` : Arbre TF du robot et repères 
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
-- `DETECTION_YOLO.md` : Guide complet sur la détection YOLO des fissures avec GPU/TensorRT
 
 **Intérêt** : Centralise toute la documentation pour faciliter la compréhension et la maintenance du projet.
 
@@ -43,6 +45,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `Dockerfile.jetson` : Image Docker avec PyTorch + ROS2 pour Jetson Orin (GPU)
 - `launch_rviz.sh` : Script de lancement du conteneur Docker pour PC (RViz2)
 - `launch_jetson.sh` : Script de lancement du nœud `image_subscriber` avec GPU sur Jetson
+- `README.md` : Notes d’usage des images et scripts Docker
 
 **Intérêt** : 
 - Permet de visualiser le robot et la carte depuis un PC distant sans installer ROS2 localement
@@ -90,6 +93,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Rôle** : Workspaces ROS2 des dépendances externes (drivers matériels)
 
 **Contenu** :
+- `dependencies.repos` : Fichier `vcs` (URLs et branches) pour les trois workspaces ci-dessous
 - `ydlidar_ros2_ws/` : Driver ROS2 pour le LIDAR YDLidar
 - `scout_base/` : Driver ROS2 pour le robot Agilex Scout Mini (odométrie des roues)
 - `zed-ros2-wrapper/` : Driver ROS2 pour la caméra ZED2i (images et profondeur)
