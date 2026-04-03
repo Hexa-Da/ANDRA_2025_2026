@@ -10,7 +10,7 @@ map
         └── base_link                     [EKF publie odom → base_link]
               ├── base_footprint          [URDF Scout via robot_state_publisher]
               ├── zed_camera_link         [static : mesures terrain]
-              └── laser_frame             [static : mesures terrain + yaw 90°]
+              └── laser_frame             [static : montage terrain, yaw 0]
 ```
 
 Le nœud ZED est lancé avec **`publish_tf:=false`** : il ne publie **pas** `odom -> zed_camera_link` ; la pose mécanique de la caméra est uniquement **`base_link -> zed_camera_link`** (statique).
@@ -35,13 +35,14 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 | **Publié par** | `robot_localization` (`ekf_filter_node`) |
 | **Config** | `configs/ekf_config.yaml` |
 
-**Sources fusionnées par l'EKF :**
+**Sources fusionnées par l'EKF** (voir `configs/ekf_config.yaml`) :
 
 | Source | Topic | Données |
 |--------|-------|---------|
-| Odométrie roues (Scout) | `/odom_robot` | X, Y + vit. linéaire |
-| Odométrie visuelle (ZED2i) | `/zed/zed_node/odom` | X, Y + vit. linéaire |
-| IMU (ZED2i) | `/zed/zed_node/imu/data` | Yaw + vit. angulaire |
+| Odométrie roues (Scout) | `/odom_robot` | X, Y, yaw + vitesses (référence principale) |
+| IMU (ZED2i) | `/zed/zed_node/imu/data` | Vit. angulaire lacet (`vyaw`) uniquement |
+
+L’odométrie visuelle ZED n’est plus fusionnée dans l’EKF (pour éviter les conflits avec les roues). La ZED reste tout de même utilisée pour l’image et surtout les données IMU.
 
 `publish_tf: true` dans `ekf_config.yaml`. Un seul nœud doit publier cette TF (conflit sinon).
 
@@ -74,7 +75,7 @@ Ce lien vient de l'URDF officiel Agilex (`scout_description`) et fournit une fra
 |-----------|--------|
 | **Type** | `static_transform_publisher` |
 | **Translation** | **(0,085, 0, 0,222)** m — soit **x ≈ 8,5 cm, z ≈ 22,2 cm** |
-| **Rotation** | yaw (Z) = **1,57 rad** (~90°) |
+| **Rotation** | yaw = pitch = roll = **0** |
 | **Publié par** | `navigation_stack.launch.py` (`base_to_laser_tf`) |
 
-LIDAR YDLidar TG15 modélisé tourné de 90° par rapport à l'avant. 
+LIDAR YDLidar TG15 : alignement du repère laser avec `base_link` sans rotation supplémentaire.

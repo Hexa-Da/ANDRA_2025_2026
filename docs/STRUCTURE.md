@@ -71,6 +71,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `navigation_stack.launch.py` : Fichier de lancement principal 
   - `configs/` : Fichiers de configuration YAML
     - `ekf_config.yaml` : Configuration du filtre EKF (fusion des capteurs)
+    - `ydlidar_TG15.yaml` : Paramètres YDLidar TG15 custom chargés par défaut par `navigation_stack.launch.py`
     - `slam_config.yaml` : Configuration SLAM (cartographie)
     - `amcl_config.yaml` : Configuration AMCL (localisation)
   - `map_results/` : Cartes créées et sauvegardées (fichiers `.yaml` et `.pgm`)

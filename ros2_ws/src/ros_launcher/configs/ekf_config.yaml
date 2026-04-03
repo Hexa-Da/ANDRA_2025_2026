@@ -1,66 +1,66 @@
 # ekf_config.yaml
+# - Une seule source pose X/Y : roues (pas de x,y VO Zed).
+# - Une seule source vx,vy : roues (la Zed ne fusionne plus les vitesses → évite
+#   le même problème « deux capteurs sur la même variable » sur la vitesse).
+# - Lacet : yaw depuis /odom_robot + seulement vyaw IMU (pas d yaw absolu IMU,
+#   souvent bruyant sur ZED). imu0_relative limite les à-coups.
 ekf_filter_node:
   ros__parameters:
-    frequency: 30.0
+    frequency: 15.0
     sensor_timeout: 0.1
-    two_d_mode: true  # Set to false if operating in 3D
+    two_d_mode: true
     publish_tf: true
-    
-    # Frame configuration
+
     map_frame: map
     odom_frame: odom
-    base_link_frame: base_link  # Critical - this must be your robot's base frame
+    base_link_frame: base_link
     world_frame: odom
-    
-    # Robot wheels
+
+    # Robot wheels — pose XY + yaw + vitesses (référence unique côté sol)
     odom0: /odom_robot
     odom0_config: [true, true, false,
-                  false, false, false,
+                  false, false, true,
                   true, true, false,
                   false, false, false,
                   false, false, false]
     odom0_queue_size: 10
     odom0_pose_rejection_threshold: 5.0
     odom0_twist_rejection_threshold: 1.0
+    odom0_pose_covariance_diagonal: [0.06, 0.06, 1e-3, 1e-3, 1e-3, 0.08]
+    odom0_twist_covariance_diagonal: [0.1, 0.1, 1e-3, 1e-3, 1e-3, 0.12]
 
-    # ZED2i odometry input
-    odom1: /zed/zed_node/odom
-    odom1_config: [true, true, false,
-                  false, false, false,
-                  true, true, false,
-                  false, false, false,
-                  false, false, false]
-    odom1_queue_size: 10
-    odom1_pose_rejection_threshold: 5.0
-    odom1_twist_rejection_threshold: 1.0
-    
-    # ZED2i IMU input
+    # Plus de odom1 : réactiver la Zed ici si besoin, de préférence SANS
+    # refusionner vx,vy en parallèle des roues (sinon tremblements possibles).
+
     imu0: /zed/zed_node/imu/data
     imu0_config: [false, false, false,
-                 false, false, true, # Use yaw
-                 false, false, false,
-                 false, false, true,  # Use yaw rate
-                 false, false, false]  
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
     imu0_queue_size: 10
     imu0_removal_threshold: 0.5
-    
-    # Additional parameters
+    imu0_relative: true
+    imu0_remove_gravitational_acceleration: true
+
     use_control: false
     smooth_lagged_data: true
-    history_length: 5.0
+    history_length: 10.0
 
-    # signification des éléments de configuration :
-    # X, Y, Z,
-    # roll, pitch, yaw,
-    # X˙, Y˙, Z˙, # vitesse linéaire
-    # roll˙, pitch˙, yaw˙, # vitesse angulaire
-    # X¨, Y¨, Z¨ # accélération linéaire
-
-    # Confiance plus élevée dans l'odométrie des roues pour la position
-    # odom0_pose_covariance_diagonal: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-    # odom0_twist_covariance_diagonal: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-
-      # Confiance plus élevée dans l'IMU pour l'orientation
-      # imu0_pose_covariance_diagonal: [0.1, 0.1, 0.1, 0.1, 0.1, 0.0005]  # Petite valeur pour yaw
-      # imu0_twist_covariance_diagonal: [0.1, 0.1, 0.1, 0.1, 0.1, 0.0005]  # Petite valeur pour yaw_rate
-
+    # x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az
+    # Lacets : bruit de prédiction bas sur yaw / vyaw = pose moins « nerveuse ».
+    process_noise_covariance: [0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.06, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.025, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.02, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.006, 0.0, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.006, 0.0, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.0,
+                               0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.015]

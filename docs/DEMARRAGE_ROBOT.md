@@ -266,7 +266,7 @@ Les transformations statiques sont publiées par des nœuds `static_transform_pu
   - Transformation : (0, 0, 0, 0, 0, 0) - pas de translation ni rotation
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
-  - Transformation : (0, 0, 0, 0, 0, 1.57) - rotation de 90° autour de l'axe Z
+  - Transformation : translation **(0.085, 0, 0.222)** m, yaw / pitch / roll = **0** (ordre x y z yaw pitch roll)
   
 - **`map_to_odom_fallback`** : Publie `map` → `odom` (uniquement en mode AMCL)
   - Transformation temporaire (0, 0, 0, 0, 0, 0) remplacée par AMCL une fois actif

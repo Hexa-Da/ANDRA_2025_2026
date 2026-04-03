@@ -1,0 +1,29 @@
+# Proche de la config SDK d’essai (5 Hz, sample_rate 0 pour TG15).
+#
+# Réglages « test » qualité RViz :
+# - fixed_resolution: false — si le scan paraît crénelé ou avec des trous.
+# - range_min — monter progressivement si du bruit très proche reste visible
+#   (essais typiques : 0.2 → 0.5 → 1.0 m ; valeur trop haute masque les obstacles proches).
+ydlidar_ros2_driver_node:
+  ros__parameters:
+    port: /dev/ttyUSB0
+    frame_id: laser_frame
+    ignore_array: ""
+    baudrate: 512000
+    lidar_type: 0
+    device_type: 0
+    sample_rate: 0
+    abnormal_check_count: 4
+    fixed_resolution: false
+    reversion: true
+    inverted: true
+    auto_reconnect: true
+    isSingleChannel: false
+    intensity: false
+    support_motor_dtr: false
+    angle_max: 180.0
+    angle_min: -180.0
+    range_max: 50.0
+    range_min: 0.2
+    frequency: 5.0
+    invalid_range_is_inf: false

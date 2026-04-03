@@ -64,6 +64,11 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame)
 - [x] Visualisation trajet en RViz (Fixed Frame `odom`, Path `/robot_path`, nœud `odom_to_path`)
 
+### Mise à jour config LiDAR + EKF 
+- [x] LiDAR : `ydlidar_TG15.yaml` est le maintenant **fichier custom utilisé par défaut** du launch 
+- [x] TF laser : `base_link` → `laser_frame` sans rotation yaw π/2 (voir `navigation_stack.launch.py` et `docs/TF_TREE.md`).
+- [x] EKF : stabilisation `odom` → `base_link` — fusion **uniquement** `/odom_robot` pour pose X/Y/yaw et vitesses linéaires ; IMU ZED limitée au **vyaw** ; **plus** de `odom1` (VO ZED) dans le filtre ; fréquence 15 Hz, `history_length` 10, covariances / `process_noise` ajustés (détail dans `configs/ekf_config.yaml`, synthèse dans `docs/CONFIG_LIDAR_EKF.md`).
+
 ---
 
 ## En cours / Problèmes rencontrés
@@ -99,6 +104,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Fréquence de balayage : 10 Hz
   - Taux d’échantillonnage : 20 kHz
   - Publication sur `/scan` : ✅ Ok
+  - Puis Création d'une Config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (`frequency` 5 Hz, `sample_rate` 0, `fixed_resolution` false, `range_min` 0.2 m). (Config ingénieurs TechLab)
 
 ### Problème Zed 2
 - [x] **zed_wrapper** : Package installé et fonctionnel
@@ -107,7 +113,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - zed_wrapper compilé dans dependencies/zed-ros2-wrapper
   - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
-  - Configuration EKF mise à jour pour utiliser les données ZED
+  - IMU ZED toujours utilisée par l'EKF (vyaw) ; la VO `/zed/zed_node/odom` n'est plus fusionnée dans `ekf_config.yaml`
 - [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2i pas encore vérifiée
 
 ### Problèmes scout_base

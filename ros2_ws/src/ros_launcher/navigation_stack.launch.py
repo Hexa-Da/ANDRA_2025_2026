@@ -2,8 +2,10 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
 from launch.conditions import IfCondition
+from launch_ros.parameter_descriptions import ParameterFile
+from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -59,6 +61,10 @@ def generate_launch_description():
     declare_video_extract_rate = DeclareLaunchArgument(
         'video_extract_rate', default_value='10.0',
         description='Extract rate for video publisher')
+    declare_ydlidar_params_file = DeclareLaunchArgument(
+        'ydlidar_params_file',
+        default_value='ydlidar_TG15.yaml',
+        description='Fichier YAML dans ros_launcher/configs pour le YDLidar TG15')
 
     # --- Resolve launch configurations AFTER declarations ---
     use_slam = LaunchConfiguration('use_slam')
@@ -74,6 +80,7 @@ def generate_launch_description():
     ptz_contrast = LaunchConfiguration('ptz_contrast')
     ptz_gamma = LaunchConfiguration('ptz_gamma')
     video_extract_rate = LaunchConfiguration('video_extract_rate')
+    ydlidar_params_file = LaunchConfiguration('ydlidar_params_file')
 
     return LaunchDescription([
         # 1. Declarations 
@@ -90,6 +97,7 @@ def generate_launch_description():
         declare_ptz_contrast,
         declare_ptz_gamma,
         declare_video_extract_rate,
+        declare_ydlidar_params_file,
 
         # 2. Drivers matériels (conditionnels)
 
@@ -98,7 +106,16 @@ def generate_launch_description():
             package='ydlidar_ros2_driver',
             executable='ydlidar_ros2_driver_node',
             name='ydlidar_ros2_driver_node',
-            parameters=[os.path.join(get_package_share_directory('ydlidar_ros2_driver'), 'params', 'TG.yaml')],
+            parameters=[
+                ParameterFile(
+                    PathJoinSubstitution([
+                        FindPackageShare('ros_launcher'),
+                        'configs',
+                        ydlidar_params_file,
+                    ]),
+                    allow_substs=False,
+                ),
+            ],
             output='screen',
             condition=IfCondition(enable_lidar),
         ),
@@ -208,12 +225,12 @@ def generate_launch_description():
                 'base_link', 'zed_camera_link',
             ],
         ),
-        # base_link -> laser_frame : x ≈ 8,5 cm, z ≈ 22,2 cm ; yaw = 1.57 (90°)
+        # base_link -> laser_frame : x ≈ 8,5 cm, z ≈ 22,2 cm ; pas de rotation (yaw pitch roll = 0)
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_laser_tf',
-            arguments=['0.085', '0.0', '0.222', '1.57', '0', '0', 'base_link', 'laser_frame'],
+            arguments=['0.085', '0.0', '0.222', '0', '0', '0', 'base_link', 'laser_frame'],
         ),
 
         # 6. Localisation et cartographie
