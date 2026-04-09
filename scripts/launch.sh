@@ -31,15 +31,15 @@ case "$MODE" in
         echo "  ptz_contrast:=(1.0=normal, >1.0=plus de contraste)         Multiplicateur de contraste"
         echo "  ptz_gamma:=(1.0=normal, <1.0=plus lumineux)                Correction gamma"
         echo ""
+
+                echo ""
+        echo "--> pour sauvegarder la carte, avant de couper les nœuds, executer :"
+        echo "ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte"
+        echo ""
         
         # Passer les arguments supplémentaires à ros2 launch
         shift  # Retirer le premier argument (slam)
         ros2 launch ros_launcher navigation_stack.launch.py use_slam:=true "$@"
-
-        echo ""
-        echo "--> executé : ros2 run nav2_map_server map_saver -f ~/Documents/ANDRA_2025-2026/ros2_ws/src/ros_launcher/map_results/ma_carte"
-        echo "pour sauvegarder la carte créer"
-        echo ""
         ;;
 
     amcl)

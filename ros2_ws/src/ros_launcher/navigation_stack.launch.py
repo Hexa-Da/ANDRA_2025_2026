@@ -1,7 +1,7 @@
 # navigation_stack.launch.py
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, TimerAction
 from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
 from launch.conditions import IfCondition
 from launch_ros.parameter_descriptions import ParameterFile
@@ -140,13 +140,13 @@ def generate_launch_description():
             condition=IfCondition(enable_scout),
         ),
 
-        # ZED Camera
+        # ZED Camera — ros_params_override_path requis : zed_camera.launch.py n’a pas d’arg launch depth_mode
+        # (sans ça, NEURAL_LIGHT reste dans common_stereo.yaml → surcharge Orin → EKF en retard → SLAM ne suit plus).
         ExecuteProcess(
-            # depth_mode:=NONE disables depth processing/publication while keeping RGB and IMU streams.
             cmd=[
                 'ros2', 'launch', 'zed_wrapper', 'zed_camera.launch.py',
                 'camera_model:=zed2i',
-                'depth_mode:=NONE',
+                'ros_params_override_path:=' + os.path.join(pkg_share, 'configs', 'zed_nav_light.yaml'),
                 'publish_tf:=false',
                 'publish_map_tf:=false',
             ],
@@ -250,13 +250,23 @@ def generate_launch_description():
             parameters=[ekf_config]
         ),
 
-        # SLAM Toolbox (mode cartographie)
-        Node(
-            package='slam_toolbox',
-            executable='sync_slam_toolbox_node',
-            name='slam_toolbox',
-            parameters=[slam_config],
-            condition=IfCondition(use_slam)
+        # SLAM après stabilisation odom/EKF — sinon 1er scan OK puis file TF pleine, carte figée.
+        GroupAction(
+            condition=IfCondition(use_slam),
+            actions=[
+                TimerAction(
+                    period=5.0,
+                    actions=[
+                        Node(
+                            package='slam_toolbox',
+                            executable='sync_slam_toolbox_node',
+                            name='slam_toolbox',
+                            parameters=[slam_config],
+                            output='screen',
+                        ),
+                    ],
+                ),
+            ],
         ),
 
         # AMCL (mode localisation avec carte existante)

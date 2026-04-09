@@ -1,22 +1,27 @@
-# slam_config.yaml
+# slam_config.yaml — sync_slam_toolbox_node (Cartographie)
 slam_toolbox:
   ros__parameters:
-    # Robot frame setup
     odom_frame: odom
     map_frame: map
     base_frame: base_link
     scan_topic: /scan
-    
-    # SLAM parameters
+
     use_sim_time: false
-    min_laser_range: 0.1  # Instead of 0.0
+    # TG15 : range_min 0.2 ; rester juste en dessous évite l’avertissement float
+    min_laser_range: 0.199
     max_laser_range: 10.0
-    minimum_time_interval: 0.5
-    map_update_interval: 5.0  # Publier la carte toutes les 5 secondes
-    transform_timeout: 0.2
-    
-    # Mapping options
+    # Ne pas sous-échantillonner trop fort (lidar ~5 Hz)
+    minimum_time_interval: 0.25
+    map_update_interval: 2.0
+    transform_timeout: 1.0
+    tf_buffer_duration: 30.0
+
+    # Défaut interne souvent 0,5 m / 0,5 rad → peu de nouveaux en petit déplacement
+    minimum_travel_distance: 0.12
+    minimum_travel_heading: 0.12
+
     mode: mapping
     debug_logging: false
     throttle_scans: 1
     resolution: 0.05
+    use_scan_matching: true

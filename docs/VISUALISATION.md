@@ -168,7 +168,7 @@ Une fois la carte construite en mode SLAM, vous pouvez la sauvegarder :
 ```bash
 # Sur le robot
 cd ~/Documents/ANDRA_2025-2026
-ros2 run nav2_map_server map_saver -f ros2_ws/src/ros_launcher/map_results/ma_carte
+ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte
 ```
 
 Cela créera deux fichiers :

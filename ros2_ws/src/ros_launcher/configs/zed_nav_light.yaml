@@ -1,0 +1,18 @@
+# Surcharge ZED pour navigation (SLAM / AMCL) : sans depth neural ni tracking ZED.
+# L’odom du robot vient des roues + EKF ; la ZED sert surtout à RGB + IMU pour l’EKF.
+# Réduit fortement la charge CPU/GPU (sinon NEURAL_LIGHT reste actif et l’EKF dérape).
+---
+/**:
+    ros__parameters:
+        general:
+            pub_frame_rate: 10.0
+        depth:
+            depth_mode: 'NONE'
+            depth_stabilization: 0
+            publish_depth_map: false
+            publish_point_cloud: false
+            publish_depth_info: false
+        pos_tracking:
+            pos_tracking_enabled: false
+        sensors:
+            sensors_pub_rate: 50.0

@@ -1,7 +1,9 @@
 # Proche de la config SDK d’essai (5 Hz, sample_rate 0 pour TG15).
 #
 # Réglages « test » qualité RViz :
-# - fixed_resolution: false — si le scan paraît crénelé ou avec des trous.
+# - fixed_resolution: true — nombre de points stable par scan (requis pour slam_toolbox / Karto :
+#   sinon erreur « LaserRangeScan contains N readings, expected 4300 » et carte figée).
+#   Si le scan paraît crénelé, tester false ou ajuster range_min.
 # - range_min — monter progressivement si du bruit très proche reste visible
 #   (essais typiques : 0.2 → 0.5 → 1.0 m ; valeur trop haute masque les obstacles proches).
 ydlidar_ros2_driver_node:
@@ -14,7 +16,7 @@ ydlidar_ros2_driver_node:
     device_type: 0
     sample_rate: 0
     abnormal_check_count: 4
-    fixed_resolution: false
+    fixed_resolution: true
     reversion: true
     inverted: true
     auto_reconnect: true
