@@ -44,12 +44,16 @@ case "$MODE" in
 
     amcl)
         echo "Lancement en mode AMCL..."
+        echo "Navigation Nav2 activée par défaut (use_nav:=true)."
+        echo "Pour localisation seule: ajouter use_nav:=false"
         # si pas de carte specifier, on affiche un message d'erreur et on quitte le script
         if [ -z "$2" ]; then
             echo "❌ Carte non specifier ou erreur sur le chemin de la carte"
             exit 1
         fi
-        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:="$2"
+        MAP_PATH="$2"
+        shift 2  # Retirer le mode (amcl) et le chemin de carte
+        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true use_nav:=true map_path:="$MAP_PATH" "$@"
         ;;
     *)
         echo "Option non reconnue. Choisissez slam ou amcl. Par défaut : slam"

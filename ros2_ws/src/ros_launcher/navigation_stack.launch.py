@@ -1,7 +1,8 @@
 # navigation_stack.launch.py
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, TimerAction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, TimerAction, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
 from launch.conditions import IfCondition
 from launch_ros.parameter_descriptions import ParameterFile
@@ -28,6 +29,9 @@ def generate_launch_description():
     declare_use_amcl = DeclareLaunchArgument(
         'use_amcl', default_value='false',
         description='Use AMCL for localization')
+    declare_use_nav = DeclareLaunchArgument(
+        'use_nav', default_value='false',
+        description='Enable Nav2 navigation stack (navigate_to_pose action server)')
     declare_map_path = DeclareLaunchArgument(
         'map_path', default_value='',
         description='Full path to map yaml file')
@@ -71,6 +75,7 @@ def generate_launch_description():
     # --- Resolve launch configurations AFTER declarations ---
     use_slam = LaunchConfiguration('use_slam')
     use_amcl = LaunchConfiguration('use_amcl')
+    use_nav = LaunchConfiguration('use_nav')
     map_path = LaunchConfiguration('map_path')
     enable_lidar = LaunchConfiguration('enable_lidar')
     enable_scout = LaunchConfiguration('enable_scout')
@@ -89,6 +94,7 @@ def generate_launch_description():
         # 1. Declarations 
         declare_use_slam,
         declare_use_amcl,
+        declare_use_nav,
         declare_map_path,
         declare_enable_lidar,
         declare_enable_scout,
@@ -313,5 +319,22 @@ def generate_launch_description():
                 arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
                 condition=IfCondition(use_amcl)
             )
-        ])
+        ]),
+
+        # Nav2 (planification/controle + action navigate_to_pose)
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource([
+                PathJoinSubstitution([
+                    FindPackageShare('nav2_bringup'),
+                    'launch',
+                    'navigation_launch.py',
+                ])
+            ]),
+            launch_arguments={
+                'use_sim_time': 'false',
+                'autostart': 'true',
+                'map_subscribe_transient_local': 'true',
+            }.items(),
+            condition=IfCondition(use_nav),
+        ),
     ])
