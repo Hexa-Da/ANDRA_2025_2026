@@ -6,6 +6,7 @@
 #   Si le scan paraît crénelé, tester false ou ajuster range_min.
 # - range_min — monter progressivement si du bruit très proche reste visible
 #   (essais typiques : 0.2 → 0.5 → 1.0 m ; valeur trop haute masque les obstacles proches).
+
 ydlidar_ros2_driver_node:
   ros__parameters:
     port: /dev/ttyUSB0
@@ -25,7 +26,7 @@ ydlidar_ros2_driver_node:
     support_motor_dtr: false
     angle_max: 180.0
     angle_min: -180.0
-    range_max: 50.0
-    range_min: 0.2
+    range_max: 15.0
+    range_min: 0.5
     frequency: 5.0
-    invalid_range_is_inf: false
+    invalid_range_is_inf: true
