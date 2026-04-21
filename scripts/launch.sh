@@ -26,13 +26,7 @@ case "$MODE" in
         echo "  (défaut) π/2 rad (~1.570796327) — usage courant sans argument"
         echo "  laser_mount_yaw:=0.0            Création de carte / SLAM"
         echo ""
-        echo "Options PTZ (ajustement d'image):"
-        echo "  ptz_brightness:=(1.0=normal, >1.0=plus lumineux)           Multiplicateur de luminosité"
-        echo "  ptz_contrast:=(1.0=normal, >1.0=plus de contraste)         Multiplicateur de contraste"
-        echo "  ptz_gamma:=(1.0=normal, <1.0=plus lumineux)                Correction gamma"
         echo ""
-
-                echo ""
         echo "--> pour sauvegarder la carte, avant de couper les nœuds, executer :"
         echo "ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte"
         echo ""

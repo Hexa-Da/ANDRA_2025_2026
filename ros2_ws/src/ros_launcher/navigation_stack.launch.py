@@ -53,15 +53,6 @@ def generate_launch_description():
     declare_enable_video_publisher = DeclareLaunchArgument(
         'enable_video_publisher', default_value='true',
         description='Enable video publisher node')
-    declare_ptz_brightness = DeclareLaunchArgument(
-        'ptz_brightness', default_value='1.0',
-        description='Brightness multiplier for PTZ images (1.0=normal, >1.0=brighter)')
-    declare_ptz_contrast = DeclareLaunchArgument(
-        'ptz_contrast', default_value='1.0',
-        description='Contrast multiplier for PTZ images (1.0=normal, >1.0=more contrast)')
-    declare_ptz_gamma = DeclareLaunchArgument(
-        'ptz_gamma', default_value='1.0',
-        description='Gamma correction for PTZ images (1.0=normal, <1.0=brighter)')
     declare_video_extract_rate = DeclareLaunchArgument(
         'video_extract_rate', default_value='10.0',
         description='Extract rate for video publisher')
@@ -83,9 +74,6 @@ def generate_launch_description():
     enable_ptz = LaunchConfiguration('enable_ptz')
     enable_image_transfer = LaunchConfiguration('enable_image_transfer')
     enable_video_publisher = LaunchConfiguration('enable_video_publisher')
-    ptz_brightness = LaunchConfiguration('ptz_brightness')
-    ptz_contrast = LaunchConfiguration('ptz_contrast')
-    ptz_gamma = LaunchConfiguration('ptz_gamma')
     video_extract_rate = LaunchConfiguration('video_extract_rate')
     ydlidar_params_file = LaunchConfiguration('ydlidar_params_file')
     laser_mount_yaw = LaunchConfiguration('laser_mount_yaw')
@@ -102,9 +90,6 @@ def generate_launch_description():
         declare_enable_ptz,
         declare_enable_image_transfer,
         declare_enable_video_publisher,
-        declare_ptz_brightness,
-        declare_ptz_contrast,
-        declare_ptz_gamma,
         declare_video_extract_rate,
         declare_ydlidar_params_file,
         declare_laser_mount_yaw,
@@ -188,9 +173,6 @@ def generate_launch_description():
             executable='image_publisher',
             name='image_publisher',
             parameters=[{
-                'brightness': PythonExpression(['float(', ptz_brightness, ')']),
-                'contrast': PythonExpression(['float(', ptz_contrast, ')']),
-                'gamma': PythonExpression(['float(', ptz_gamma, ')']),
                 'images_output_dir': 'ros2_ws/images_capturees',
                 'enable_capture_auto': False,
             }],

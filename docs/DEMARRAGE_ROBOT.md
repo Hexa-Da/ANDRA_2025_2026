@@ -133,17 +133,13 @@ Il existe deux façons de lancer le système :
 
 **Avantages :**
 - Contrôle total sur tous les paramètres ROS2
-- Configuration avancée possible (ex: paramètres PTZ personnalisés)
 - Utile pour le débogage et les tests
 
 ```bash
-# Mode SLAM avec paramètres PTZ personnalisés
+# Mode SLAM avec paramètres personnalisés
 ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=true \
   enable_ptz:=true \
-  ptz_brightness:=2.0 \
-  ptz_contrast:=1.5 \
-  ptz_gamma:=0.8 \
   enable_image_transfer:=true
 
 # Mode AMCL avec configuration personnalisée

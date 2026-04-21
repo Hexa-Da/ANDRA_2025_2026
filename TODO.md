@@ -6,108 +6,138 @@ Projet réalisé par un groupe de 4 étudiants en partenariat avec l'ANDRA.
 
 Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDRA pour effectuer une analyse des fissures sur les murs via une caméra 3D.
 
-**Transmission d'année en année** : Ce projet est transmis d'année en année parmi les étudiants. Le but est de s'approprier les avancées réalisées l'année dernière pour reproduire leurs résultats finaux, puis réalisé les missions supplémentaires demandé par l'ANDRA.
+**Transmission d'année en année** : Ce projet est transmis d'année en année parmi les étudiants. Le but est de s'approprier les avancées réalisées l'année dernière pour reproduire leurs résultats finaux, puis réaliser les missions supplémentaires demandées par l'ANDRA.
 
 ## Échéances importantes
 
-- **Soutenance mi-parcouts** : 23 janvier 2026
-- **Première descente dans les tunnels** : 6 février 2026
-- **Autres descente** : ?
-- **Soutenance fianle** : 12 juin 2026
+- **Soutenance mi-parcours** : 23 janvier 2026
+- **Première descente** : 6 février 2026
+- **Seconde descente** : 10 avril 2026
+- **Soutenance finale** : 12 juin 2026
 
 ---
 
 ## Ce qui a été fait
 
 ### Accès et ressources
-- [x] Accès au dépôt GitHub 
-- [x] Accès au drive hébergeant le modèle YOLO11 
-- [x] Accès au robot Agilex Scout Mini du TechLab 
+- [x] Accès au dépôt GitHub
+- [x] Accès au drive hébergeant le modèle YOLO11
+- [x] Accès au robot Agilex Scout Mini du TechLab
 
 ### Infrastructure et scripts
 - [x] Analyse et compréhension de l'infrastructure et des scripts
-- [x] Etablir un worflow simple pour toute l'équipe
+- [x] Établir un workflow simple pour toute l'équipe
 - [x] Création d'un script d'initialisation (`scripts/setup.sh`)
 - [x] Création d'un script de compilation (`scripts/build.sh`)
 - [x] Création d'un script de lancement (`scripts/launch.sh`)
 - [x] Création d'un script de mise en réseau de la PTZ (`scripts/ptz-network-setup.sh`)
-- [x] Réecriture du script video, avec sauvegarde dans `video_output/` (`video/script.sh`)
+- [x] Réécriture du script vidéo, avec sauvegarde dans `video_output/` (`video/script.sh`)
 - [x] Organisation de la structure du projet (workspaces, dépendances, configurations/launcher)
-- [x] Nettoyage du code, fichier non utilisés ou dépréciés
+- [x] Nettoyage du code, fichiers non utilisés ou dépréciés
 
 ### Documentation
-- [x] Documentation complète du démarrage (`DEMARRAGE_ROBOT.md`)
-- [x] Guide connexion réseau Techlab vs Hotspot (`docs/HOTSPOT.md`)
+- [x] Documentation complète sur comment utiliser le robot (`DEMARRAGE_ROBOT.md`)
+- [x] Guide connexion réseau TechLab vs Hotspot (`docs/HOTSPOT.md`)
 - [x] Explication de la structure du projet (`STRUCTURE.md`)
 - [x] Guide d'utilisation des scripts (`SCRIPTS.md`)
-- [x] Guide de debogage (`DEBUG.md`)
+- [x] Guide de débogage (`DEBUG.md`)
 - [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
 - [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
-- [x] Documentation des nœuds ROS2
+- [x] Documentation de l'arbre TF (`TF_TREE.md`)
 - [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
 
-### Verification/Implémentation des nœuds ROS2  
+### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
-- [x] `video_publisher` : Traitement des vidéos enregistrées, extraction d'images et publication sur `/photo_topic`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
-- [x] `position_publisher` : Affichage de la position du robot
-- [x] `report_fissures` : Traçage des positions détectées sur la carte
-- [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP 
+- [ ] `show_pos` : Affichage de la position du robot
+- [ ] `report_fissures` : Tracé des positions détectées sur la carte
+- [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP
+
+### Implémentation de nœuds ROS2
 - [x] `sequence_photo` : Automatisation de la séquence de mouvement et captures PTZ en boucle (5 captures)
 - [x] `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
+- [x] `video_publisher` : Traitement des vidéos enregistrées, extraction d'images et publication sur `/photo_topic`
+- [x] `odom_to_path` : Transforme `/odom` en `/robot_path` pour la visualisation.
 
 ### Configuration navigation
-- [x] Configuration SLAM Toolbox (`ros_launcher/slam_config.yaml`)
-- [x] Configuration AMCL (`ros_launcher/amcl_config.yaml`)
-- [x] Configuration EKF pour fusion des capteurs (`ros_launcher/ekf_config.yaml`)
+- [x] Configuration SLAM Toolbox (`ros_launcher/configs/slam_config.yaml`)
+- [x] Configuration AMCL (`ros_launcher/configs/amcl_config.yaml`)
+- [x] Configuration EKF pour fusion des capteurs (`ros_launcher/configs/ekf_config.yaml`)
+- [x] Configuration LIDAR (`ros_launcher/configs/ydlidar_TG15.yaml` — fichier custom, paramètres adaptés au TG15)
 - [x] Launch file principal (`ros_launcher/navigation_stack.launch.py`)
-- [x] Transforms TF statiques (base_link → zed_camera_link, base_link → laser_frame ; yaw LiDAR `laser_mount_yaw`, défaut π/2, `0.0` pour création de carte )
-- [x] Visualisation trajet en RViz (Fixed Frame `odom`, Path `/robot_path`, nœud `odom_to_path`)
+- [x] Transforms TF statiques révisés
 
-### Mise à jour config LiDAR + EKF 
-- [x] LiDAR : fichier YAML driver via `ydlidar_params_file` (défaut dans `ros_launcher/configs/`, ex. profil TG15 custom).
-- [x] TF laser : `base_link` → `laser_frame` avec **yaw paramétrable au launch** (`laser_mount_yaw`, par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte).
-- [x] EKF : stabilisation `odom` → `base_link` — fusion **uniquement** `/odom_robot` pour pose X/Y/yaw et vitesses linéaires ; IMU ZED limitée au **vyaw** ; **plus** de `odom1` (VO ZED) dans le filtre ; fréquence 15 Hz, `history_length` 10, covariances / `process_noise` ajustés (détail dans `configs/ekf_config.yaml`).
+### Utilisation des capteurs
+- [x] LiDAR YDLidar TG15 : en service ; scan OK sur `/scan` ; USB `/dev/ttyUSB0`, baud 512000, 10 Hz, 20 kHz ; problèmes hardware (Micro USB, mauvaise config G4 vs TG15) résolus ; fichier custom `ydlidar_TG15.yaml` + paramètre `laser_mount_yaw` selon montage (π/2 vs 0 pour SLAM) ; qualité de carte dégradée par les piliers (support 3D pour carto).
+- [x] Caméra ZED 2i : driver `zed_wrapper` installé et OK ; odom/IMU/image publiés ; EKF : IMU ZED pour `vyaw` seulement, pas de fusion de la VO `/zed/zed_node/odom` ; profondeur/nuages désactivés côté GPU pour libérer la charge (YOLO).
+- [x] Base Scout / odométrie des roues : `scout_base` fonctionnel via CAN `agilex`, topic `/odom_robot` aligné EKF ; dérive mentionnée roue avant gauche.
+- [x] Caméra PTZ Marshall CV-605 : réseau `192.168.5.x` (Jetson en `192.168.5.100`), capture RTSP + pub `/photo_topic`, contrôle VISCA (`ptz_controller`) ; script `ptz-network-setup.sh` pour éviter conflits WiFi.
+
+### Utilisation de RViz
+- [x] macOS / Docker : tentative RViz2 via Docker + XQuartz (`launch-macos.sh`) puis abandon (trop complexe) — usage ciblé Linux (machine TechLab).
+- [x] DDS dans Docker : `ros2 topic list` / `node list` vides dans le conteneur alors que le robot tournait — diagnostic réseau + `ROS_DOMAIN_ID` OK ; alignement middleware : `RMW_IMPLEMENTATION=rmw_fastrtps_cpp` partout (robot + conteneur).
+- [x] État : FastRTPS (`rmw_fastrtps_cpp`) standardisé côté robot et Docker pour une découverte ROS2 cohérente avec RViz lancé depuis le conteneur.
+
+### Configuration Hotspot
+- [x] Objectif : en terrain (tunnels ANDRA), sans Wi‑Fi, joindre la Jetson via le hotspot qu’elle crée.
+- [x] Usage : SSID `JetsonWIFI`, mot de passe documenté ; SSH préféré en `ssh techlab@orin2.local`.
+- [x] Terrain : hotspot testé opérationnel en première descente ; stabilité SSH confirmée au fil des sorties.
+
+### Création de script d'analyse autonome
+- [x] `sequence_photo` : boucle autonome — avance du robot (~1 m), arrêt, puis 5 captures PTZ (positions pan/tilt prédéfinies : gauche, haut ×3, droite, haut) via `/ptz/cmd_vel` et déclenchement des clichés (`/trigger_capture`) ; retour au centre (preset Home) ; paramètres (durées, stabilisation) ajustables.
+- [x] `sequence_video` : enregistrement vidéo continu en parallèle d’un balayage PTZ (mouvement horizontal type sinusoïde) et du robot à faible vitesse linéaire ; arrêt propre (STOP puis Home).
+
+### Optimisation de l'utilisation GPU
+- [x] Docker / Jetson Orin : image dédiée (`Dockerfile.jetson`) et scripts `image_subscriber_gpu.sh`, `launch_jetson.sh` pour exécuter la détection YOLO avec accès GPU.
+- [x] TensorRT : conversion du modèle PyTorch vers `best.engine` via `scripts/convert_to_tensorrt.sh` pour accélérer l’inférence (souvent plusieurs fois plus rapide qu’en PyTorch seul).
+- [x] `image_subscriber` : charge automatiquement le moteur TensorRT s’il est disponible, avec repli sur `best.pt` sinon.
+- [x] ZED : désactivation de la profondeur et des nuages de points côté nœuds ZED pour libérer la mémoire GPU au profit de l’analyse YOLO sur images et vidéos.
+
+### Création des premières cartes
+- [x] Contexte : les premiers essais de cartographie échouaient en partie à cause de scans LiDAR peu exploitables (capteur entre les quatre piliers de la tourelle, interférences, configuration à affiner).
+- [x] Fichier `ros_launcher/configs/ydlidar_TG15.yaml` : configuration dédiée au TG15 pour améliorer la qualité des scans.
+- [x] Plateforme imprimée en 3D : élève le LiDAR pour la cartographie ; possibilité de remonter le capteur entre les piliers pour la navigation et la détection d’obstacles (deux modes d’usage).
+- [x] Mise à jour EKF + SLAM : fusion recentrée sur `/odom_robot`, IMU ZED limitée à `vyaw`, suppression de `odom1`, réglages EKF à 15 Hz avec `history_length=10`, et frames SLAM strictes `odom/base_link/map` pour stabiliser la trajectoire et fiabiliser la cartographie.
+- [x] Paramètre `laser_mount_yaw` : π/2 (rad) pour le montage courant ; `laser_mount_yaw:=0.0` pour la création de carte en SLAM, selon l’orientation du LiDAR sur la tourelle.
+- [x] Résultat : qualité des nuages de points nettement meilleure ; premières cartes exploitables produites, ouvrant la voie à la localisation (AMCL) et aux tests de navigation sur carte.
 
 ---
 
-## En cours / Problèmes rencontrés
+## Problèmes rencontrés / résolus
 
-### Réinstallation complète du robot
-- [ ] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
-- [x] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration 
-- [ ] **Objectif** : Atteindre les résultats finaux de l'année dernière
+### Réinstallation complète du robot (pas de backup)
+- [x] **Problème** : L'image qui avait été créée sur le robot l'année dernière a été supprimée sans sauvegarde
+- [x] **Action** : Refaire toute la réinstallation et sourçage des drivers ainsi que leur configuration
+- [x] **Objectif** : Atteindre les résultats finaux de l'année dernière
 
-### Problème LIDAR
-- [x] Connexion au port série (`/dev/ttyTHS1`)
-- [x] **Diagnostic communication LiDAR** : 
-  - Scan de baudrates effectués : 115200, 128000 (X4), 230400 (G4) sans réponse
+### Problème LIDAR (impossible de faire un scan)
+- [x] **Connexion au port série** (`/dev/ttyTHS1`)
+- [x] **Diagnostic communication LiDAR** :
+  - Scan de baudrates effectués : 115200, 128000, 230400 sans réponse
   - Tentative activation forcée via DTR/RTS sans succès
   - LED s'allume brièvement puis s'éteint (mise en sécurité ou coupure alimentation)
-- [x] **Diagnostic du chipset (Carte Radar_Con)** : 
+- [x] **Diagnostic du chipset (Carte Radar_Con)** :
   - Le port Micro USB est arraché, ce qui empêche l’alimentation du moteur et donc le lancement du scan
   - Test de loopback concluant (TX/RX opérationnels), le reste des composants fonctionne donc correctement
   - Un branchement de secours via le port USB-C a été tenté et s’est avéré fonctionnel
-- [x] **Problème résolu après intervention sur le chipset** : ✅ **RÉSOLU**
+- [x] **Problème résolu après intervention sur le chipset (après la première descente)** :
   - **Modification de l’alimentation** : Passage au port USB-C `/dev/ttyUSB0` pour fournir suffisamment de puissance au LIDAR.
   - **Correction de la configuration** : Le mauvais fichier de configuration (G4.yaml) était utilisé alors que le LIDAR est en réalité un modèle TG15.
   - **Actions menées** :
-    - Remplacement du port `/dev/ttyTHS1` par `/dev/ttyUSB0`
+    - Remplacement du port `/dev/ttyTHS1` par `/dev/ttyUSB0` via soudure au microscope
     - Suppression de l’ancien fichier de configuration local (`ros_launcher/ydlidar_config.yaml`)
     - Adoption du fichier officiel `TG.yaml` du package `ydlidar_ros2_driver`
     - Simplification du launch file afin d’utiliser directement la configuration officielle fournie par le package
   - **Résultat** : Le LIDAR démarre normalement et publie sur `/scan` avec les paramètres attendus.
-- [x] **État actuel** : ✅ LIDAR en service
+- [x] **État actuel** : LIDAR en service
   - Modèle : TG15 (Model Code 100)
   - Port utilisé : `/dev/ttyUSB0` (détection automatique)
   - Baudrate : 512000
   - Fréquence de balayage : 10 Hz
   - Taux d’échantillonnage : 20 kHz
-  - Publication sur `/scan` : ✅ Ok
-  - Puis Création d'une Config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (`frequency` 5 Hz, `sample_rate` 0, `fixed_resolution` false, `range_min` 0.2 m). (Config ingénieurs TechLab)
-  - Montage / RViz : `laser_mount_yaw` — **défaut π/2** au launch ; **`laser_mount_yaw:=0.0`** pour **création de carte (SLAM)**.
+  - Publication sur `/scan` : OK
 
-### Problème Zed 2
+### Problème ZED 2 (reconfigurer et installer le driver)
 - [x] **zed_wrapper** : Package installé et fonctionnel
   - ZED SDK installé dans /usr/local/zed
   - zed_msgs installé via apt
@@ -115,21 +145,21 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Caméra ZED 2i détectée (S/N 32802052)
   - Topics publiés : /zed/zed_node/odom, /zed/zed_node/imu/data, /zed/zed_node/rgb/color/rect/image
   - IMU ZED toujours utilisée par l'EKF (vyaw) ; la VO `/zed/zed_node/odom` n'est plus fusionnée dans `ekf_config.yaml`
-- [ ] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2i pas encore vérifiée
+- [x] **Vérification cohérence données** : Cohérence des données renvoyées par la caméra ZED2i au filtre EKF.
 
-### Problèmes scout_base
+### Problèmes scout_base (package et driver manquant + interface CAN non reconnue)
 - [x] **Package** : Package non trouvé (nécessaire pour l'odométrie des roues)
   - Repository probable : https://github.com/agilexrobotics/scout_ros2
   - Topic attendu : `/odom_robot`
-- [x] **Arret du neoud** :
+- [x] **Arrêt du nœud** :
   - **Configuration** : Ajout du paramètre `odom_topic_name:=odom_robot` pour correspondre à la configuration EKF
   - **Problème identifié** : Le driver `ugv_sdk` ne reconnaissait pas "agilex" comme un port CAN valide (vérification stricte du nom contenant "can")
   - **Solution** : Modification du code source `scout_base_ros.cpp` pour accepter "agilex" en plus des noms contenant "can"
-  - **État actuel** : ✅ Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
+  - **État actuel** : Le nœud démarre correctement et communique avec le robot via l'interface CAN `agilex`
 
-### Problème Caméra PTZ
+### Problème Caméra PTZ (impossible de se connecter)
 - [x] **Adresse statique introuvable** : Caméra PTZ inaccessible sur `192.168.5.163`
-  - **Cause** : La connection ethernet de la Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
+  - **Cause** : La connexion Ethernet de la Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
   - **Solution** : Configuration de l'adresse IP statique sur l'interface Ethernet `enP8p1s0`
   - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
 - [x] **Conflits** : Le WiFi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
@@ -137,34 +167,35 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
     - Configure automatiquement l'IP sur `enP8p1s0`
     - Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
     - Vérifie que la route passe bien par Ethernet
-  - **État actuel** : ✅ La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
-- [x] **Controle PTZ** : Contrôle PTZ fonctionnel via VISCA over IP port 1259
-  - **Caméra** : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
-  - **Nœud créé** : `ptz_controller` dans le package `image_transfer`
-  - **Topics** :
+  - **État actuel** : La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
+- [x] **Contrôle PTZ** : opérationnel via VISCA over IP port 1259
+  - Caméra : Marshall CV-605 (5x HD60 IP PTZ Camera with 3GSDI)
+  - Nœud créé : `ptz_controller` dans le package `image_transfer`
+  - Topics :
     - `/ptz/cmd_vel` (geometry_msgs/Twist) : Contrôle pan/tilt continu (utilisé par `sequence_photo` et `sequence_video`)
-    - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre et Reset (0) pour le recallibrage
-  - **Format VISCA** : Implémentation selon documentation Marshall CV-605
+    - `/ptz/preset` (std_msgs/Int32) : Preset Home (-1) pour retour au centre et Reset (0) pour le recalibrage
+  - Format VISCA : Implémentation selon documentation Marshall CV-605
     - Header : `0x80 + camera_address` (adresse 1 par défaut)
     - Pan-Tilt Drive : `0x01 0x06 0x01 VV WW DD DD` où VV=pan speed (1-18), WW=tilt speed (1-14), DD DD=direction
     - Home : `0x01 0x06 0x04` pour retour au centre
-  - **État actuel** : ✅ Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset
+  - **État actuel** : Contrôle PTZ fonctionnel, caméra répond aux commandes de mouvement et preset
 - [x] **Automatisation séquence robot** : Création des nœuds `sequence_photo` et `sequence_video`
-  - **sequence_photo** : Avance 1m, arrêt 30s, 5 captures PTZ (Gauche, Haut×3, Droite, Haut), boucle
-  - **sequence_video** : Vidéo continue + balayage PTZ horizontal sinusoïdal + robot à 0.06 m/s
-  - **Contrôle PTZ** : `/ptz/cmd_vel` pour les mouvements ; preset Home (-1) ou socket VISCA direct à l'arrêt (Ctrl+C)
-  - **Paramètres configurables** : Durées de mouvement, stabilisation, retour au centre
-  - **État actuel** : ✅ Séquence automatique fonctionnelle, arrêt propre avec STOP puis HOME via socket
+  - sequence_photo : Avance 1m, arrêt 30s, 5 captures PTZ (Gauche, Haut×3, Droite, Haut), boucle
+  - sequence_video : Vidéo continue + balayage PTZ horizontal sinusoïdal + robot à 0.06 m/s
+  - Contrôle PTZ : `/ptz/cmd_vel` pour les mouvements ; preset Home (-1) ou socket VISCA direct à l'arrêt (Ctrl+C)
+  - Paramètres configurables : Durées de mouvement, stabilisation, retour au centre
+  - **État actuel** : Séquence automatique fonctionnelle, arrêt propre avec STOP puis HOME via socket
 
-### Améliorations du système de lancement
+### Améliorations du système de lancement (pas de système de débogage)
 - [x] **Options de configuration** : Ajout d'options pour désactiver des composants
   - `enable_lidar:=false` : Désactiver le LIDAR
   - `enable_scout:=false` : Désactiver Scout Base
   - `enable_zed:=false` : Désactiver la caméra ZED
   - `enable_ptz:=false` : Désactiver la caméra PTZ
+  - `enable_image_transfer:=false` : Désactiver les nœuds de capture et de traitement d'images
   - Permet de tester le système même si un composant pose problème
 
-### Configuration visualisation RViz2 avec Docker
+### Configuration visualisation RViz2 avec Docker (utilisation de RViz compliquée)
 - [x] **Tentative macOS** : Tentative d'utilisation de RViz2 sur macOS via Docker
   - **Solution XQuartz** : Création de `launch-macos.sh` utilisant XQuartz pour l'affichage X11
   - **Décision** : Abandon de la compatibilité macOS/Windows pour simplifier le setup
@@ -183,126 +214,158 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - **État actuel** : Robot et conteneur Docker utilisent maintenant FastRTPS de manière cohérente
 - [x] **Amélioration visualisation RViz2** : Ajout de displays et configuration du Fixed Frame
   - **Nœud odom_to_path** : Création de `ros2_ws/src/navigation_utils/navigation_utils/odom_to_path.py`
-    - **Fonctionnalités** :
+    - Fonctionnalités :
       - Abonnement à `/odometry/filtered` (odométrie filtrée par EKF)
       - Publication du Path sur `/robot_path` pour visualiser le trajet du robot
       - Publication TF `odom → base_link` pour compléter l'arbre de transformations
-    - **Paramètres** : Ajout d'un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
+    - Paramètres : Ajout d'un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
   - **Configuration RViz2** : Mise à jour de `ros_launcher/config.rviz`
-    - **Fixed Frame** : Changé de `map` à `odom` pour permettre la visualisation même si la carte n'est pas encore créée (mode SLAM initial)
-    - **Display RobotPath** : Ajout d'un display Path pour visualiser `/robot_path` (couleur orange, style Lines)
-    - **Displays existants** : Conservation de tous les displays précédents (Grid, TF, Map, LaserScan, PoseArray, Polygon, Pose)
-  - **Utilité** : Permet de visualiser le trajet du robot même en mode SLAM avant que la carte ne soit créée
+    - Fixed Frame : Changé de `map` à `odom` pour permettre la visualisation même si la carte n'est pas encore créée (mode SLAM initial)
+    - Display RobotPath : Ajout d'un display Path pour visualiser `/robot_path` (couleur orange, style Lines)
+    - Displays existants : Conservation de tous les displays précédents (Grid, TF, Map, LaserScan, PoseArray, Polygon, Pose)
   - **Frame world** : Ajout de la frame `world` dans l'arbre TF
   - **Reconstruction de l'arbre TF** : Réorganisation de l'arbre des transformations pour intégrer `world` et clarifier les liens entre frames
-  - **Conflit avec le nœud odom_to_path** : Le nœud `odom_to_path` publiais aussi `odom → base_link` ; à prendre en compte dans la reconstruction TF (éviter doublon ou conflit avec l'EKF)
+  - **Conflit avec le nœud odom_to_path** : Le nœud `odom_to_path` publiait aussi `odom → base_link` ; à prendre en compte dans la reconstruction TF (éviter doublon ou conflit avec l'EKF)
   - **Objectif** : Constater la dérive de trajectoire entre les différents capteurs (odométrie roues, ZED, EKF fusionné) pour diagnostiquer le positionnement
-- [ ] **Navigation et visualisation** (etat de la prise en main après première descente) :
-  - Familiarisation avec RViz2 en cours
-  - **Problèmes TF identifiés** : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
-  - **Caméra ZED2i** : Cohérence des données pas encore vérifiée
 
 ### Config Hotspot pour connexion dans les tunnels ANDRA
-- [x] **Contexte** : Dans les tunnels, pas de Techlab-wifi ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
-- [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le Techlab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.100` en mode hotspot).
+- [x] **Contexte** : Dans les tunnels, pas de Wi-Fi du TechLab ; le robot doit être joignable via son hotspot (réseau créé par la Jetson).
+- [x] **À valider** : Vérifier que le hotspot `JetsonWIFI` (mdp `depinfonancy`) se lance bien quand le robot ne capte pas le TechLab ; connexion SSH via `ssh techlab@orin2.local` (ne pas utiliser `192.168.40.100` en mode hotspot).
 - [x] **À tester** : Connexion et stabilité SSH depuis un PC portable connecté au hotspot du robot, dans un environnement extérieur au labo.
 - [x] **Référence** : Procédure détaillée dans `docs/HOTSPOT.md` (mode Terrain, commandes `nmcli`).
 
 ### Inventaire et analyse hardware
 - [x] **Inventaire complet** : Paul-Antoine a effectué un inventaire de l'ensemble des composants matériels du robot et a organisé le câblage interne de la tourelle.
 - [x] **Étude de la structure de la tourelle** : Démontage puis remontage de la tourelle pour :
-  - Identifier les composants effectivement utilisé ou non
+  - Identifier les composants effectivement utilisés ou non
   - Comprendre le rôle et l'utilité de chaque élément
   - Effectuer des tests individuels sur chaque capteur
 
 ### Première descente - Vendredi 6 février 2026
 - [x] **Réalisation** : Première descente dans les tunnels ANDRA effectuée avec succès
-- [x] **Caméra 360** : Caméra 360 prêtée par l'ANDRA, dataset créé (à trier et annoter)
-- [x] **Système opérationnel** : 
-  - ✅ Séquence de prise de photo fonctionnelle comme prévu
-  - ✅ Système de Hotspot opérationnel
-  - ✅ Tous les nœuds ROS2 fonctionnels
+- [x] **Caméra 360** : Caméra 360 prêtée par l'ANDRA, dataset créé
+- [x] **Système opérationnel** :
+  - Séquence de prise de photo fonctionnelle comme prévu
+  - Système de Hotspot opérationnel
+  - Tous les nœuds ROS2 fonctionnels
 - [x] **Incident matériel** : Alimentation de la Jetson arrachée suite à une mauvaise manipulation
   - **Réparation** : Paul-Antoine a réparé la carte en changeant l'alimentation le week-end suivant
   - **État** : Robot de nouveau opérationnel rapidement
-- [ ] **Constats sur la séquence PTZ** :
+- [x] **Améliorations à réaliser sur la séquence PTZ** :
   - Séquence complète dans une galerie assez longue
   - Séquence actuelle (3 photos) ne couvre pas l'entièreté de l'arche avec la PTZ
-  - **Solutions à explorer** :
+  - Solutions à explorer :
     - Passer d'une séquence de 3 photos à 5 photos
     - Revoir l'enchaînement des positions de la PTZ
     - Essayer d'utiliser le script video à très basse vitesse
 
+### Amélioration de la vitesse de traitement des images (surtout avec les vidéos)
 - [x] **Optimisation de la détection YOLO avec Docker et TensorRT** :
-  - **Recherche et construction de l'image Docker** : Création d'une image Docker spécialisée pour Jetson Orin (`Dockerfile.jetson`) basée sur `dustynv/l4t-pytorch:r36.2.0` pour bénéficier du support GPU natif. L'image intègre ROS 2 Humble, PyTorch avec CUDA, et toutes les dépendances nécessaires (Ultralytics, OpenCV, NumPy < 2.0 pour compatibilité avec cv_bridge). Cette approche permet d'isoler l'environnement de détection YOLO et d'utiliser efficacement le GPU du Jetson.
-  - **Optimisation par conversion TensorRT** : Création du script `scripts/convert_to_tensorrt.sh` pour convertir le modèle PyTorch `best.pt` en format TensorRT `best.engine`, permettant une accélération significative de l'inférence sur Jetson (jusqu'à 3-5x plus rapide). Le script utilise le conteneur Docker pour effectuer la conversion avec les paramètres optimaux (half precision, device GPU, taille d'image 640x640).
-  - **Adaptation et création des scripts** : 
+  - Recherche et construction de l'image Docker : Création d'une image Docker spécialisée pour Jetson Orin (`Dockerfile.jetson`) basée sur `dustynv/l4t-pytorch:r36.2.0` pour bénéficier du support GPU natif. L'image intègre ROS 2 Humble, PyTorch avec CUDA, et toutes les dépendances nécessaires (Ultralytics, OpenCV, NumPy < 2.0 pour compatibilité avec cv_bridge). Cette approche permet d'isoler l'environnement de détection YOLO et d'utiliser efficacement le GPU du Jetson.
+  - Optimisation par conversion TensorRT : Création du script `scripts/convert_to_tensorrt.sh` pour convertir le modèle PyTorch `best.pt` en format TensorRT `best.engine`, permettant une accélération significative de l'inférence sur Jetson (jusqu'à 3-5x plus rapide). Le script utilise le conteneur Docker pour effectuer la conversion avec les paramètres optimaux (half precision, device GPU, taille d'image 640x640).
+  - Adaptation et création des scripts :
     - `scripts/image_subscriber_gpu.sh` : Script unifié qui délègue à `docker/launch_jetson.sh` pour lancer le nœud `image_subscriber` dans le conteneur Docker avec accès GPU
     - `docker/launch_jetson.sh` : Script de lancement du conteneur Docker avec configuration réseau host, montage des volumes, et vérification automatique des dépendances (ROS 2, Ultralytics, modèles YOLO)
     - `docker/Dockerfile.jetson` : Dockerfile optimisé pour Jetson avec installation de ROS 2 Humble et dépendances Python pour YOLO
-  - **Adaptation du code Python** : Modification de `ros2_ws/src/image_transfer/image_transfer/image_subscriber.py` pour détecter et utiliser automatiquement le modèle TensorRT (`best.engine`) s'il est disponible, avec fallback sur `best.pt` si nécessaire. 
+  - Adaptation du code Python : Modification de `ros2_ws/src/image_transfer/image_transfer/image_subscriber.py` pour détecter et utiliser automatiquement le modèle TensorRT (`best.engine`) s'il est disponible, avec fallback sur `best.pt` si nécessaire.
+- [x] **Désactivation des images de profondeur sur la ZED** :
+  - Les nœuds de la ZED générant les nuages de points consomment beaucoup de mémoire GPU.
+  - La désactivation permet de libérer des ressources pour l’analyse d’images avec YOLO.
+
+### Arbre TF incohérent (TF statiques non implémentées => dérive obligatoire)
+- [x] **Navigation et visualisation** :
+  - Problèmes TF identifiés : Trajectoire du robot sur RViz n'est pas sur un plan horizontal
+  - Caméra ZED2i : Cohérence des données pas encore vérifiée
+  - **Solution** : Révision complète du filtre EKF (la VO `/zed/zed_node/odom` crée un conflit)
+- [x] **Reconstruire l'arbre TF** :
+  - Reprendre l'ensemble des frames et des transformations statiques pour garantir leur cohérence
+  - Intégrer précisément les repères transmis par scout_base (pas utilisé jusqu'ici)
+  - Mesurer et appliquer avec précision les distances réelles entre repères dans les TF statiques
+  - Supprimer la frame `world` devenue redondante, car `odom` joue déjà ce rôle
+
+### Scan LiDAR (impossible de créer une carte avec les scans fournis)
+- [x] **Création d'une Config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (Config ingénieurs TechLab), pour améliorer la qualité des scans.
+- **Amélioration du support LiDAR par impression 3D** : Nous avons imprimé en 3D une plateforme dédiée afin d'exploiter pleinement la capacité du LiDAR pour la création de cartes. À l'origine, le capteur était fixé entre quatre piliers, ce qui perturbait fortement les mesures et influençait de manière importante la qualité des scans. Désormais, le robot fonctionne avec deux modes : un mode avec la plateforme 3D pour la cartographie, et un mode sans la plateforme (LiDAR fixé entre les quatre piliers) pour l'utilisation en navigation, notamment pour la détection d'obstacles.
+- [x] **Paramètre de montage du LiDAR** : Selon la position du LiDAR par rapport à l'avant de la tourelle, il faut paramétrer le LiDAR.
+  - `laser_mount_yaw` — défaut π/2 pour le montage « normal »
+  - `laser_mount_yaw:=0.0` pour création de carte (SLAM)
+
+### Mise à jour config EKF + SLAM (amélioration de la création de carte)
+- [x] **EKF** : Configuration du filtre de fusion dans `ekf_config.yaml` :
+    - La pose et la vitesse du robot (`x`, `y`, `yaw`, `vx`, `vy`) sont obtenues uniquement depuis les roues via `/odom_robot` (aucune fusion avec la VO de la ZED ou d'autres capteurs).
+    - L’IMU ZED n’est utilisée que pour la vitesse angulaire en lacet (`vyaw`) afin de limiter l'influence du bruit sur le yaw absolu.
+    - Aucun `odom1` n’est présent, la ZED ne fusionne plus les vitesses.
+    - Réglages complémentaires : fréquence du filtre à 15 Hz, history_length à 10, tuning précis des matrices de covariance et process_noise pour une trajectoire plus stable (voir détail dans `configs/ekf_config.yaml`).
+- [x] **SLAM** : Paramétrage du nœud SLAM Toolbox dans `slam_config.yaml` pour assurer la compatibilité avec le LiDAR TG15 et le pipeline EKF :
+    - Définition stricte des frames (`odom_frame: odom`, `base_frame: base_link`, `map_frame: map`).
+
+## Seconde descente - Vendredi 10 avril 2026
+- [x] **Réalisation** : Seconde descente dans les tunnels ANDRA effectuée avec succès
+- [x] **Caméra 360** : Caméra 360 de nouveau prêtée par l'ANDRA, jeu de données supplémentaire créé
+- [x] **Système opérationnel** :
+  - Nouvelle séquence de prise de photos bien plus efficace (capture toute l'arche "rapidement")
+  - Séquence de prise vidéo fonctionnelle
+  - Traitement des images par GPU uniquement fonctionnel
+  - Première tentative de cartographie des tunnels de l'ANDRA encourageante mais peu fiable (dérive du robot)
+- [x] **Améliorations à réaliser sur la cartographie** :
+  - Stabiliser la localisation du robot lors des scans
+  - Trouver des paramètres LIDAR/SLAM/EKF qui permettent une cartographie de qualité
 
 ---
 
-## À faire - Court terme (avant première descente debut février)
+## Problèmes actuels / en cours de résolution
 
-### Configuration et installation
-- [x] Finaliser la réinstallation de l'image du robot
-- [x] Installer/configurer le driver `scout_base` (Installé, configuré et fonctionnel)
-- [x] Installer/configurer le driver `zed_wrapper` (Installé et fonctionnel)
-- [x] Configurer la caméra PTZ (Réseau configuré, nœuds fonctionnels)
-- [x] Résoudre le problème LIDAR (Résolu le 18 février 2026)
+### Impossible de rendre le robot autonome avec la tourelle actuelle (problème des piliers)
+- [ ] **Conception d'une nouvelle tourelle** :
+  - Les premiers tests de navigation AMCL révèlent que le LiDAR sera aussi essentiel lors de la navigation autonome. La localisation seule sur la carte ne suffit pas.
+  - La tourelle actuelle ne permet pas une bonne utilisation du LiDAR et de la caméra PTZ simultanément.
+  - Il faut créer une tourelle avec un plexiglas autour du LiDAR.
+- [ ] **Création d'un nœud de correction de trajectoire** :
+  - `position_director.py` : prototype de suivi de couloir à partir du LiDAR (`/scan` → `/cmd_vel`). Encore au stade des premiers tests avec le stack AMCL / Nav2 (`use_nav` en mode `amcl`), pas un comportement final validé.
+
+### Pas de caméra 360° au TechLab (intégration impossible)
+- [ ] **Disposer d'une caméra 360°** :
+  - Modèle Rico Theta compatible avec ROS
+  - Le TechLab va peut-être acheter des Insta360
+  - Voir si un plugin open source existe
+- [ ] **Intégrer la caméra 360° au robot**
+
+### Annotation du dataset
+- [ ] **Quel logiciel utiliser ?**
+
+---
+
+## À faire
 
 ### Test et compréhension du projet
-- [x] Tester la configuration de la navigation
-- [ ] Crée une map de test
-- [ ] Tester les noeuds de position du cette map
+- [ ] Tester les nœuds de position sur une carte
 - [ ] Tests de bout en bout du système complet
-- [ ] Validation des transformations TF (vérifier toutes les transformations)
-- [x] Tests de performance des nœuds (fréquence de publication, latence)
-
-### Reproduire les résultats de l'année dernière
-- [x] Robot capable d'avancer en ligne droite pendant 1 mètre
-- [x] Robot capable de s'arrêter pour prendre une image
-- [x] Robot capable de recommencer le cycle (séquence automatique avec `sequence_photo` ou `sequence_video`)
-  - Séquence PTZ : gauche → haut → droite avec captures
-  - Retour au centre via preset Home (-1)
-  - Boucle automatique de la séquence complète
-- [ ] Robot capable de prendre une carte en entrée et d'estimer sa position (AMCL)
-
-### Préparation première descente
-- [x] Tester le système complet dans l'environnement TechLab
-- [x] Prendre des photos avec la caméra 360 dans les tunnels
-- [x] Documenter les résultats de la première descente (cf section "Première descente - Vendredi 6 février 2026")
-
----
-
-## À faire - Moyen terme (avant les autres descente)
 
 ### Amélioration du modèle de détection
-- [x] **Dataset caméra 360** : Dataset créé lors de la première descente (6 février 2026) - à trier et annoter
-- [ ] **Lucas et Adrien** : Trier et annoter le dataset de la caméra 360
-- [ ] **Lucas et Adrien** : Entraîner un modèle de détection sur image avec caméra 360
+- [x] Dataset caméra 360 : Dataset créé
+- [ ] Lucas et Adrien : Trier et annoter le dataset de la caméra 360
+- [ ] Lucas et Adrien : Entraîner un modèle de détection sur image avec caméra 360
 - [ ] Améliorer l'efficacité du robot avec le nouveau modèle
 - [ ] Tester le nouveau modèle sur les images capturées
 
-### Amélioration du positionnement (propositions Éliott)
-- [ ] Utiliser les étiquettes au mur pour recalibration
-- [ ] Améliorer l'estimation de position relative
-- [ ] Réduire les erreurs de divergence dues aux vibrations
+### Amélioration du positionnement
+- [x] Améliorer l'estimation de position relative
+- [ ] Réduire les erreurs de divergence dues à la roue avant gauche
+- [ ] Utiliser les étiquettes au mur pour recalibrage ?
 
 ### Amélioration de la cartographie
-- [ ] Améliorer la cartographie des tunnels (actuellement fonctionne mal à cause du mauvais positionnement)
+- [x] Améliorer la cartographie des tunnels (actuellement fonctionne mal à cause des piliers qui entourent le LiDAR)
+- [x] Tester la cartographie dans les tunnels réels
 - [ ] Créer des cartes précises des galeries
-- [ ] Tester la cartographie dans les tunnels réels
 
 ### Navigation autonome de base
+- [ ] Réussir à faire avancer le robot de manière autonome (avec correction de trajectoire)
 - [ ] Développer la navigation autonome au-delà de "avancer en ligne droite"
 - [ ] Implémenter la détection et évitement d'obstacles si nous continuons avec le LIDAR
 
 ---
 
-## À faire - Long terme (objectif final)
+## Objectif final
 
 ### Robot autonome complet
 - [ ] Robot autonome faisant des rondes dans les tunnels
@@ -314,8 +377,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] Intégrer la cartographie dans le système de navigation
 
 ### Navigation avancée
-- [ ] Navigation autonome avec ligne jaune au sol (détection via ZED2i)
-- [ ] Navigation avec étiquettes au mur pour repérage dans les tunnels
+- [ ] Navigation autonome
 - [ ] Système de localisation robuste combinant plusieurs méthodes
 
 ### Analyse continue
@@ -333,13 +395,14 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ## Répartition des tâches
 
 ### Lucas et Adrien
-- [ ] Entraînement du modèle de détection avec caméra 360
-- [ ] Amélioration de l'efficacité de détection
+- Entraînement du modèle de détection avec caméra 360
+- Amélioration de l'efficacité de détection
+- Création automatique de rapport sur l'état des fissures
 
 ### Vincent et Paul-Antoine
-- [ ] Configuration et tests du robot
-- [ ] Installation et configuration des drivers
-- [ ] Documentation et rapports sur l'utilisation du robot
+- Installation et configuration des drivers
+- Documentation et rapports sur l'utilisation du robot
+- Rendre le robot autonome dans les tunnels
 
 ---
 
@@ -347,7 +410,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Problèmes connus (d'après README.md de l'année dernière)
 - L'estimation de position relative est objectivement mauvaise (capteurs d'entrée de gamme, vibrations)
-- La cartographie fonctionne mal à cause du mauvais positionnement
+- La cartographie fonctionne mal à cause de la dérive du robot (roue avant gauche voilée)
 - L'IA est restreinte à un unique type de mur (GER)
 
 ### Solutions suggérées (d'après README.md)
@@ -357,4 +420,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 19 Février 2026
+**Dernière mise à jour** : 21 avril 2026
