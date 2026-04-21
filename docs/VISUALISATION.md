@@ -8,7 +8,7 @@ RViz (Robot Visualization) est l'outil de visualisation 3D de ROS2 qui permet de
 - **Visualiser les données des capteurs** (LIDAR, caméras)
 - **Observer la position du robot** et ses déplacements
 - **Voir la carte** générée par SLAM ou chargée (si disponible)
-- **Définir des objectifs de navigation** (Set Goal)
+- **Définir des objectifs de navigation** (Set Goal / 2D Goal Pose, via Nav2)
 - **Déboguer visuellement** le système robotique
 
 ## Configuration : `ros2_ws/src/ros_launcher/config.rviz`
@@ -129,13 +129,16 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
    ```bash
    # Sur le robot
    ssh techlab@orin2.local
-   cd ~/Documents/ANDRA_2025-2026
+   cd ~/Documents/ANDRA_2025_2026
    source scripts/setup.sh
-   # Mode SLAM pour créer une carte ou pour observer les derives en desactivant les capteurs
-   ./scripts/launch.sh slam  
-   # Mode AMCL pour naviguer sur une carte existante
-   ./scripts/launch.sh amcl  
+   # Mode SLAM pour créer une carte ou pour observer les dérives
+   ./scripts/launch.sh slam
+   # Mode AMCL carte obligatoire
+   ./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte.yaml
    ```
+
+   **Note** : `launch.sh amcl` active **Nav2** par défaut (`use_nav:=true`), nécessaire pour **2D Goal Pose** / « Set Goal ».  
+   Si vous lancez `navigation_stack.launch.py` à la main avec `use_amcl:=true`, le défaut est **sans** Nav2 (`use_nav:=false`) : ajoutez `use_nav:=true` pour la navigation par objectif.
 
 2. **Lancer RViz2 sur votre PC Linux** :
    ```bash
@@ -158,8 +161,8 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
    - Si une carte est disponible, elle s'affiche en arrière-plan
 
 4. **Interagir avec le robot** (mode avec carte uniquement) :
-   - Utiliser "2D Goal Pose" pour envoyer le robot à un endroit précis
-   - Utiliser "2D Pose Estimate" pour corriger la position estimée (mode AMCL)
+   - **2D Goal Pose** (« Set Goal ») : nécessite **Nav2** en cours d’exécution (`use_nav:=true`, comme avec `./scripts/launch.sh amcl …`). Sans Nav2, l’outil n’a pas de serveur d’action pour envoyer l’objectif.
+   - **2D Pose Estimate** : initialisation / correction de pose AMCL (localisation), sans exiger Nav2 pour la simple relocalisation.
 
 ## Sauvegarde de la carte
 
@@ -167,7 +170,7 @@ Une fois la carte construite en mode SLAM, vous pouvez la sauvegarder :
 
 ```bash
 # Sur le robot
-cd ~/Documents/ANDRA_2025-2026
+cd ~/Documents/ANDRA_2025_2026
 ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte
 ```
 

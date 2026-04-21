@@ -49,6 +49,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
+- [ ] `position_publisher` : Publie la position courante du robot (extraite depuis `/odometry/filtered`)
 - [ ] `show_pos` : Affichage de la position du robot
 - [ ] `report_fissures` : Tracé des positions détectées sur la carte
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP

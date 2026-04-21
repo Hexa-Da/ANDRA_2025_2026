@@ -108,11 +108,6 @@ echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide =
 
 **Important** : Si les middlewares diffèrent (FastRTPS vs CycloneDDS), les topics ne seront pas visibles même si le réseau fonctionne.
 
-
-
-
-
-
 ### Prendre le contrôle manuel
 
 Pour controler les roues :

@@ -87,7 +87,7 @@ ping -c 3 192.168.5.163
 
 **Note** : Ce script configure l'interface Ethernet `enP8p1s0` de la orin2 avec l'adresse IP statique `192.168.5.100/24` et supprime les routes WiFi conflictuelles. 
 
-### 5. Configurer CAN (une seule fois par session)
+### 5. Configurer CAN (normalement déjà configuré)
 
 Le TechLab utilise un service systemd pour configurer automatiquement l'interface CAN `agilex` :
 
@@ -116,11 +116,10 @@ Il existe deux façons de lancer le système :
 - Syntaxe simplifiée avec deux modes (`slam` / `amcl`)
 - Vérifications automatiques (carte obligatoire pour AMCL)
 - Messages d'aide affichés
-- Gestion automatique du répertoire de travail
 
 ```bash
 # Mode SLAM simple (par défault)
-./scripts/launch.sh slam
+./scripts/launch.sh 
 
 # Mode SLAM avec options
 ./scripts/launch.sh slam enable_lidar:=false enable_zed:=false
@@ -197,7 +196,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 ### Drivers matériels
 - **LIDAR** : `ydlidar_ros2_driver` (scans laser) 
 - **Robot Scout** : `scout_base` (odométrie des roues) 
-- **Caméra ZED2i** : `zed_wrapper` (images et données de profondeur) 
+- **Caméra ZED2i** : `zed_wrapper` avec `configs/zed_nav_light.yaml` (RGB + IMU pour l’EKF)
 
 ### Nœuds de traitement d'images (image_transfer)
 - **`image_publisher`** : Capture des images depuis la caméra PTZ
@@ -215,7 +214,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Surveille le dossier `video/video_output/` toutes les 5 secondes pour détecter de nouvelles vidéos `.mp4`
   - Vérifie que les vidéos sont stables (pas en cours d'écriture) avant traitement
   - Valide les vidéos avant traitement (vérifie FPS et capacité de lecture)
-  - Extrait des images à un taux configurable (`extract_rate`, défaut: 30 images/seconde)
+  - Extrait des images à un taux configurable (`extract_rate` ; via le launch : argument `video_extract_rate`)
   - Sauvegarde les images extraites dans `ros2_ws/images_capturees/` avec le préfixe `from_vid_`
   - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
   - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
@@ -229,7 +228,6 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **`odom_to_path`** : Visualisation du trajet du robot
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - Publie le Path sur `/robot_path` pour visualiser le trajet parcouru dans RViz2
-  - Publie la transformation TF `odom` → `base_link` pour compléter l'arbre de transformations
   - Ajoute un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
 - **`report_fissures`** : Trace les positions détectées sur la carte
   - Reçoit les positions depuis le topic `/position_detectee`
@@ -240,8 +238,8 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 ### Localisation et cartographie
 
 - **EKF** (`ekf_filter_node`) : Filtre de Kalman étendu pour fusionner les données des capteurs
-  - Publie la transformation `odom` → `base_link`
-  - Fusionne : odométrie des roues (`/odom_robot`), odométrie ZED2i (`/zed/zed_node/odom`), IMU ZED2i (`/zed/zed_node/imu/data`)
+  - Publie le topic `/odometry/filtered` ; dans `configs/ekf_config.yaml`
+  - Fusion actuelle : odométrie des roues (`/odom_robot`) et IMU ZED2i (`/zed/zed_node/imu/data`)
   
 - **SLAM Toolbox** (`slam_toolbox`) : En mode SLAM, construit la carte
   - Publie la transformation `map` → `odom`
@@ -259,7 +257,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 Les transformations statiques sont publiées par des nœuds `static_transform_publisher` :
 
 - **`base_to_zed_tf`** : Publie `base_link` → `zed_camera_link` (caméra ZED2i)
-  - Transformation : (0, 0, 0, 0, 0, 0) - pas de translation ni rotation
+  - Translation **(0.185, 0, 0.192)** m ; rotation rpy **(0, 0, 0)** 
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
   - Translation fixe **(0.085, 0, 0.222)** m ; **yaw** = argument `laser_mount_yaw` (par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte), pitch et roll = **0**
@@ -320,8 +318,5 @@ ros2 run navigation_utils report_fissures
 
 # Afficher la position du robot
 ros2 run navigation_utils show_pos
-
-# Test de la carte
-ros2 run navigation_utils test
 ```
 
