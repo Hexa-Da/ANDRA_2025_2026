@@ -30,6 +30,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `PTZ_PRESETS.md` : Guide de contrôle PTZ et utilisation de la caméra
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
 - `STRUCTURE.md` : Ce fichier (structure du projet)
+- `TRAJECTOIRE_MISSION.md` : Guide de création et exécution des missions par waypoints (AMCL/Nav2)
 - `TF_TREE.md` : Arbre TF du robot et repères 
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
 
@@ -69,7 +70,8 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `sequence_photo` : Séquence Step-and-Go avec 5 captures PTZ en boucle
   - `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
   - `show_pos` : Affiche la position du robot (odométrie)
-  - `test` : Outil de test pour vérifier la disponibilité de la carte
+  - `trajectoire_mission` : Exécute une mission Nav2 à partir d'un fichier de waypoints (`x`, `y`, `yaw`)
+  - `trajectoire/` : Dossier des fichiers de trajectoire (`*.yaml`) par carte (ex: `ma_carte_traj.yaml`)
 - `src/ros_launcher/` : Package ROS2 de configuration et de lancement (SLAM, AMCL, EKF, Nav2)
   - `navigation_stack.launch.py` : Fichier de lancement principal 
   - `configs/` : Fichiers de configuration YAML

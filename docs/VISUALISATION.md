@@ -105,7 +105,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
   - **Gris** : Espace inconnu
 
 #### 6. **PoseArray** (Particules AMCL)
-- **Topic** : `/particlecloud`
+- **Topic** : `/particle_cloud`
 - Affiche les particules de localisation AMCL
 - Flèches représentant les hypothèses de position
 - **Utilité** : Voir la convergence des particules (mode AMCL uniquement)
@@ -129,7 +129,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
    ```bash
    # Sur le robot
    ssh techlab@orin2.local
-   cd ~/Documents/ANDRA_2025_2026
+   cd ~/Documents/ANDRA_2025-2026
    source scripts/setup.sh
    # Mode SLAM pour créer une carte ou pour observer les dérives
    ./scripts/launch.sh slam
@@ -170,7 +170,7 @@ Une fois la carte construite en mode SLAM, vous pouvez la sauvegarder :
 
 ```bash
 # Sur le robot
-cd ~/Documents/ANDRA_2025_2026
+cd ~/Documents/ANDRA_2025-2026
 ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte
 ```
 

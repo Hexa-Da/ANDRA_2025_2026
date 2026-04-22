@@ -341,14 +341,18 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ## Problèmes actuels / en cours de résolution
 
 ### Impossible de rendre le robot autonome avec la tourelle actuelle (problème des piliers)
-- [x] **Conception d'une nouvelle tourelle** :
+- [ ] **Conception d'une nouvelle tourelle** :
   - Les premiers tests de navigation AMCL révèlent que le LiDAR sera aussi essentiel lors de la navigation autonome. La localisation seule sur la carte ne suffit pas.
   - La tourelle actuelle ne permet pas une bonne utilisation du LiDAR et de la caméra PTZ simultanément.
   - Il faut créer une tourelle avec un plexiglas autour du LiDAR.
-  - Vincent concevoit une nouvelle tourelle avec une cage en plexiglace pour le Lidar
 
 ### Fusion de l'analyse et de la navigation
-- [ ] 
+- [ ] **Rendre les séquences autonome** :
+  - Objectif : suivre un circuit de waypoints tout en capturant photo/vidéo.
+- [ ] **Associer chaque média à la pose robot** :
+  - Réviser les neouds `show_pos.py`, `position_publisher.py`
+  - Les intégrer au système
+- [x] **Gérer robustement les incidents** (arrêt d'urgence frontal, timeout waypoint, reprise/skip).
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :
