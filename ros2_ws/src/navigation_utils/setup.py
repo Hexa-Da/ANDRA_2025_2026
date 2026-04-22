@@ -30,7 +30,7 @@ setup(
             'test = navigation_utils.test:main',
             'sequence_photo = navigation_utils.sequence_photo:main',
             'sequence_video = navigation_utils.sequence_video:main',
-            'position_director = navigation_utils.position_director:main',
+            'trajectoire_mission = navigation_utils.trajectoire_mission:main',
         ],
     },
 )

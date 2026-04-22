@@ -45,6 +45,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
 - [x] Documentation de l'arbre TF (`TF_TREE.md`)
 - [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
+- [x] Guide mission trajectoire AMCL/Nav2 (`docs/TRAJECTOIRE_MISSION.md`)
 
 ### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
@@ -101,6 +102,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Mise à jour EKF + SLAM : fusion recentrée sur `/odom_robot`, IMU ZED limitée à `vyaw`, suppression de `odom1`, réglages EKF à 15 Hz avec `history_length=10`, et frames SLAM strictes `odom/base_link/map` pour stabiliser la trajectoire et fiabiliser la cartographie.
 - [x] Paramètre `laser_mount_yaw` : π/2 (rad) pour le montage courant ; `laser_mount_yaw:=0.0` pour la création de carte en SLAM, selon l’orientation du LiDAR sur la tourelle.
 - [x] Résultat : qualité des nuages de points nettement meilleure ; premières cartes exploitables produites, ouvrant la voie à la localisation (AMCL) et aux tests de navigation sur carte.
+
+### Navigation autonome de base
+- [x] Réussir à faire avancer le robot de manière autonome sur carte (mission par waypoints)
+- [x] Développer la navigation autonome au-delà de "avancer en ligne droite" (séquence de goals Nav2)
+- [x] Implémenter la détection et évitement d'obstacles si nous continuons avec le LIDAR
+- [x] Créer un nœud de mission trajectoire (`navigation_utils/trajectoire_mission.py`)
+- [x] Créer et utiliser des fichiers de trajectoire YAML par carte (`ros2_ws/src/navigation_utils/trajectoire/*.yaml`)
 
 ---
 
@@ -312,17 +320,35 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Stabiliser la localisation du robot lors des scans
   - Trouver des paramètres LIDAR/SLAM/EKF qui permettent une cartographie de qualité
 
+### Création de parcours avec évitement automatique
+- [x] **Validation du mode AMCL + Nav2 pour la navigation sur carte** :
+  - Lancement en mode `amcl` avec carte (`map_server` + `amcl`) et activation de Nav2 (`use_nav:=true`).
+  - Validation des objectifs de navigation via RViz (`2D Nav Goal`) dans le repère `map`.
+- [x] **Création d'un nœud mission pour exécuter un circuit** :
+  - Remplacement du prototype `position_director.py` (contrôle local `/cmd_vel`) par une approche mission basée Nav2.
+  - Nœud implémenté : `navigation_utils/trajectoire_mission.py`.
+  - Fonction : lecture d'un fichier `traj.yaml` puis envoi séquentiel des goals `navigate_to_pose`.
+- [x] **Mise en place des fichiers de trajectoire par carte** :
+  - Dossier dédié : `ros2_ws/src/navigation_utils/trajectoire/`.
+  - Fichiers créés depuis RViz en capturant `/goal_pose`, conversion quaternion -> yaw, puis structuration en YAML `waypoints`.
+  - Boucle fermée supportée en répétant le point de départ à la fin de la liste.
+- [x] **Ajout d'un arrêt d'urgence frontal en mission** :
+  - Surveillance LiDAR `/scan` pendant l'exécution des goals.
+  - Si obstacle frontal sous seuil (`emergency_stop_distance`), annulation du goal en cours et arrêt de la mission.
+
 ---
 
 ## Problèmes actuels / en cours de résolution
 
 ### Impossible de rendre le robot autonome avec la tourelle actuelle (problème des piliers)
-- [ ] **Conception d'une nouvelle tourelle** :
+- [x] **Conception d'une nouvelle tourelle** :
   - Les premiers tests de navigation AMCL révèlent que le LiDAR sera aussi essentiel lors de la navigation autonome. La localisation seule sur la carte ne suffit pas.
   - La tourelle actuelle ne permet pas une bonne utilisation du LiDAR et de la caméra PTZ simultanément.
   - Il faut créer une tourelle avec un plexiglas autour du LiDAR.
-- [ ] **Création d'un nœud de correction de trajectoire** :
-  - `position_director.py` : prototype de suivi de couloir à partir du LiDAR (`/scan` → `/cmd_vel`). Encore au stade des premiers tests avec le stack AMCL / Nav2 (`use_nav` en mode `amcl`), pas un comportement final validé.
+  - Vincent concevoit une nouvelle tourelle avec une cage en plexiglace pour le Lidar
+
+### Fusion de l'analyse et de la navigation
+- [ ] 
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :
@@ -351,35 +377,27 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Amélioration du positionnement
 - [x] Améliorer l'estimation de position relative
-- [ ] Réduire les erreurs de divergence dues à la roue avant gauche
 - [ ] Utiliser les étiquettes au mur pour recalibrage ?
 
 ### Amélioration de la cartographie
 - [x] Améliorer la cartographie des tunnels (actuellement fonctionne mal à cause des piliers qui entourent le LiDAR)
 - [x] Tester la cartographie dans les tunnels réels
+- [ ] Réduire les erreurs de divergence dues à la roue avant gauche
 - [ ] Créer des cartes précises des galeries
-
-### Navigation autonome de base
-- [ ] Réussir à faire avancer le robot de manière autonome (avec correction de trajectoire)
-- [ ] Développer la navigation autonome au-delà de "avancer en ligne droite"
-- [ ] Implémenter la détection et évitement d'obstacles si nous continuons avec le LIDAR
 
 ---
 
 ## Objectif final
 
 ### Robot autonome complet
-- [ ] Robot autonome faisant des rondes dans les tunnels
+- [x] Robot autonome faisant des rondes dans les tunnels
 - [ ] Système de mission/planification de parcours
+- [ ] Système de localisation robuste combinant plusieurs méthodes
 
 ### Cartographie complète
 - [ ] Cartographier tous les tunnels nécessaires
 - [ ] Créer une carte globale des galeries
-- [ ] Intégrer la cartographie dans le système de navigation
-
-### Navigation avancée
-- [ ] Navigation autonome
-- [ ] Système de localisation robuste combinant plusieurs méthodes
+- [x] Intégrer la cartographie dans le système de navigation
 
 ### Analyse continue
 - [ ] Analyse continue des images capturées par caméra 360

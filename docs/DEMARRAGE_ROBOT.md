@@ -187,6 +187,23 @@ ros2 run navigation_utils sequence_video
 1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh slam` ou `amcl`)
 2. **Terminal 2** : Lancer `sequence_video` (`ros2 run navigation_utils sequence_video`)
 
+### 10. Lancer une mission de trajectoire (AMCL/Nav2)
+
+Le nœud `trajectoire_mission` exécute une liste de waypoints (`x`, `y`, `yaw`) dans le repère `map`.
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal en AMCL)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run navigation_utils trajectoire_mission --ros-args \
+  -p waypoints_file:=/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/src/navigation_utils/trajectoire/ma_carte_traj.yaml \
+  -p frame_id:=map \
+  -p loop:=false
+```
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh amcl` ce qui active Nav2)
+2. **Terminal 2** : Lancer `trajectoire_mission` (avec ses parmètres obligatoires)
+
 ## Nœuds lancés automatiquement
 
 Que vous utilisiez `scripts/launch.sh` ou `navigation_stack.launch.py` directement, les mêmes nœuds sont lancés (car `launch.sh` appelle `navigation_stack.launch.py` en interne).
