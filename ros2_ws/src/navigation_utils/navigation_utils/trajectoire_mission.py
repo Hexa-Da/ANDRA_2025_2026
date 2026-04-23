@@ -57,12 +57,26 @@ class TrajectoireMission(Node):
         self._waypoints: List[Dict[str, float]] = []
         self._emergency_stop = False
         self._last_front_dist = None
+        self._current_goal_handle = None
         self._scan_sub = self.create_subscription(
             LaserScan,
             scan_topic,
             self._on_scan,
             qos_profile_sensor_data,
         )
+
+    def cancel_current_goal(self, timeout_sec: float = 2.0) -> None:
+        """Annule le goal Nav2 en cours si présent."""
+        goal_handle = self._current_goal_handle
+        if goal_handle is None:
+            return
+        try:
+            cancel_future = goal_handle.cancel_goal_async()
+            rclpy.spin_until_future_complete(self, cancel_future, timeout_sec=timeout_sec)
+        except Exception as exc:
+            self.get_logger().warn(f'Failed to cancel current goal: {exc}')
+        finally:
+            self._current_goal_handle = None
 
     def _on_scan(self, msg: LaserScan) -> None:
         front_dist = self._sector_min(msg, center_angle=0.0, half_width=self.emergency_front_sector_rad)
@@ -157,6 +171,7 @@ class TrajectoireMission(Node):
                 if goal_handle is None or not goal_handle.accepted:
                     self.get_logger().error('Goal rejected by Nav2.')
                     return 3
+                self._current_goal_handle = goal_handle
 
                 result_future = goal_handle.get_result_async()
                 while rclpy.ok():
@@ -167,14 +182,14 @@ class TrajectoireMission(Node):
                             f'Emergency stop: obstacle ahead at {self._last_front_dist:.2f} m. '
                             'Cancelling current goal and stopping mission.'
                         )
-                        cancel_future = goal_handle.cancel_goal_async()
-                        rclpy.spin_until_future_complete(self, cancel_future, timeout_sec=2.0)
+                        self.cancel_current_goal(timeout_sec=2.0)
                         return 6
 
                     if result_future.done():
                         break
 
                 wrapped = result_future.result()
+                self._current_goal_handle = None
                 if wrapped is None:
                     self.get_logger().error('No result received from Nav2.')
                     return 4
@@ -194,9 +209,15 @@ class TrajectoireMission(Node):
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = TrajectoireMission()
+    code = 130
     try:
         code = node.run()
+    except KeyboardInterrupt:
+        node.get_logger().info('Interrupted, cancelling current goal...')
+        node.cancel_current_goal(timeout_sec=1.0)
+        code = 130
     finally:
+        node.cancel_current_goal(timeout_sec=0.5)
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

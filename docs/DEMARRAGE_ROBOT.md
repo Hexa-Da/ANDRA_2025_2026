@@ -204,6 +204,31 @@ ros2 run navigation_utils trajectoire_mission --ros-args \
 1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh amcl` ce qui active Nav2)
 2. **Terminal 2** : Lancer `trajectoire_mission` (avec ses parmètres obligatoires)
 
+### 11. Lancer la fusion autonome (navigation + captures)
+
+Le package `patrouille_autonome` orchestre `trajectoire_mission` avec les séquences de capture.
+
+#### Fusion photo
+
+```bash
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run patrouille_autonome fusion_photo_navigation
+```
+
+#### Fusion vidéo
+
+```bash
+# Dans un nouveau terminal (après avoir lancé le système principal en AMCL)
+cd ~/Documents/ANDRA_2025-2026
+source scripts/setup.sh
+ros2 run patrouille_autonome fusion_video_navigation
+```
+
+**Ordre de lancement recommandé** :
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh amcl`)
+2. **Terminal 2** : Lancer `fusion_photo/video_navigation.py` 
+
 ## Nœuds lancés automatiquement
 
 Que vous utilisiez `scripts/launch.sh` ou `navigation_stack.launch.py` directement, les mêmes nœuds sont lancés (car `launch.sh` appelle `navigation_stack.launch.py` en interne).
@@ -329,6 +354,12 @@ ros2 run navigation_utils sequence_photo
 
 # Séquence vidéo (enregistrement continu + balayage PTZ)
 ros2 run navigation_utils sequence_video
+
+# Fusion autonome photo (mission + sequence_photo)
+ros2 run patrouille_autonome fusion_photo_navigation
+
+# Fusion autonome vidéo (mission + sequence_video)
+ros2 run patrouille_autonome fusion_video_navigation
 
 # Rapport des fissures (trace sur la carte)
 ros2 run navigation_utils report_fissures

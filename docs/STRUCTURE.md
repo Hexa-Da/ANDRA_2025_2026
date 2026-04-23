@@ -72,6 +72,9 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `show_pos` : Affiche la position du robot (odométrie)
   - `trajectoire_mission` : Exécute une mission Nav2 à partir d'un fichier de waypoints (`x`, `y`, `yaw`)
   - `trajectoire/` : Dossier des fichiers de trajectoire (`*.yaml`) par carte (ex: `ma_carte_traj.yaml`)
+- `src/patrouille_autonome/` : Package ROS2 d'orchestration mission + capture autonome
+  - `fusion_photo_navigation` : Lance `trajectoire_mission` + `sequence_photo` en parallèle
+  - `fusion_video_navigation` : Lance `trajectoire_mission` + `sequence_video` en parallèle
 - `src/ros_launcher/` : Package ROS2 de configuration et de lancement (SLAM, AMCL, EKF, Nav2)
   - `navigation_stack.launch.py` : Fichier de lancement principal 
   - `configs/` : Fichiers de configuration YAML

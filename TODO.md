@@ -353,11 +353,21 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
 
 ### Fusion de l'analyse et de la navigation
-- [ ] **Rendre les séquences autonomes** :
+- [x] **Rendre les séquences autonomes** :
   - Objectif : suivre un circuit de waypoints tout en capturant photo/vidéo.
+  - Nouveau package ROS2 `patrouille_autonome` créé dans `ros2_ws/src`.
+  - Scripts d'orchestration ajoutés :
+    - `fusion_photo_navigation` : lance `trajectoire_mission` + `sequence_photo`.
+    - `fusion_video_navigation` : lance `trajectoire_mission` + `sequence_video`.
+  - Paramétrage mission intégré : waypoint par défaut `ma_carte_traj.yaml`, `frame_id:=map`, option `--loop`.
+  - Fin de mission : arrêt automatique de la séquence photo/vidéo, retour PTZ en preset Home.
+  - Arrêt robuste (`Ctrl+C`) : shutdown des deux nœuds de fusion + commande de sécurité `cmd_vel=0`.
 - [ ] **Associer chaque média à la pose robot** :
   - Réviser les nœuds `show_pos.py`, `position_publisher.py`.
+  - Comprendre comment fonctionne `report_fissures.py`.
   - Les intégrer au système.
+
+### Gestion de la navigation
 - [x] **Gérer robustement les incidents** (arrêt d'urgence frontal, timeout waypoint, reprise/skip).
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
