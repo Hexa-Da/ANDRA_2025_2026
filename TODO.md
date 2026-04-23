@@ -293,7 +293,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Supprimer la frame `world` devenue redondante, car `odom` joue déjà ce rôle
 
 ### Scan LiDAR (impossible de créer une carte avec les scans fournis)
-- [x] **Création d'une Config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (Config ingénieurs TechLab), pour améliorer la qualité des scans.
+- [x] **Création d'une config custom** : `ros_launcher/configs/ydlidar_TG15.yaml` (config ingénieurs TechLab), pour améliorer la qualité des scans.
 - **Amélioration du support LiDAR par impression 3D** : Nous avons imprimé en 3D une plateforme dédiée afin d'exploiter pleinement la capacité du LiDAR pour la création de cartes. À l'origine, le capteur était fixé entre quatre piliers, ce qui perturbait fortement les mesures et influençait de manière importante la qualité des scans. Désormais, le robot fonctionne avec deux modes : un mode avec la plateforme 3D pour la cartographie, et un mode sans la plateforme (LiDAR fixé entre les quatre piliers) pour l'utilisation en navigation, notamment pour la détection d'obstacles.
 - [x] **Paramètre de montage du LiDAR** : Selon la position du LiDAR par rapport à l'avant de la tourelle, il faut paramétrer le LiDAR.
   - `laser_mount_yaw` — défaut π/2 pour le montage « normal »
@@ -340,25 +340,31 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ## Problèmes actuels / en cours de résolution
 
-### Impossible de rendre le robot autonome avec la tourelle actuelle (problème des piliers)
-- [ ] **Conception d'une nouvelle tourelle** :
+### Impossible de rendre le robot autonome (les piliers de la tourelle cachent trop le LiDAR)
+- [x] **Conception d'une nouvelle tourelle** :
   - Les premiers tests de navigation AMCL révèlent que le LiDAR sera aussi essentiel lors de la navigation autonome. La localisation seule sur la carte ne suffit pas.
   - La tourelle actuelle ne permet pas une bonne utilisation du LiDAR et de la caméra PTZ simultanément.
   - Il faut créer une tourelle avec un plexiglas autour du LiDAR.
+  - Problème : les scans ne passent à travers aucun matériau, même transparent.
+  - Abandon de l'idée d'une nouvelle tourelle
+- [ ] **Changer la position de la caméra** :
+  - Nouvelle idée : nous allons positionner la caméra derrière la tourelle.
+  - Elle doit seulement prendre des photos/vidéos d'une arche ; elle n'a pas besoin de voir devant elle.
+  - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
 
 ### Fusion de l'analyse et de la navigation
-- [ ] **Rendre les séquences autonome** :
+- [ ] **Rendre les séquences autonomes** :
   - Objectif : suivre un circuit de waypoints tout en capturant photo/vidéo.
 - [ ] **Associer chaque média à la pose robot** :
-  - Réviser les neouds `show_pos.py`, `position_publisher.py`
-  - Les intégrer au système
+  - Réviser les nœuds `show_pos.py`, `position_publisher.py`.
+  - Les intégrer au système.
 - [x] **Gérer robustement les incidents** (arrêt d'urgence frontal, timeout waypoint, reprise/skip).
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :
-  - Modèle Rico Theta compatible avec ROS
-  - Le TechLab va peut-être acheter des Insta360
-  - Voir si un plugin open source existe
+  - Modèle Ricoh Theta compatible avec ROS.
+  - Le TechLab va peut-être acheter des Insta360.
+  - Voir si un plugin open source existe.
 - [ ] **Intégrer la caméra 360° au robot**
 
 ### Annotation du dataset

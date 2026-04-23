@@ -81,14 +81,5 @@ source scripts/setup.sh
 ros2 run navigation_utils trajectoire_mission --ros-args \
   -p waypoints_file:=/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/src/navigation_utils/trajectoire/ma_carte_traj.yaml \
   -p frame_id:=map \
-  -p loop:=false \
-```
-
-Boucle continue:
-
-```bash
-ros2 run navigation_utils trajectoire_mission --ros-args \
-  -p waypoints_file:=/home/techlab/Documents/ANDRA_2025-2026/ros2_ws/src/navigation_utils/trajectoire/ma_carte_traj.yaml \
-  -p frame_id:=map \
-  -p loop:=true \
+  -p loop:=false
 ```
