@@ -125,7 +125,15 @@ def main():
             ]
         )
 
-    photo_cmd = ['ros2', 'run', 'navigation_utils', 'sequence_photo']
+    photo_cmd = [
+        'ros2',
+        'run',
+        'navigation_utils',
+        'sequence_photo',
+        '--ros-args',
+        '-p',
+        'enable_robot_motion:=false',
+    ]
 
     processes = []
     mission_process = None
@@ -144,6 +152,14 @@ def main():
             if mission_status is not None and photo_process is not None and photo_status is None:
                 _stop_process(photo_process)
                 _send_ptz_home()
+                break
+
+            # Si la séquence photo se termine en premier,
+            # arrêter aussi la mission Nav2.
+            if photo_status is not None and mission_process is not None and mission_status is None:
+                _stop_process(mission_process)
+                _send_ptz_home()
+                _stop_robot_motion()
                 break
 
             if mission_status is not None or photo_status is not None:

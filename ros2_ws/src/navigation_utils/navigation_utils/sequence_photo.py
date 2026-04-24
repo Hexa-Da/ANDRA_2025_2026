@@ -43,10 +43,15 @@ class RobotSequence(Node):
         self.state = 'WAITING_START'  # WAITING_START, MOVING, STOPPED, PTZ_MOVING, WAITING_STABLE, RESETTING
         self.shutdown_requested = False
 
-        # Paramètres
-        self.target_distance = 1.0  # 1 mètre
-        self.stop_duration = 30.0  # 30 secondes
-        self.robot_speed = 0.3  # m/s (vitesse de déplacement)
+        # Paramètres (surchageables via --ros-args -p ...)
+        self.declare_parameter('target_distance', 1.0)  # m
+        self.declare_parameter('stop_duration', 30.0)   # s
+        self.declare_parameter('robot_speed', 0.3)      # m/s
+        self.target_distance = float(self.get_parameter('target_distance').value)
+        self.stop_duration = float(self.get_parameter('stop_duration').value)
+        self.robot_speed = float(self.get_parameter('robot_speed').value)
+        self.declare_parameter('enable_robot_motion', True)
+        self.enable_robot_motion = bool(self.get_parameter('enable_robot_motion').value)
         
         # Configuration PTZ - Séquence précise avec durées fixes
         # Séquence : gauche(3.6s) → stab(0.5s) → capture → attendre(0.5s)
@@ -139,6 +144,8 @@ class RobotSequence(Node):
     
     def move_robot(self, linear_x, angular_z=0.0):
         """Publie une commande de vitesse avec sécurité contextuelle"""
+        if not self.enable_robot_motion:
+            return
         if self.shutdown_requested:
             return
         try:
@@ -259,7 +266,8 @@ class RobotSequence(Node):
                 self.get_logger().info(f"Attente de {self.stop_duration}s pour les captures PTZ...")
             else:
                 # Continuer à avancer
-                self.move_robot(self.robot_speed)
+                if self.enable_robot_motion:
+                    self.move_robot(self.robot_speed)
         
         elif self.state == 'RESETTING':
             # Si le robot peut repartir pendant le Home final, démarrer immédiatement

@@ -9,8 +9,6 @@ from geometry_msgs.msg import PoseStamped
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import LaserScan
 import yaml
 
 
@@ -34,36 +32,16 @@ class TrajectoireMission(Node):
         self.declare_parameter('loop', False)
         self.declare_parameter('pause_s', 0.0)
         self.declare_parameter('action_name', 'navigate_to_pose')
-        self.declare_parameter('scan_topic', '/scan')
-        self.declare_parameter('emergency_stop_distance', 0.5)
-        self.declare_parameter('emergency_front_sector_deg', 15.0) 
-        self.declare_parameter('min_valid_range', 0.05)
-        self.declare_parameter('max_valid_range', 8.0)
 
         self.waypoints_file = str(self.get_parameter('waypoints_file').value)
         self.frame_id = str(self.get_parameter('frame_id').value)
         self.loop = bool(self.get_parameter('loop').value)
         self.pause_s = float(self.get_parameter('pause_s').value)
         action_name = str(self.get_parameter('action_name').value)
-        scan_topic = str(self.get_parameter('scan_topic').value)
-        self.emergency_stop_distance = float(self.get_parameter('emergency_stop_distance').value)
-        self.emergency_front_sector_rad = math.radians(
-            float(self.get_parameter('emergency_front_sector_deg').value)
-        )
-        self.min_valid_range = float(self.get_parameter('min_valid_range').value)
-        self.max_valid_range = float(self.get_parameter('max_valid_range').value)
 
         self._client = ActionClient(self, NavigateToPose, action_name)
         self._waypoints: List[Dict[str, float]] = []
-        self._emergency_stop = False
-        self._last_front_dist = None
         self._current_goal_handle = None
-        self._scan_sub = self.create_subscription(
-            LaserScan,
-            scan_topic,
-            self._on_scan,
-            qos_profile_sensor_data,
-        )
 
     def cancel_current_goal(self, timeout_sec: float = 2.0) -> None:
         """Annule le goal Nav2 en cours si présent."""
@@ -77,22 +55,6 @@ class TrajectoireMission(Node):
             self.get_logger().warn(f'Failed to cancel current goal: {exc}')
         finally:
             self._current_goal_handle = None
-
-    def _on_scan(self, msg: LaserScan) -> None:
-        front_dist = self._sector_min(msg, center_angle=0.0, half_width=self.emergency_front_sector_rad)
-        self._last_front_dist = front_dist
-        self._emergency_stop = front_dist is not None and front_dist < self.emergency_stop_distance
-
-    def _sector_min(self, scan: LaserScan, center_angle: float, half_width: float):
-        vals: List[float] = []
-        angle = scan.angle_min
-        for rng in scan.ranges:
-            rel = math.atan2(math.sin(angle - center_angle), math.cos(angle - center_angle))
-            if abs(rel) <= half_width and math.isfinite(rng):
-                if self.min_valid_range <= rng <= self.max_valid_range:
-                    vals.append(rng)
-            angle += scan.angle_increment
-        return min(vals) if vals else None
 
     def load_waypoints(self) -> bool:
         if not self.waypoints_file:
@@ -176,14 +138,6 @@ class TrajectoireMission(Node):
                 result_future = goal_handle.get_result_async()
                 while rclpy.ok():
                     rclpy.spin_until_future_complete(self, result_future, timeout_sec=0.2)
-
-                    if self._emergency_stop:
-                        self.get_logger().error(
-                            f'Emergency stop: obstacle ahead at {self._last_front_dist:.2f} m. '
-                            'Cancelling current goal and stopping mission.'
-                        )
-                        self.cancel_current_goal(timeout_sec=2.0)
-                        return 6
 
                     if result_future.done():
                         break
