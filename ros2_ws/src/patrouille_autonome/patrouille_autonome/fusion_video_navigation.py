@@ -82,12 +82,6 @@ def main():
         action='store_true',
         help='Active la boucle de mission pour trajectoire_mission',
     )
-    parser.add_argument(
-        '--robot-speed',
-        type=float,
-        default=0.14,
-        help='Vitesse lineaire du robot pour sequence_video (m/s)',
-    )
     args, unknown = parser.parse_known_args()
 
     mission_cmd = [
@@ -110,7 +104,7 @@ def main():
         'sequence_video',
         '--ros-args',
         '-p',
-        f'robot_speed:={args.robot_speed}',
+        'enable_robot_motion:=false',
     ]
 
     processes = []

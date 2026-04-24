@@ -60,6 +60,7 @@ class RobotSequenceVideo(Node):
         
         # Paramètres
         self.declare_parameter('robot_speed', 0.06)
+        self.declare_parameter('enable_robot_motion', True)
         
         # Configuration RTSP et vidéo
         self.declare_parameter('rtsp_url', 'rtsp://admin:admin@192.168.5.163:554/live/av0')
@@ -70,6 +71,7 @@ class RobotSequenceVideo(Node):
         self.declare_parameter('video_gamma', 1.0)
         
         self.robot_speed = self.get_parameter('robot_speed').get_parameter_value().double_value
+        self.enable_robot_motion = self.get_parameter('enable_robot_motion').get_parameter_value().bool_value
         self.rtsp_url = self.get_parameter('rtsp_url').get_parameter_value().string_value
         self.video_output_dir = self.get_parameter('video_output_dir').get_parameter_value().string_value
         self.enable_video_adjustment = self.get_parameter('enable_video_adjustment').get_parameter_value().bool_value
@@ -108,6 +110,7 @@ class RobotSequenceVideo(Node):
         self.record_start_time: Time = None
         self.ffmpeg_process = None
         self.video_filename = None
+        self.video_ready_flag_path = None
         
         # État du balayage PTZ
         self.ptz_sweep_start_time: Time = None
@@ -143,6 +146,8 @@ class RobotSequenceVideo(Node):
     
     def move_robot(self, linear_x, angular_z=0.0):
         """Publie une commande de vitesse pour le robot"""
+        if not self.enable_robot_motion:
+            return
         twist = Twist()
         twist.linear.x = float(linear_x)
         twist.angular.z = float(angular_z)
@@ -268,7 +273,8 @@ class RobotSequenceVideo(Node):
         """Arrête l'enregistrement vidéo"""
         if self.ffmpeg_process is None:
             return
-        
+        recorded_video_path = self.video_filename
+
         try:
             self.ffmpeg_process.send_signal(signal.SIGINT)
             self.ffmpeg_process.wait(timeout=5)
@@ -281,7 +287,15 @@ class RobotSequenceVideo(Node):
             self.get_logger().error(f"Erreur lors de l'arrêt de l'enregistrement: {e}")
             if self.ffmpeg_process.poll() is None:
                 self.ffmpeg_process.kill()
-        
+        if recorded_video_path and os.path.exists(recorded_video_path):
+            self.video_ready_flag_path = f"{recorded_video_path}.done"
+            try:
+                with open(self.video_ready_flag_path, 'w', encoding='utf-8') as flag_file:
+                    flag_file.write(f"{os.path.basename(recorded_video_path)}\n")
+                self.get_logger().info(f"Marqueur de fin vidéo créé: {self.video_ready_flag_path}")
+            except Exception as e:
+                self.get_logger().error(f"Impossible de créer le marqueur de fin vidéo: {e}")
+
         self.ffmpeg_process = None
         self.video_filename = None
     
@@ -321,7 +335,8 @@ class RobotSequenceVideo(Node):
             if self.current_position is None:
                 return
             
-            self.move_robot(self.robot_speed)
+            if self.enable_robot_motion:
+                self.move_robot(self.robot_speed)
             
             if not self.ptz_positioning_done:
                 pan_to_start = self.ptz_start_pan

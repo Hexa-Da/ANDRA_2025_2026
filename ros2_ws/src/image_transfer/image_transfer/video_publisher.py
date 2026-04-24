@@ -38,6 +38,20 @@ class VideoFilePublisher(Node):
         # Dictionnaire pour suivre la taille des fichiers (pour détecter les fichiers en cours d'écriture)
         self.file_sizes = {}
 
+    def is_video_marked_ready(self, video_path):
+        """Vérifie que la vidéo est marquée comme terminée par sequence_video.py."""
+        ready_flag_path = f"{video_path}.done"
+        return os.path.exists(ready_flag_path)
+
+    def consume_video_ready_flag(self, video_path):
+        """Supprime le marqueur .done après traitement de la vidéo."""
+        ready_flag_path = f"{video_path}.done"
+        if os.path.exists(ready_flag_path):
+            try:
+                os.remove(ready_flag_path)
+            except Exception as e:
+                self.get_logger().warn(f"Impossible de supprimer le marqueur {os.path.basename(ready_flag_path)}: {e}")
+
     def is_file_stable(self, video_path, min_age_seconds=2.0):
         """Vérifie si un fichier est stable (pas en cours d'écriture)"""
         try:
@@ -106,6 +120,10 @@ class VideoFilePublisher(Node):
 
             for video_file in videos:
                 video_path = os.path.join(self.video_input_dir, video_file)
+
+                # Ne traiter que les vidéos marquées "terminées" par sequence_video.py
+                if not self.is_video_marked_ready(video_path):
+                    continue
                 
                 # Vérifier si le fichier est stable (pas en cours d'écriture)
                 if not self.is_file_stable(video_path, min_age_seconds=2.0):
@@ -120,6 +138,7 @@ class VideoFilePublisher(Node):
                     failed_path = os.path.join(self.failed_dir, video_file)
                     try:
                         os.rename(video_path, failed_path)
+                        self.consume_video_ready_flag(video_path)
                     except Exception as e:
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers failed: {e}")
                     continue
@@ -136,6 +155,7 @@ class VideoFilePublisher(Node):
                     processed_path = os.path.join(self.processed_dir, video_file)
                     try:
                         os.rename(video_path, processed_path)
+                        self.consume_video_ready_flag(video_path)
                         self.get_logger().info(f"Vidéo traitée avec succès et déplacée vers : {processed_path}")
                     except Exception as e:
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers processed: {e}")
@@ -143,6 +163,7 @@ class VideoFilePublisher(Node):
                     failed_path = os.path.join(self.failed_dir, video_file)
                     try:
                         os.rename(video_path, failed_path)
+                        self.consume_video_ready_flag(video_path)
                         self.get_logger().warn(f"Échec du traitement, vidéo déplacée vers : {failed_path}")
                     except Exception as e:
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers failed: {e}")

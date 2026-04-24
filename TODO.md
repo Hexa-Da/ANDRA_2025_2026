@@ -351,6 +351,12 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Nouvelle idée : nous allons positionner la caméra derrière la tourelle.
   - Elle doit seulement prendre des photos/vidéos d'une arche ; elle n'a pas besoin de voir devant elle.
   - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
+  - Conception 3D de nouveaux support par Vincent
+- [x] **Arret d'urgence** :
+  - Les tests terrain ont montré trop de faux positifs LiDAR malgré plusieurs filtrages (angle, distance, confirmations temporelles/spatiales).
+  - Décision actuelle : retrait de l'arrêt d'urgence logiciel dans `trajectoire_mission.py` pour éviter les arrêts intempestifs de mission.
+  - Stratégie retenue : s'appuyer sur l'évitement Nav2 (comportement d'esquive jugé globalement fiable) plutôt que forcer un stop logiciel instable.
+  - Action future si nécessaire : réintroduire un arrêt d'urgence uniquement avec une source capteur plus robuste / dédiée.
 
 ### Fusion de l'analyse et de la navigation
 - [x] **Rendre les séquences autonomes** :
@@ -362,13 +368,15 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Paramétrage mission intégré : waypoint par défaut `ma_carte_traj.yaml`, `frame_id:=map`, option `--loop`.
   - Fin de mission : arrêt automatique de la séquence photo/vidéo, retour PTZ en preset Home.
   - Arrêt robuste (`Ctrl+C`) : shutdown des deux nœuds de fusion + commande de sécurité `cmd_vel=0`.
+- [ ] **Retoucher les séquences**
+  - Aligner `sequence_photo` et `sequence_video` sur un usage "capture only" quand elles sont lancées via `patrouille_autonome` (ne jamais concurrencer Nav2 sur `/cmd_vel`).
+  - Revoir le timing PTZ/capture pour éviter les captures pendant les phases d'accélération/virage (fenêtre stable ou waypoint atteint).
+  - Uniformiser le comportement de fin : arrêt propre des séquences, `cmd_vel=0`, retour PTZ Home, fermeture sans processus orphelin.
+  - Clarifier les paramètres d'orchestration (distance/rythme de capture, loop, vitesse, waypoint file) et leurs valeurs par défaut.
 - [ ] **Associer chaque média à la pose robot** :
   - Réviser les nœuds `show_pos.py`, `position_publisher.py`.
   - Comprendre comment fonctionne `report_fissures.py`.
   - Les intégrer au système.
-
-### Gestion de la navigation
-- [x] **Gérer robustement les incidents** (arrêt d'urgence frontal, timeout waypoint, reprise/skip).
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :
