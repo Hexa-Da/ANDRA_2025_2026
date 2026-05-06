@@ -22,7 +22,7 @@
 \titleformat{\section}[hang]{\normalfont\huge\bfseries}{\thesection.}{1em}{}
 \titleformat{\subsection}[hang]{\normalfont\Large\bfseries}{\thesubsection}{1em}{}
 
-% En-tête personnalisée
+% En-tête personnalisé
 \setlength{\headheight}{60pt}
 \fancyhead[R]{%
     \includegraphics[align=c, height=1.2cm]{images/logo_andra.png}%
@@ -59,8 +59,8 @@
 \section*{Avant-Propos et Remerciements}
 \addcontentsline{toc}{section}{Avant-Propos et Remerciements}
 
-Ce rapport a été rédigé à la suite du projet industrie de l'École des Mines de Nancy, en partenariat avec l'ANDRA, durant l'année scolaire 2025-2026. Il a été réalisé par les auteurs avec l'aide des ingénieurs du Techlab, de nos tuteurs ainsi que de l'intervenant de l'ANDRA.
-Nous tenons à remercier chaleureusement l'ensemble des personnes qui ont pu nous aider et conseiller tout au long de ce projet. L'ensemble de notre projet se trouve à l'adresse github suivante : \nolinkurl{https://github.com/Hexa-Da/ANDRA_2025_2026}
+Ce rapport a été rédigé à la suite du projet industrie de l'École des Mines de Nancy, en partenariat avec l'ANDRA, durant l'année scolaire 2025-2026. Il a été réalisé par les auteurs avec l'aide des ingénieurs du TechLab, de nos tuteurs ainsi que de l'intervenant de l'ANDRA.
+Nous tenons à remercier chaleureusement l'ensemble des personnes qui ont pu nous aider et nous conseiller tout au long de ce projet. L'ensemble de notre projet se trouve à l'adresse GitHub suivante : \nolinkurl{https://github.com/Hexa-Da/ANDRA_2025_2026}
 
 \newpage
 
@@ -77,11 +77,11 @@ Ce projet industrie est réalisé en collaboration avec l'ANDRA (Agence national
 
 En parallèle, l’ANDRA a conduit plus de deux décennies de recherches sur le stockage géologique en profondeur. Ces travaux ont abouti au projet CIGEO, un site de stockage en profondeur, à environ 500 mètres sous terre, dans une couche géologique aux propriétés intéressantes, située dans la région de Bure, à cheval entre la Meuse et la Haute-Marne. 
 
-Cette infrastructure d’envergure comprendra plus de 270 kilomètres de galeries et d’alvéoles, avec une capacité de stockage d’environ 80 000 mètres cubes de déchets à haute activité et à longue durée de vie.
+Cette infrastructure d’envergure compte, dans sa version finale, plus de 270 kilomètres de galeries et d’alvéoles, avec une capacité de stockage d’environ 80 000 mètres cubes de déchets à haute activité et à longue durée de vie.
 
 Cependant, en raison du cisaillement entre les jointures de la galerie, des fissures peuvent apparaître et se développer. Les galeries s'étendant sur plusieurs kilomètres, suivre l'évolution des fissures est une tâche répétitive et chronophage. 
 
-C'est dans ce contexte qu'est né le projet de ce parcours industrie, porté sur le thème suivant : “ Robotique et IA en environnements complexes : exploration de la galerie souterraine de l’ANDRA avec le robot et détection avancée de fissures.”
+C'est dans ce contexte qu'est né le projet de ce parcours industrie, porté sur le thème suivant : “ Robotique et IA en environnements complexes : exploration de la galerie souterraine de l’ANDRA avec un robot et détection avancée de fissures.”
 
 \vspace{0.7cm}
 
@@ -105,8 +105,9 @@ Pour pallier ce problème, un jeu de données spécifique à l'environnement de 
 
 Les limitations actuelles de ce système sont :
 \begin{itemize}
-    \item La nécessité pour le robot d'être à l'arrêt lors de la prise de vue (sensibilité aux vibrations de l'auto-focus).
+    \item La nécessité pour le robot d'être à l'arrêt lors de la prise de vue (sensibilité aux vibrations provoquée par la navigation).
     \item Une distance au mur qui doit être inférieure à deux mètres pour garantir la résolution nécessaire à la détection.
+    \item Une couverture de l'ensemble de l'arche du tunnel qui reste à perfectionner.
 \end{itemize}
 
 \vspace{1cm}
@@ -132,31 +133,31 @@ Les limitations actuelles de ce système sont :
 
 \subsection{Positionnement et navigation}
 
-Le positionnement en milieu souterrain (sans GPS) reste le défi majeur. Si les modèles haut de gamme utilisent des solutions onéreuses combinant LiDAR 3D et centrales inertielles de précision pour éviter le dérapage (« drift »), notre plateforme repose sur un Agilex Scout Mini équipé d'un LiDAR 2D et d'une caméra stéréoscopique ZED2.
+Le positionnement en milieu souterrain (sans GPS) reste le défi majeur. Si les modèles haut de gamme utilisent des solutions onéreuses combinant LiDAR 3D et centrales inertielles de précision pour éviter le dérapage (« drift »), notre plateforme repose sur un Agilex Scout Mini équipé d'un LiDAR 2D et d'une caméra stéréoscopique ZED2i.
 
 Depuis 2025, l'architecture logicielle est entièrement portée sur le framework \textbf{ROS2 (Humble)}, standard industriel actuel, abandonnant les API propriétaires précédentes pour gagner en modularité.
 
 \textbf{Limites du SLAM et solution AMCL :}
-Les travaux récents ont démontré que l'approche par SLAM (Simultaneous Localization and Mapping) via un filtre de Kalman étendu (EKF) entraînait une dérive trop importante avec les capteurs actuels, rendant la cartographie autonome inexploitable sur de longues distances.
+Les travaux récents ont démontré que l'approche par SLAM (Simultaneous Localization and Mapping) via un filtre de Kalman étendu (EKF) entraînait une dérive trop importante avec les capteurs actuels, rendant la cartographie autonome difficile sur de longues distances.
 
-L'état actuel de la solution de navigation repose donc sur l'algorithme AMCL (Adaptive Monte Carlo Localization). Cette méthode, validée lors des tests sur site en mai 2025, utilise une carte statique préétablie de la galerie (fichiers `.pgm`). Elle permet de recaler la position du robot grâce aux données du LiDAR 2D, compensant ainsi les erreurs d'odométrie et offrant une localisation fiable pour le placement des fissures détectées sur la carte.
+L'état actuel de la solution de navigation repose donc sur l'algorithme AMCL (Adaptive Monte Carlo Localization). Cette méthode, validée lors des tests sur site en mai 2025, utilise une carte statique préétablie de la galerie (fichiers `.pgm`). Elle permet de recaler la position du robot grâce aux données du LiDAR 2D, compensant ainsi les erreurs d'odométrie et offrant une localisation fiable pour le placement des fissures détectées sur la carte et pour la continuité de la navigation.
 
 % --- Travail Semestre 1 ---
 \section{Semestre 1}
 
-\subsection{Assemblage du robot}
+\subsection{Prise en main du robot}
 
 \subsubsection{Présentation des parties indépendantes}
-Notre robot autonome est constitué de 5 parties indépendantes que nous allons détailler ci-dessous. 
+Notre robot est constitué de 5 parties indépendantes que nous allons détailler ci-dessous. 
 
 \paragraph{Caméra PTZ}
-Une caméra PTZ (Pan-Tilt-Zoom) capable de pivoter sur 360° et d'ajuster son angle et son zoom de manière dynamique. Il s'agit du même modèle utilisé les années précédentes, offrant une résolution de 1080p à 60 fps, mais elle ne dispose pas de stabilisateur d'image intégré. Il est donc crucial de minimiser les vibrations pendant son utilisation pour garantir la netteté de l'image. Autrement dit, le robot devra se déplacer à une vitesse modérée, ce qui ne pose pas de problème en soi, mais doit être pris en compte pour assurer des prises de vue claires et précises.
+Une caméra Pan-Tilt-Zoom motorisée offrant une rotation panoramique de ±135°, une inclinaison de ±90° et un zoom adaptatif en temps réel. Il s'agit du même modèle utilisé les années précédentes, offrant une résolution de 1080p à 60 fps, mais elle ne dispose pas de stabilisateur d'image intégré. Il est donc crucial de minimiser les vibrations pendant son utilisation pour garantir la netteté de l'image. Autrement dit, le robot devra se déplacer à une vitesse modérée, ce qui ne pose pas de problème en soi, mais doit être pris en compte pour assurer des prises de vue claires et précises.
 
-\paragraph{LiDAR}
-Un LiDAR (Light Detection and Ranging) qui utilise des impulsions laser pour mesurer des distances avec une grande précision. En émettant des faisceaux lumineux et en calculant le temps qu'ils mettent à revenir après avoir réfléchi sur des objets, un LiDAR est capable de reconstituer en deux ou trois dimensions (ici notre LiDAR est 2D) l’environnement, même dans des conditions de faible luminosité. 
+\paragraph{LiDAR 2D}
+Un LiDAR (Light Detection and Ranging) qui utilise des impulsions laser pour mesurer des distances avec une grande précision. En émettant des faisceaux lumineux et en calculant le temps qu'ils mettent à revenir après avoir réfléchi sur des objets, ce genre de capteur est capable de reconstituer en deux dimensions l’environnement, même dans des conditions de faible luminosité. 
 
-\paragraph{ZED2}
-La caméra ZED2 est une caméra de profondeur, ce qui lui permet d'estimer si le robot se déplace en avant, en arrière ou s'il effectue une rotation. Ces informations seront essentielles lors de la phase de localisation. De plus, cette caméra possède une unité de mesure inertielle (IMU), un capteur capable de mesurer les accélérations linéaires et les vitesses angulaires grâce à des accéléromètres et des gyroscopes. L'IMU permet ainsi d'estimer la position, l'orientation et les mouvements du robot dans l'espace.
+\paragraph{ZED2i}
+Cette caméra est une caméra de profondeur, ce qui lui permet d'estimer si le robot se déplace en avant, en arrière ou s'il effectue une rotation. Ces informations seront essentielles lors de la phase de localisation. De plus, cette caméra possède une unité de mesure inertielle (IMU), un capteur capable de mesurer les accélérations linéaires et les vitesses angulaires grâce à des accéléromètres et des gyroscopes. L'IMU permet ainsi d'estimer la position, l'orientation et les mouvements du robot dans l'espace.
 
 \begin{figure}[H]
   \centering
@@ -169,15 +170,15 @@ La caméra ZED2 est une caméra de profondeur, ce qui lui permet d'estimer si le
   \hspace*{\fill}
   \begin{minipage}[b]{0.28\textwidth}
     \centering
-    \includegraphics[width=\textwidth]{images/lidar.jpg}
-    \captionof{figure}\\{Ydlidar G4}
+    \includegraphics[width=\textwidth]{images/ydlidar-tg15.jpg}
+    \captionof{figure}\\{Ydlidar TG15}
     \label{fig:lidar}
   \end{minipage}
   \hspace*{\fill}
   \begin{minipage}[b]{0.28\textwidth}
     \centering
     \includegraphics[width=\textwidth]{images/zed2.jpg}
-    \captionof{figure}\\{Stereolabs ZED2}
+    \captionof{figure}\\{Stereolabs ZED2i}
     \label{fig:zed2}
   \end{minipage}
 \end{figure}
@@ -185,10 +186,10 @@ La caméra ZED2 est une caméra de profondeur, ce qui lui permet d'estimer si le
 \vspace{1cm}
 
 \paragraph{Jetson Orin Nano}
-La Jetson Nano est un microcontrôleur équipé d'un GPU intégré, offrant ainsi une capacité de traitement suffisamment puissante pour exécuter des tâches complexes, telles que la reconnaissance basée sur l'intelligence artificielle, directement sur le robot. Cette architecture permet d'éviter le recours à des solutions de edge ou cloud computing, qui pourraient introduire des latences.
+Microcontrôleur équipé d'un GPU intégré, offrant ainsi une capacité de traitement suffisamment puissante pour exécuter des tâches complexes, telles que la reconnaissance basée sur l'intelligence artificielle, directement sur le robot. Cette architecture permet d'éviter le recours à des solutions de edge ou cloud computing, qui pourraient introduire des latences.
 
 \paragraph{Agilex Scout Mini}
-Enfin, la base de notre robot est un Agilex Scout Mini. Ce dernier peut se contrôler à l'aide d'une télécommande ou à partir d'un microcontroleur connecté à un convertisseur analogique numérique (CAN).
+Enfin, nous disposons d'une base mobile adaptée au terrain accidenté et pouvant se contrôler à l'aide d'une télécommande ou à partir d'un microcontrôleur connecté à un convertisseur analogique numérique (CAN).
 
 \begin{figure}[H]
   \centering
@@ -211,15 +212,15 @@ Enfin, la base de notre robot est un Agilex Scout Mini. Ce dernier peut se contr
 
 \subsubsection{Remise en service et configuration matérielle}
 
-Contrairement à l'année dernière, l'équipe 2025-2026 ne s'est pas concentrée sur la construction mécanique de la tourelle, mais sur la reconstitution complète de l'architecture logicielle suite à la perte de l'image système du robot. La priorité a donc été de rétablir la communication entre l'unité de calcul (\textbf{Jetson Orin Nano}) et les différents actionneurs et capteurs.
+Contrairement à l'année dernière, l'équipe 2025-2026 n'a pas eu à construire la tourelle du robot, mais nous avons dû reconstituer l'architecture logicielle suite à la perte de l'image système du robot. La priorité a donc été de rétablir la communication entre l'unité de calcul (\textbf{Jetson Orin Nano}) et les différents actionneurs et capteurs.
 
-Premièrement, la connexion avec la base mobile \textbf{Agilex Scout Mini} a nécessité une reconfiguration de l'interface CAN. Une modification du code source a été nécessaire pour permettre la reconnaissance de l'interface nommée agilex (au lieu des interfaces standards can0) utilisée par le système conseillé par les ingénieurs du Techlab, assurant désormais un pilotage fluide et la remontée des données odométriques sur le topic odom\_robot.
+Premièrement, la connexion avec la base mobile \textbf{Agilex Scout Mini} a nécessité une reconfiguration de l'interface CAN. Une modification du code source a été nécessaire pour permettre la reconnaissance de l'interface nommée \texttt{agilex} (au lieu des interfaces standards \texttt{can0}), utilisée par le systemd des ingénieurs du TechLab, assurant désormais un pilotage fluide et la remontée des données odométriques sur le topic \texttt{odom\_robot}.
 
 Par la suite, l'intégration des capteurs a présenté des résultats contrastés : 
 \begin{itemize} 
-    \item \textbf{Caméra ZED 2i :} La caméra est fonctionnelle et publie correctement les données visuelles et inertielles (IMU), qui ont été intégrées à la configuration du filtre de Kalman étendu (EKF). Le package est installé et la caméra est détectée, mais les tests ne sont pour l'instant pas concluant.
+    \item \textbf{Caméra ZED2i :} La caméra est fonctionnelle et publie correctement les données visuelles et inertielles (IMU), qui ont été intégrées à la configuration du filtre de Kalman étendu (EKF). Le package est installé et la caméra est détectée, mais les tests ne sont, pour l'instant, pas concluants.
     \item \textbf{LiDAR 2D :} Bien que la connexion série soit établie et validée sur le port /dev/ttyTHS1, le capteur rencontre actuellement des erreurs d'initialisation empêchant le démarrage du scan. Des tests avec différents fichiers de configuration et différents baudrates ont été effectués sans succès, laissant penser qu'il s'agit d'une panne matérielle ou d'un problème de connexion physique. 
-    \item \textbf{Caméra PTZ :} La caméra était dans un premier temps inaccessible sur le réseau. Mais elle est désormais accessible via son adresse IP statique grâce à la configuration réseau et à la création d'un script d'automatisation. Les images sont capturées et publiées correctement, et le contrôle PTZ est fonctionnel via le protocole VISCA over IP, permettant le contrôle continu de l'orientation de la caméra ainsi que l'appel de presets.
+    \item \textbf{Caméra PTZ :} La caméra était dans un premier temps inaccessible sur le réseau. Mais elle est désormais accessible via son adresse IP statique grâce à un script de configuration réseau. Les images sont capturées et publiées correctement, et le contrôle PTZ est fonctionnel via le protocole VISCA over IP.
 \end{itemize}
 
 Cette phase de remise en service a permis de valider une architecture modulaire, où chaque capteur peut être activé ou désactivé via des arguments de lancement (enable\_lidar, enable\_zed, etc), garantissant la continuité des développements malgré les maintenances matérielles en cours.
@@ -240,11 +241,11 @@ Ce module constitue une évolution majeure par rapport aux années précédentes
 
 \subsection{Reprise des travaux de l'année 2024-2025}
 
-Bien que ce projet industriel avec l’ANDRA soit mené pour la cinquième année consécutive, la continuité entre les équipes reste le défi majeur. Contrairement aux années précédentes où la documentation faisait défaut, nous avons pu bénéficier cette année d'un accès complet aux ressources numériques produites par l'équipe 2024-2025 : le dépôt GitHub contenant l'architecture ROS2 et le Drive hébergeant le modèle d'intelligence artificielle YOLOv11 adapté à la caméra PTZ accompagné de ces photos d'entrainement.
+Bien que ce projet industriel avec l’ANDRA soit mené pour la cinquième année consécutive, la continuité entre les équipes reste le défi majeur. Contrairement aux années précédentes où la documentation faisait défaut, nous avons pu bénéficier cette année d'un accès complet aux ressources numériques produites par l'équipe 2024-2025 : le dépôt GitHub contenant l'architecture ROS2 et le Drive hébergeant le modèle d'intelligence artificielle YOLOv11 adapté à la caméra PTZ, accompagné de ses photos d'entraînement.
 
 Cependant, la reprise a été fortement ralentie par un incident technique critique : l'image système du robot, contenant l'ensemble de l'environnement configuré, a été supprimée sans sauvegarde. Cette perte nous a contraints à ne pas simplement « utiliser » le travail précédent, mais à devoir le comprendre en profondeur pour le reconstruire (réinstallation des drivers, configuration des espaces de travail, créer les scripts de compilation).
 
-\paragraph{Critique de l'architecture historique :} L'analyse menée par l'équipe 2024-2025 a mis en évidence les limites méthodologiques des approches antérieures. La stratégie employée en 2023-2024 reposait sur la détection conjointe des fissures et d'étiquettes calibrées présentes dans les tunnels, utilisant ces dernières comme référentiel pour dimensionner la taille des fissures. Cette méthode par comparaison s'est avérée peu viable en raison d'une incertitude trop importante ($\pm4$ cm) et d'un manque de robustesse, l'algorithme confondant fréquemment les fissures avec des câbles ou des interstices comme le montre les figures 2 et 3 (pour plus de détails, cf. section "Reprise du code de l'année dernière" du rapport 2024-2025).
+\paragraph{Critique de l'architecture historique :} L'analyse menée par l'équipe 2024-2025 a mis en évidence les limites méthodologiques des approches antérieures. La stratégie employée en 2023-2024 reposait sur la détection conjointe des fissures et d'étiquettes calibrées présentes dans les tunnels, utilisant ces dernières comme référentiel pour dimensionner la taille des fissures. Cette méthode par comparaison s'est avérée peu viable en raison d'une incertitude trop importante ($\pm4$ cm) et d'un manque de robustesse, l'algorithme confondant fréquemment les fissures avec des câbles ou des interstices, comme le montrent les figures 2 et 3 (pour plus de détails, cf. section "Reprise du code de l'année dernière" du rapport 2024-2025).
 
 L'équipe 2024-2025 avait donc pris la décision d'abandonner ce protocole et ce modèle contraignant au profit d'un nouveau modèle de détection par réseaux de neurones. Nous validons et poursuivons cette stratégie technologique pour l'année 2025-2026 :
 \begin{itemize}
@@ -254,28 +255,72 @@ L'équipe 2024-2025 avait donc pris la décision d'abandonner ce protocole et ce
 
 \subsection{Préparation de la première descente}
 
-Notre première descente au laboratoire de Bure, prévue pour le début du mois de février 2026, s'inscrit dans la continuité de la phase de reconstruction technique menée tout au long du premier semestre. Suite à la suppression accidentelle de l'image système du robot de l'année précédente, nous avons dû redéfinir nos priorités. L'objectif premier étant de rétablir une base de travail saine en recréant intégralement l'infrastructure logicielle (scripts d'installation, configuration ROS2) et en validant les pilotes des capteurs (Scout Base pour l'odométrie des roues, ZED Wrapper pour les données IMU, et ydlidar\_ros2\_driver pour la cartographie et la détection d'obstacles).
+Notre première descente au laboratoire de Bure, prévue pour le vendredi 6 février 2026, s'inscrit dans la continuité de la phase de reconstruction technique menée tout au long du premier semestre. Suite à la suppression accidentelle de l'image système du robot de l'année précédente, nous avons dû redéfinir nos priorités. L'objectif premier étant de rétablir une base de travail saine en recréant intégralement l'infrastructure logicielle (scripts d'installation, configuration ROS2) et en validant les pilotes des capteurs (Scout Base pour l'odométrie des roues, ZED Wrapper pour les données IMU, et ydlidar\_ros2\_driver pour la cartographie et la détection d'obstacles).
+
+\subsubsection{État du robot avant la descente}
+
+À l'approche de cette première descente, l'état du robot est le suivant :
+
+\begin{itemize}
+    \item \textbf{Base mobile Agilex Scout Mini :} Fonctionnelle. Le driver \texttt{scout\_base} communique avec le robot via l'interface CAN \texttt{agilex} et publie correctement les données odométriques sur \texttt{/odom\_robot}.
+    \item \textbf{Caméra PTZ Marshall CV-605 :} Fonctionnelle. La caméra est accessible via son adresse IP statique grâce au script \texttt{ptz-network-setup.sh}. Le contrôle pan/tilt/zoom est opérationnel via le protocole VISCA over IP, et les nœuds de séquence automatique (\texttt{sequence\_photo} et \texttt{sequence\_video}) sont en place.
+    \item \textbf{Caméra ZED2i :} Partiellement fonctionnelle. Le package \texttt{zed\_wrapper} est installé et la caméra est détectée, elle publie les données visuelles et inertielles (IMU). Cependant, la cohérence des données renvoyées n'a pas encore été vérifiée.
+    \item \textbf{LiDAR 2D :} Non résolu. Le diagnostic a identifié un port micro USB arraché sur la carte Radar\_Con. Un branchement de secours via USB-C pour assurer le rôle de ce branchement arraché va être tenté.
+    \item \textbf{Hotspot Jetson :} Configuré et validé. Le robot, équipé de sa propre carte réseau, crée automatiquement un réseau Wi-Fi \texttt{JetsonWIFI} lorsqu'il ne capte pas le réseau du TechLab, permettant la connexion SSH en galerie via \texttt{ssh techlab@orin2.local}.
+\end{itemize}
+
+\subsubsection{Objectifs de la descente}
 
 L'objectif principal de cette échéance de février est double :
 \begin{enumerate}
-    \item \textbf{Validation système :} Essayer de reproduire les test réalisé par l'équipe 2024-2025 en conditions réelles avec le robot fraîchement reconfiguré, notamment sa capacité à effectuer des cycles simples (avancer, s'arrêter, prendre une photo) malgré les instabilités matérielles identifiées (problèmes de connexion LIDAR et caméra PTZ).
-    \item \textbf{Acquisition de données 360° :} Contrairement aux approches précédentes, nous profiterons de cette descente pour capturer un nouveau jeu de données à l'aide d'une caméra 360°. Cette acquisition est indispensable pour entraîner notre nouveau modèle de détection afin qu'il puisse, à terme, analyser l'ensemble de la voûte et non plus uniquement les murs verticaux.
+    \item \textbf{Validation système :} Reproduire les résultats de l'équipe 2024-2025 en conditions réelles avec le robot fraîchement reconfiguré, notamment sa capacité à effectuer des cycles simples (avancer, s'arrêter, prendre une photo).
+    \item \textbf{Acquisition de données 360° :} Capturer un nouveau jeu de données à l'aide d'une caméra 360° prêtée par l'ANDRA. Cette acquisition est indispensable pour entraîner notre nouveau modèle de détection afin qu'il puisse, à terme, analyser l'ensemble de la voûte et non plus uniquement les murs verticaux.
 \end{enumerate}
 
 Cette descente permettra ainsi de vérifier la cohérence entre l'environnement de simulation du TechLab et la réalité des tunnels, tout en fournissant à l'équipe IA les données nécessaires à l'amélioration du modèle de détection.
 
-\paragraph{Contraintes et limitations actuelles :} Malgré la définition de ces objectifs, plusieurs défis techniques et logistiques subsistent à l'approche de cette première descente :
+\paragraph{Contraintes et limitations :} Malgré ces avancées, plusieurs défis subsistent à l'approche de cette première descente dans les tunnels de l'ANDRA : 
 
 \begin{itemize}
-    \item \textbf{Disponibilité du matériel 360° :} L'équipe ne dispose pas encore de sa propre caméra 360° intégrée au robot. Pour cette session d'acquisition, nous nous appuierons sur un équipement fourni ponctuellement par l'ANDRA, ce qui nous permet de réaliser les prises de vues mais repousse l'intégration matérielle définitive.
-    \item \textbf{Communication en tunnel :} La problématique de la connexion sans fil au robot au sein des galeries n'a pas encore été traitée. L'absence de solution validée pour le monitoring et le contrôle à distance dans cet environnement confiné reste une inconnue technique pour cette première intervention.
-    \item \textbf{Maturité du système :} En raison de la perte des données de l'année précédente et du temps consacré à la reconstruction de l'infrastructure, l'état actuel du robot reste en retrait par rapport au système final de 2024-2025. Nous ne serons donc pas en mesure de tester l'architecture complète en conditions réelles comme nous l'aurions souhaité, nous limitant pour l'instant à la validation des briques logicielles restaurées.
+    \item \textbf{Absence du LiDAR :} Le capteur LiDAR n'étant pas encore fonctionnel, la navigation se fera sans cartographie ni détection d'obstacles laser, limitant les tests de navigation aux séquences de prise de photos ou vidéos.
+    \item \textbf{Disponibilité du matériel 360° :} L'équipe ne dispose pas de sa propre caméra 360° intégrée au robot. Pour cette session d'acquisition, nous nous appuierons sur un équipement fourni ponctuellement par l'ANDRA, ce qui repousse l'intégration matérielle définitive, mais permet tout de même de créer un dataset.
+    \item \textbf{Données ZED2i non vérifiées :} La cohérence des données inertielles et visuelles de la caméra ZED2i n'a pas encore été validée, ce qui limite la fiabilité du filtre de Kalman étendu pour le positionnement (visible dans RViz).
 \end{itemize}
 
-% --- Travail Smestre 2 ---
+\subsection{Résultats de la première descente}
+
+La première descente dans les galeries de l'ANDRA s'est déroulée le vendredi 6 février 2026. Cette intervention a permis de confronter pour la première fois le système reconstruit aux conditions réelles du site de Bure.
+
+\subsubsection{Succès opérationnels}
+
+L'ensemble du système logiciel s'est montré fonctionnel en conditions réelles :
+
+\begin{itemize}
+    \item \textbf{Séquence de prise de photos :} La séquence automatique de capture via la caméra PTZ a fonctionné comme prévu. Le robot a pu effectuer des cycles complets (avancer, s'arrêter, prendre des photos) dans une galerie de longueur suffisante.
+    \item \textbf{Hotspot opérationnel :} Le système de hotspot de la Jetson s'est activé automatiquement en l'absence du réseau du TechLab, permettant la connexion SSH et le contrôle à distance du robot depuis un PC portable, validant ainsi la solution de communication en galerie.
+    \item \textbf{Nœuds ROS2 fonctionnels :} L'ensemble des nœuds ROS2 déployés ont fonctionné correctement, confirmant la robustesse de l'architecture reconstruite.
+    \item \textbf{Acquisition du dataset 360° :} Grâce à la caméra 360° prêtée par l'ANDRA, un jeu de données panoramiques a été capturé dans les galeries. Ce dataset constitue la base de travail pour l'entraînement du futur modèle de détection adapté aux images grand angle.
+\end{itemize}
+
+\subsubsection{Incident matériel}
+
+Un incident est survenu lors de la descente : l'alimentation de la Jetson Orin Nano a été arrachée suite à une mauvaise manipulation. Cette panne a interrompu les tests en cours. Cependant, la carte a été réparée par Paul-Antoine le week-end suivant, avec un changement du connecteur d'alimentation, rendant le robot de nouveau opérationnel la semaine suivante.
+
+\subsubsection{Constats et axes d'amélioration}
+
+La descente a également mis en lumière plusieurs points à améliorer :
+
+\begin{itemize}
+    \item \textbf{Couverture PTZ insuffisante :} La séquence actuelle de 3 photos ne couvre pas l'intégralité de l'arche de la galerie. Plusieurs solutions sont envisagées : passer à une séquence de 5 photos, revoir l'enchaînement des positions PTZ ou utiliser le script vidéo à très basse vitesse.
+    \item \textbf{Trajectoire RViz non-planaire :} Les premières visualisations dans RViz2 ont révélé que la trajectoire du robot ne s'affiche pas sur un plan horizontal, indiquant un problème dans les transformations TF à investiguer.
+\end{itemize}
+
+Cette première descente a permis de valider les briques logicielles fondamentales du système et d'identifier clairement les axes de travail prioritaires pour le second semestre.
+
+% --- Travail Semestre 2 ---
 \section{Semestre 2}
 
-Le second semestre s'ouvre sur les enseignements tirés de la première descente et vise à faire progresser le robot vers un système pleinement opérationnel. Les travaux se structurent autour de trois axes : la résolution des problèmes matériels restants, l'amélioration du modèle de détection et la compréhension du système de navigation.
+Le second semestre s'ouvre sur les enseignements tirés de la première descente et vise à faire progresser le robot vers un système réellement exploitable en galerie. Les travaux se sont articulés autour de quatre axes : la fiabilisation des capteurs, l'amélioration des performances d'inférence, la validation de la navigation sur carte, puis la fusion entre navigation autonome et acquisition d'images.
 
 \subsection{Résolution du problème LiDAR}
 
@@ -287,50 +332,125 @@ La résolution a nécessité deux corrections :
     \item \textbf{Correction de la configuration :} L'ancien fichier de configuration (\texttt{G4.yaml}) était inadapté au modèle réel du capteur. Le LiDAR est un TG15, et l'adoption du fichier officiel \texttt{TG.yaml} du package \texttt{ydlidar\_ros2\_driver} a permis un fonctionnement normal.
 \end{itemize}
 
+\subsection{Optimisation YOLO sur Jetson}
+
+Afin d'exploiter pleinement le GPU de la Jetson Orin Nano pour la détection de fissures, une chaîne d'optimisation complète a été mise en place. Une image Docker spécialisée (\texttt{Dockerfile.jetson}), basée sur \texttt{dustynv/l4t-pytorch:r36.2.0}, a été construite pour isoler l'environnement de détection. Cette image intègre ROS~2 Humble, PyTorch avec CUDA et la bibliothèque Ultralytics, garantissant la compatibilité GPU native sur la plateforme Jetson.
+
+Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli sur le modèle PyTorch.
+
+L'ensemble est orchestré par le script \texttt{docker/launch\_jetson.sh}, qui lance le conteneur avec la configuration réseau host, le montage des volumes nécessaires et la vérification automatique des dépendances.
+
+\subsection{Travaux préparatoires avant la seconde descente}
+
+Entre la première et la seconde descente, une phase de stabilisation a été menée sur la chaîne navigation/cartographie afin de corriger les incohérences observées en février.
+
+\subsubsection{Révision de la séquence PTZ}
+
+Avant la seconde descente, un travail spécifique a été mené sur les séquences de capture PTZ. Les essais de février avaient montré que la séquence initiale à 3 photos ne couvrait pas l'ensemble de l'arche et restait assez lente à l'exécution.
+
+Ainsi, les séquences ont été révisées et les modifications ont porté sur :
+\begin{itemize}
+    \item le passage de 3 prises de photo à 5 prises ;
+    \item la réorganisation des positions pan/tilt pour améliorer la vitesse des séquences ;
+    \item l'évaluation du script vidéo à très basse vitesse comme alternative de capture continue avec la création d'un nouveau type de séquence (\texttt{sequence\_video}).
+\end{itemize}
+
+\subsubsection{Reconstruction de l'arbre TF}
+
+Les visualisations RViz mettaient en évidence une trajectoire non planaire, signe d'un problème de cohérence des transformations. Le travail effectué a porté sur :
+\begin{itemize}
+    \item la reprise complète des frames et transformations statiques ;
+    \item l'intégration explicite des repères publiés par \texttt{scout\_base} ;
+    \item l'ajustement des distances inter-capteurs dans les TF statiques ;
+    \item la suppression de la frame \texttt{world}, redondante avec \texttt{odom}.
+\end{itemize}
+
+\subsubsection{Amélioration de la qualité des scans LiDAR}
+
+Pour la cartographie, une configuration dédiée \texttt{ydlidar\_TG15.yaml} a été consolidée, puis une plateforme imprimée en 3D a été utilisée pour libérer le LiDAR des perturbations causées par les piliers de la tourelle. Ainsi, deux modes de montage ont été conservés selon l'usage (cartographie ou navigation), avec adaptation du paramètre \texttt{laser\_mount\_yaw} :
+\begin{itemize}
+    \item \texttt{\(\pi/2\)} pour le montage original (hérité de l'année dernière);
+    \item \texttt{0.0} pour la création de carte en SLAM (LiDAR aligné avec l'avant du robot).
+\end{itemize}
+
+\subsubsection{Mise à jour EKF + SLAM}
+
+La fusion d'état a été simplifiée pour gagner en robustesse :
+\begin{itemize}
+    \item la position et la vitesse proviennent maintenant uniquement de \texttt{/odom\_robot} ;
+    \item l'IMU ZED est conservée uniquement pour \texttt{vyaw} (orientation du robot) ;
+    \item la VO ZED n'est plus fusionnée pour éviter les conflits avec l'odométrie des roues ;
+    \item le SLAM est maintenant paramétré avec des frames strictes : \begin{itemize}
+        \item \texttt{map} = repère global de la carte ;
+        \item \texttt{odom} = repère local continu pour l’odométrie ;
+        \item \texttt{base\_link} = repère du robot.
+    \end{itemize} 
+    \item l’EKF publie donc maintenant l’état du robot dans les bons repères et SLAM utilise exactement les mêmes noms de frames pour une parfaite cohérence ;
+    \item il n’y a plus de frames parasites ni de doublons TF qui contredisent cette chaîne.
+\end{itemize}
+
+\subsection{Résultats de la seconde descente}
+
+La seconde descente a constitué le jalon principal du semestre 2. Elle a permis de valider en conditions réelles une version nettement plus mature de la stack logicielle.
+
+\begin{itemize}
+    \item \textbf{Séquences de capture améliorées :} la nouvelle séquence photo couvre mieux l'arche de la galerie et réduit le temps de capture par arrêt.
+    \item \textbf{Séquence vidéo opérationnelle :} l'acquisition continue vidéo est fonctionnelle, mais reste encore assez lente pour assurer une bonne qualité de capture.
+    \item \textbf{Pipeline GPU validé :} le traitement des images via le GPU Jetson (Docker + TensorRT) fonctionne en situation réelle et est bien plus rapide.
+    \item \textbf{Acquisition de données 360° :} un jeu de données supplémentaire a été collecté grâce à la caméra 360° prêtée par l'ANDRA.
+    \item \textbf{Cartographie initiale encourageante :} une première tentative de cartographie des tunnels a été réalisée, mais reste insatisfaisante, car les dérives restent encore trop importantes. La carte créée est donc difficilement exploitable.
+\end{itemize}
+
+\subsection{Navigation autonome sur carte}
+
+Le semestre 2 a aussi marqué la transition vers un premier prototype de navigation autonome orientée mission avec des waypoints, basée sur AMCL et Nav2. Le point central de cette transition est l'usage de RViz comme interface de création et de validation des trajectoires, en particulier via \texttt{2D Nav Goal}.
+
+\begin{itemize}
+    \item \textbf{Validation AMCL + Nav2 :} lancement en mode carte (\texttt{map\_server} + \texttt{amcl}) et validation de l'envoi d'objectifs de navigation dans RViz.
+    \item \textbf{Nœud de mission :} création du nœud \texttt{trajectoire\_mission.py}, qui lit une trajectoire YAML puis envoie séquentiellement des goals \texttt{navigate\_to\_pose}.
+    \item \textbf{Trajectoires construites depuis RViz :} les scripts s'appuient sur les objectifs posés manuellement avec \texttt{2D Nav Goal}. Chaque pose est récupérée, puis l'ensemble est enregistré dans un YAML de waypoints.
+\end{itemize}
+
+\subsection{Fusion navigation + acquisition}
+
+L'objectif a ensuite été de fusionner le déplacement autonome et la capture de données. Cette fusion a nécessité une réflexion conjointe sur l'orchestration logicielle et sur le montage mécanique des capteurs. Un package ROS2 dédié (\texttt{patrouille\_autonome}) a été créé pour cette fonction.
+
+\subsubsection{Compromis mécanique LiDAR/PTZ}
+
+Ce travail s’est accompagné d’une réflexion sur l’architecture mécanique de la tourelle. Les premiers essais ont confirmé que le LiDAR était un capteur clé, non seulement pour la cartographie, mais aussi pour la navigation autonome. Or, la configuration initiale dégradait fortement les scans (masqués par les piliers de la tourelle), ce qui nuisait directement à la qualité de la localisation, aussi bien en phase de cartographie qu’en phase de navigation.
+
+Une refonte complète de la tourelle a d’abord été envisagée, avec un habillage en plexiglas autour du LiDAR tout en gardant la caméra PTZ placée au-dessus. Cette solution a finalement été abandonnée, les tests ayant montré qu’aucun matériau ne laissait suffisamment passer les scans. Il était donc impossible de conserver cette structure horizontale avec la caméra PTZ au sommet de la tourelle.
+
+La stratégie retenue repose donc sur un montage plus pragmatique : positionner la caméra derrière la tourelle sur une platine imprimée en 3D pour cet usage, et conserver le LiDAR dans une position dominante sur une nouvelle platine dédiée imprimée également en 3D, afin de lui garantir un champ de scan aussi dégagé que possible. L’objectif est d’exploiter au maximum la précision du LiDAR pour la cartographie et la navigation, tout en maintenant la capacité de capture d’images de l’arche d'un tunnel.
+
+\subsubsection{Orchestration logicielle}
+
+\begin{itemize}
+    \item \textbf{Orchestration photo/navigation :} script \texttt{fusion\_photo\_navigation} pour exécuter une mission de waypoints en parallèle d'une séquence photo.
+    \item \textbf{Orchestration vidéo/navigation :} script \texttt{fusion\_video\_navigation} pour exécuter une mission de waypoints en parallèle d'une séquence vidéo.
+    \item \textbf{Stratégie d'évitement d'obstacles :} les tests terrain ayant montré trop de faux positifs sur l'arrêt d'urgence, la stratégie retenue repose sur l'esquive native de Nav2, jugée plus performante en mission réelle.
+    \item \textbf{Fin de mission robuste :} arrêt automatique des séquences, envoi d'une commande pour stopper le mouvement et retour de la PTZ en position Home.
+\end{itemize}
+
 \subsection{Amélioration du modèle de détection}
 
-Le dataset de la caméra 360° capturé lors de la première descente constitue la matière première du travail d'amélioration du modèle de détection mené par Lucas et Adrien. Les étapes en cours sont :
+Le dataset 360° capturé sur les deux descentes constitue la base de travail du chantier IA mené par Lucas et Adrien. Les étapes suivantes restent à finaliser :
 
 \begin{enumerate}
     \item \textbf{Tri et annotation du dataset :} Les images panoramiques capturées dans les galeries doivent être triées pour ne conserver que les prises exploitables, puis annotées manuellement pour identifier les fissures.
     \item \textbf{Entraînement d'un modèle adapté :} Un nouveau modèle de détection sera entraîné spécifiquement sur ces images 360°, afin de permettre une analyse continue de l'ensemble de la voûte pendant les déplacements du robot.
 \end{enumerate}
 
-\subsection{Amélioration de la séquence de capture}
 
-Les constats de la première descente ont mis en évidence que la séquence de 3 photos PTZ ne couvre pas l'intégralité de l'arche de la galerie. Plusieurs pistes sont explorées pour améliorer la couverture :
-\begin{itemize}
-    \item Augmenter le nombre de captures par arrêt (passage de 3 à 5 positions PTZ).
-    \item Revoir l'enchaînement des positions de la caméra pour maximiser la couverture.
-    \item Expérimenter le script vidéo à très basse vitesse.
-\end{itemize}
+\newpage
 
-\subsection{Optimisation YOLO avec Docker et TensorRT}
-
-Afin d'exploiter pleinement le GPU de la Jetson Orin Nano pour la détection de fissures, une chaîne d'optimisation complète a été mise en place. Une image Docker spécialisée (\texttt{Dockerfile.jetson}), basée sur \texttt{dustynv/l4t-pytorch:r36.2.0}, a été construite pour isoler l'environnement de détection. Cette image intègre ROS~2 Humble, PyTorch avec CUDA et la bibliothèque Ultralytics, garantissant la compatibilité GPU native sur la plateforme Jetson.
-
-Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch original grâce à l'optimisation en demi-précision (half precision). Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli transparent sur le modèle PyTorch.
-
-L'ensemble est orchestré par le script \texttt{docker/launch\_jetson.sh}, qui lance le conteneur avec la configuration réseau host, le montage des volumes nécessaires et la vérification automatique des dépendances.
-
-\subsection{Amélioration du positionnement et de la navigation}
-
-Le second semestre vise également à faire progresser le système de navigation autonome et de positionnement. Les axes de travail sont :
-
-\begin{itemize}
-    \item \textbf{Validation des transformations TF :} Corriger le problème de trajectoire non planaire observé dans RViz2, qui traduit une incohérence dans l'arbre des transformations géométriques.
-    \item \textbf{Vérification de la ZED2i :} Valider la cohérence des données inertielles et visuelles de la caméra stéréoscopique, condition préalable à un filtre de Kalman étendu fiable.
-    \item \textbf{Analyse des données LiDAR :} Une étape clé consiste à approfondir la compréhension des données générées par le LiDAR, afin de garantir la fiabilité des mesures utilisées pour la navigation et l’élaboration des cartes.
-    \item \textbf{Cartographie et réglages SLAM :} La génération de cartes par SLAM est fonctionnelle, mais il reste à en maîtriser parfaitement le paramétrage et l’interprétation, afin d’optimiser la qualité des cartes produites et d’assurer leur cohérence avec l’environnement réel.
-    \item \textbf{Localisation AMCL sur cartes SLAM :} L’exploitation des cartes obtenues via SLAM pour la localisation avec AMCL constitue la prochaine étape. Maintenant que le LiDAR est pleinement opérationnel, la mise en œuvre et l’ajustement d’AMCL doivent permettre une localisation précise du robot lors de ses déplacements, conformément aux recommandations de l’équipe 2024-2025.
-\end{itemize}
 
 % --- Gestion de projet ---
 \section{Gestion de projet}
 
 \subsection{Démarrage et contexte initial}
 
-En raison d'aléas administratifs liés à l'affectation des sujets, le projet n'a débuté officiellement que fin novembre. Cette période de latence a toutefois été mise à profit pour nous auto-former, en autonomie, à la prise en main du modèle de détection YOLO. Anticipant une problématique centrée sur l'analyse d'image, cette montée en compétence nous étant conseillée par nos encadrants.
+En raison d'aléas administratifs liés à l'affectation des sujets, le projet n'a débuté officiellement que fin novembre. Cette période de latence a toutefois été mise à profit pour nous auto-former, en autonomie, à la prise en main du modèle de détection YOLO. Anticipant une problématique centrée sur l'analyse d'image, cette montée en compétence nous avait été conseillée par nos encadrants.
 
 Une fois affecté, le sujet a révélé une composante robotique majeure que nous ne pouvions pas anticiper. Ne disposant pas de connaissances spécifiques dans ce domaine, la prise en main de l'aspect navigation et matériel a constitué le premier défi technique majeur de ce semestre.
 
