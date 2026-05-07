@@ -23,7 +23,7 @@ YDLIDAR_WS="$PROJECT_DIR/dependencies/ydlidar_ros2_ws"
 if [ -f "$YDLIDAR_WS/install/setup.bash" ]; then
     source "$YDLIDAR_WS/install/setup.bash"
     echo "✅ Workspace YDLidar sourcé"
-elif [ -d "u$YDLIDAR_WS" ]; then
+elif [ -d "$YDLIDAR_WS" ]; then
     echo "❌ Workspace YDLidar trouvé mais non compilé (exécutez: scripts/build.sh)"
 else
     echo "❌ Workspace YDLidar non trouvé dans dependencies/"
@@ -62,16 +62,16 @@ else
     return 1
 fi
 
-# 7. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
-if [ -z "$RMW_IMPLEMENTATION" ]; then
-    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-    echo "✅ Middleware DDS configuré: $RMW_IMPLEMENTATION (FastRTPS)"
-fi
-
 # 6. Configuration ROS_DOMAIN_ID (pour communication avec conteneur Docker)
 if [ -z "$ROS_DOMAIN_ID" ]; then
     export ROS_DOMAIN_ID=0
     echo "✅ ROS_DOMAIN_ID configuré: $ROS_DOMAIN_ID"
+fi
+
+# 7. Configuration middleware DDS ROS2 (pour éviter les problèmes avec scout_base)
+if [ -z "$RMW_IMPLEMENTATION" ]; then
+    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    echo "✅ Middleware DDS configuré: $RMW_IMPLEMENTATION (FastRTPS)"
 fi
 
 # Retour à la racine 

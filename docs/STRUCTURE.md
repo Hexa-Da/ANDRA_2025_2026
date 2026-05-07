@@ -62,16 +62,18 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `image_publisher` : Capture d'images depuis la caméra PTZ (RTSP)
   - `video_publisher` : Traitement des vidéos enregistrées, extraction d'images et publication sur `/photo_topic`
   - `image_subscriber` : Détection YOLO des fissures sur les images reçues depuis `/photo_topic`
-  - `position_publisher` : Affichage de la position du robot lors des détections
+  - `position_publisher` *(WIP, voir ci-dessous)* : devait afficher la position du robot lors des détections
   - `ptz_controller` : Contrôle de la caméra PTZ Marshall CV-605
 - `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
   - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
-  - `report_fissures` : Trace les positions détectées sur la carte
+  - `report_fissures` *(WIP, voir ci-dessous)* : devait tracer les positions détectées sur la carte
   - `sequence_photo` : Séquence Step-and-Go avec 5 captures PTZ en boucle
   - `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
-  - `show_pos` : Affiche la position du robot (odométrie)
+  - `show_pos` *(WIP, voir ci-dessous)* : devait afficher la position du robot (odométrie)
   - `trajectoire_mission` : Exécute une mission Nav2 à partir d'un fichier de waypoints (`x`, `y`, `yaw`)
   - `trajectoire/` : Dossier des fichiers de trajectoire (`*.yaml`) par carte (ex: `ma_carte_traj.yaml`)
+
+> **Nœuds WIP** : `position_publisher`, `show_pos` et `report_fissures` ne sont pas branchés en production aujourd'hui. La chaîne pose↔détection passe par `position_publisher` qui souscrit à un topic `detection_status` (`std_msgs/Bool`) jamais publié (le détecteur `image_subscriber` publie `/position_detectee` en `geometry_msgs/Point`). Le nœud `report_fissures` a un `map_yaml_path` par défaut pointant vers une carte qui n'existe plus dans `map_results/`. Ces nœuds restent dans le repo pour servir de base à la future tâche TODO « Associer chaque média à la pose robot » mais doivent être considérés comme non fonctionnels tant qu'ils n'ont pas été retravaillés.
 - `src/patrouille_autonome/` : Package ROS2 d'orchestration mission + capture autonome
   - `fusion_photo_navigation` : Lance `trajectoire_mission` + `sequence_photo` en parallèle
   - `fusion_video_navigation` : Lance `trajectoire_mission` + `sequence_video` en parallèle (arrêt uniformisé avec `fusion_photo_navigation`, PTZ Home explicitement envoyé par la fusion)

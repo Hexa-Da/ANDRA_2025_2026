@@ -21,21 +21,24 @@ if command -v nvidia-smi >/dev/null 2>&1; then
   GPU_ARGS+=(--gpus all -e NVIDIA_DRIVER_CAPABILITIES=all)
 fi
 
+# Propage ROS_DOMAIN_ID / RMW_IMPLEMENTATION depuis l'environnement hôte (avec
+# defauts cohérents avec scripts/setup.sh et docker/launch_jetson.sh).
+ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
+RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}"
+
 docker run -it --rm \
   --net=host \
   -e DISPLAY="$DISPLAY" \
   -e QT_X11_NO_MITSHM=1 \
-  -e ROS_DOMAIN_ID=0 \
-  -e RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
+  -e ROS_DOMAIN_ID="$ROS_DOMAIN_ID" \
+  -e RMW_IMPLEMENTATION="$RMW_IMPLEMENTATION" \
   "${GPU_ARGS[@]}" \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v "$WORKSPACE_DIR:/workspace/ros2_ws" \
   "$IMAGE_NAME" /bin/bash -c "
     source /opt/ros/humble/setup.bash && \
     cd /workspace/ros2_ws && \
-    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp && \
     [ -f install/setup.bash ] && source install/setup.bash || echo 'Workspace non compile: colcon build' && \
     cd /workspace/ && \
-    export ROS_DOMAIN_ID=0 && \
     exec /bin/bash
   "

@@ -26,9 +26,8 @@ Rôle:
 - envoie les objectifs à Nav2 (`navigate_to_pose`) dans le repère `map`
 - exécute les points séquentiellement
 - peut fonctionner en boucle (`loop:=true`)
-- intègre un arrêt d'urgence frontal LiDAR:
-  - surveillance `/scan`
-  - annulation du goal courant si obstacle frontal sous un seuil
+
+> **Note** : un arrêt d'urgence frontal LiDAR a été expérimenté puis **retiré** suite à de trop nombreux faux positifs en tunnel. L'évitement d'obstacle est entièrement délégué à Nav2 (costmap local + comportements d'esquive). Si une surcouche de sécurité est ré-introduite plus tard, ce sera via une source capteur dédiée plus robuste.
 
 ## 3) Format des fichiers trajectoire
 

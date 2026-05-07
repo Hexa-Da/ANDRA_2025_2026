@@ -103,7 +103,8 @@ def main():
         '--capture-interval',
         type=float,
         default=5.0,
-        help='Intervalle d arret pour captures PTZ (secondes)',
+        help="Durée d'arrêt à chaque waypoint pour captures PTZ (secondes). "
+             "Transmis à sequence_photo via le paramètre stop_duration.",
     )
     parser.add_argument(
         '--loop',
@@ -131,8 +132,8 @@ def main():
         'navigation_utils',
         'sequence_photo',
         '--ros-args',
-        '-p',
-        'enable_robot_motion:=false',
+        '-p', 'enable_robot_motion:=false',
+        '-p', f'stop_duration:={args.capture_interval}',
     ]
 
     processes = []

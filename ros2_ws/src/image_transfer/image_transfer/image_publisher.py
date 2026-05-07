@@ -20,7 +20,15 @@ class ImagePublisher(Node):
         self.declare_parameter('capture_interval', 10.0)  # secondes
         self.declare_parameter('enable_ptz', True)
         self.declare_parameter('enable_capture_auto', False)  # Capture automatique périodique
-        
+
+        # Paramètres réseau / identifiants PTZ (externalisés pour éviter le hardcoding)
+        self.declare_parameter('ptz_host', '192.168.5.163')
+        self.declare_parameter('ptz_rtsp_port', 554)
+        self.declare_parameter('ptz_rtsp_path', '/live/av0')
+        self.declare_parameter('ptz_visca_port', 1259)
+        self.declare_parameter('ptz_user', 'admin')
+        self.declare_parameter('ptz_password', 'admin')
+
         # Paramètres d'ajustement d'image
         self.declare_parameter('brightness', 1.0)  # Multiplicateur de luminosité (1.0 = normal, >1.0 = plus clair)
         self.declare_parameter('contrast', 1.0)  # Multiplicateur de contraste (1.0 = normal, >1.0 = plus de contraste)
@@ -35,6 +43,13 @@ class ImagePublisher(Node):
         capture_interval = self.get_parameter('capture_interval').get_parameter_value().double_value
         enable_ptz = self.get_parameter('enable_ptz').get_parameter_value().bool_value
         enable_capture_auto = self.get_parameter('enable_capture_auto').get_parameter_value().bool_value
+
+        self.ptz_host = self.get_parameter('ptz_host').get_parameter_value().string_value
+        self.ptz_rtsp_port = self.get_parameter('ptz_rtsp_port').get_parameter_value().integer_value
+        self.ptz_rtsp_path = self.get_parameter('ptz_rtsp_path').get_parameter_value().string_value
+        self.ptz_visca_port = self.get_parameter('ptz_visca_port').get_parameter_value().integer_value
+        ptz_user = self.get_parameter('ptz_user').get_parameter_value().string_value
+        ptz_password = self.get_parameter('ptz_password').get_parameter_value().string_value
         
         # Paramètres d'ajustement d'image
         self.brightness = self.get_parameter('brightness').get_parameter_value().double_value
@@ -61,11 +76,14 @@ class ImagePublisher(Node):
             
         self.image_count = 0
 
-        # Construire l'URL RTSP
-        self.rtsp_url = f"rtsp://admin:admin@192.168.5.163:554/live/av0"
-        
-        self.get_logger().info(f"Configuration PTZ : 192.168.5.163:554")
-        self.get_logger().info(f"URL RTSP : rtsp://admin:admin@192.168.5.163:554/live/av0")
+        # Construire l'URL RTSP à partir des paramètres ROS
+        rtsp_path = self.ptz_rtsp_path if self.ptz_rtsp_path.startswith('/') else f"/{self.ptz_rtsp_path}"
+        self.rtsp_url = f"rtsp://{ptz_user}:{ptz_password}@{self.ptz_host}:{self.ptz_rtsp_port}{rtsp_path}"
+        # Variante masquée des credentials pour les logs
+        rtsp_url_redacted = f"rtsp://***:***@{self.ptz_host}:{self.ptz_rtsp_port}{rtsp_path}"
+
+        self.get_logger().info(f"Configuration PTZ : {self.ptz_host}:{self.ptz_rtsp_port}")
+        self.get_logger().info(f"URL RTSP : {rtsp_url_redacted}")
         self.get_logger().info(f"PTZ activée : {enable_ptz}, Intervalle de capture : {capture_interval}s")
         self.get_logger().info(f"Capture automatique : {enable_capture_auto}")
         if self.enable_adjustment:
@@ -92,9 +110,9 @@ class ImagePublisher(Node):
 
     def set_auto_exposure(self):
             """Active le mode Full Auto via une connexion VISCA temporaire"""
-            cam_ip = '192.168.5.163'
-            cam_port = 1259  # Port VISCA Marshall
-            
+            cam_ip = self.ptz_host
+            cam_port = self.ptz_visca_port  # Port VISCA Marshall
+
             try:
                 # 1. Création d'une connexion temporaire
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as temp_sock:
@@ -135,7 +153,7 @@ class ImagePublisher(Node):
                 timeout=15,
             )
         except subprocess.TimeoutExpired:
-            self.get_logger().error("FFmpeg timeout (15s). Vérifiez : ping 192.168.5.163, RTSP URL.")
+            self.get_logger().error(f"FFmpeg timeout (15s). Vérifiez : ping {self.ptz_host}, RTSP URL.")
             return
         except FileNotFoundError:
             self.get_logger().error("FFmpeg non trouvé. Installez : sudo apt install ffmpeg")
@@ -159,7 +177,7 @@ class ImagePublisher(Node):
         else:
             err = process.stderr.decode("utf-8", errors="replace") if process.stderr else "Erreur inconnue"
             self.get_logger().error(f"Erreur FFmpeg (code {process.returncode}) : {err[-600:]}")
-            self.get_logger().error("Vérifiez : ping 192.168.5.163, URL RTSP, ffmpeg -i rtsp://...")
+            self.get_logger().error(f"Vérifiez : ping {self.ptz_host}, URL RTSP, ffmpeg -i rtsp://...")
   
     def adjust_image(self, img):
         """

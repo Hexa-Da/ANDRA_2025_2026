@@ -2,11 +2,14 @@
 # Convertit best.pt en best.engine (TensorRT) pour Jetson
 # Usage: ./scripts/convert_to_tensorrt.sh
 
+set -euo pipefail
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 MODEL_DIR="$PROJECT_DIR/ros2_ws/models"
 MODEL_PT="$MODEL_DIR/best.pt"
 MODEL_ENGINE="$MODEL_DIR/best.engine"
+TRT_IMAGE="${TRT_IMAGE:-ros2-humble-pytorch-jetson:r36.2.0}"
 
 echo "Conversion best.pt -> TensorRT (.engine)"
 echo "Source: $MODEL_PT"
@@ -29,7 +32,7 @@ sudo docker run --rm \
     --runtime nvidia \
     -v "$MODEL_DIR:/models" \
     -w /models \
-    ros2-humble-pytorch-jetson:r36.2.0 \
+    "$TRT_IMAGE" \
     python3 -c "
 from ultralytics import YOLO
 import sys, os
@@ -41,11 +44,11 @@ try:
 except Exception as e:
     print(f'[ERROR] {e}')
     sys.exit(1)
-" || true
+"
 
 # Verification du fichier genere
 if [ -f "$MODEL_ENGINE" ]; then
-    FILE_SIZE=$(stat -f%z "$MODEL_ENGINE" 2>/dev/null || stat -c%s "$MODEL_ENGINE" 2>/dev/null || echo "0")
+    FILE_SIZE=$(stat -c%s "$MODEL_ENGINE" 2>/dev/null || echo "0")
     if [ "$FILE_SIZE" -gt 1048576 ]; then
         echo "[OK] $MODEL_ENGINE ($(du -h "$MODEL_ENGINE" | cut -f1))"
     else

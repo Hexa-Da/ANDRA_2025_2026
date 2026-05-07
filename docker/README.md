@@ -25,7 +25,7 @@ Permet de :
 
 **Lancer le conteneur** :
 ```bash
-cd ros2_docker
+cd docker
 ./launch_rviz.sh
 ```
 
@@ -63,7 +63,7 @@ rviz2 -d /workspace/ros2_ws/src/ros_launcher/config.rviz
 ```
 
 **Remarque importante** :  
-L'utilisation de cet environnement ne se fait **pas** en lançant des commandes depuis ce dossier `ros2_docker/`, mais via le script `./scripts/image_subscriber_gpu.sh`. Ce script utilise les fichiers Docker présents dans ce dossier pour démarrer (`launch_jetson.sh`) un conteneur adapté à Jetson (`Dockerfile.jetson`), permettant l'exécution du nœud `image_subscriber` avec GPU.
+L'utilisation de cet environnement ne se fait **pas** en lançant des commandes depuis ce dossier `docker/`, mais via le script `./scripts/image_subscriber_gpu.sh`. Ce script utilise les fichiers Docker présents dans ce dossier pour démarrer (`launch_jetson.sh`) un conteneur adapté à Jetson (`Dockerfile.jetson`), permettant l'exécution du nœud `image_subscriber` avec GPU.
 
 ---
 

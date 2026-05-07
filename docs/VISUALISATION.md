@@ -34,7 +34,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - Les différences entre les frames (`odom`, `base_link`, etc.)
 
 **Frames disponibles :**
-- `odom` : Repère de l'odométrie (publié par EKF)
+- `odom` : Repère de l'odométrie (TF publiée par le driver `scout_base`)
 - `base_link` : Repère du robot (centre du robot)
 - `base_footprint` : Projection au sol du robot
 - `laser_frame` : Repère du LIDAR
@@ -59,7 +59,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 
 **Frames disponibles :**
 - `map` : Repère de la carte globale (publié par SLAM/AMCL)
-- `odom` : Repère de l'odométrie (publié par EKF)
+- `odom` : Repère de l'odométrie (TF publiée par le driver `scout_base` ; l'EKF alimente seulement le topic `/odometry/filtered`)
 - `base_link` : Repère du robot (centre du robot)
 - `base_footprint` : Projection au sol du robot 
 - `laser_frame` : Repère du LIDAR

@@ -6,8 +6,8 @@ L'arbre TF décrit les relations spatiales entre les repères (frames) du robot.
 
 ```
 map
-  └── odom                                [SLAM ou AMCL]
-        └── base_link                     [EKF publie odom → base_link]
+  └── odom                                [SLAM ou AMCL — exclusivement]
+        └── base_link                     [Driver scout_base via /odom_robot]
               ├── base_footprint          [URDF Scout via robot_state_publisher]
               ├── zed_camera_link         [static : mesures terrain]
               └── laser_frame             [static : yaw au choix via launch]
@@ -22,18 +22,19 @@ Le nœud ZED est lancé avec **`publish_tf:=false`** : il ne publie **pas** `odo
 | Paramètre | Valeur |
 |-----------|--------|
 | **Type** | Dynamique |
-| **Publié par** | `slam_toolbox` (SLAM) ou `nav2_amcl` (localisation) |
-| **Fallback** | `static_transform_publisher` identité si inactifs |
+| **Publié par** | `slam_toolbox` (mode SLAM) ou `nav2_amcl` (mode AMCL) |
 
-Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback identité si aucune map disponible.
+Corrige la dérive d'odométrie en recadrant le robot sur la carte. **Aucun static identité de secours n'est publié** : si ni SLAM ni AMCL ne tourne, la TF `map -> odom` n'existe simplement pas (et `map` n'a pas vocation à être utilisé en mode SLAM tant que la carte n'a pas démarré).
 
-### 2. `odom` → `base_link` (dynamique, EKF)
+### 2. `odom` → `base_link` (dynamique)
 
 | Paramètre | Valeur |
 |-----------|--------|
 | **Type** | Dynamique |
-| **Publié par** | `robot_localization` (`ekf_filter_node`) |
-| **Config** | `configs/ekf_config.yaml` |
+| **Publié par** | `scout_base` (driver des roues) |
+| **Topic odométrie associé** | `/odom_robot` |
+
+C'est bien le **driver scout** qui publie cette TF, pas l'EKF. L'EKF est configuré avec `publish_tf: false` (`configs/ekf_config.yaml`) et n'alimente que le **topic** `/odometry/filtered` (consommé par `image_subscriber`, `position_publisher`, `odom_to_path`, `sequence_*`). Cela évite tout conflit de TF sur l'arête `odom -> base_link`.
 
 **Sources fusionnées par l'EKF** (voir `configs/ekf_config.yaml`) :
 
@@ -42,9 +43,7 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. Fallback ide
 | Odométrie roues (Scout) | `/odom_robot` | X, Y, yaw + vitesses (référence principale) |
 | IMU (ZED2i) | `/zed/zed_node/imu/data` | Vit. angulaire lacet (`vyaw`) uniquement |
 
-L’odométrie visuelle ZED n’est plus fusionnée dans l’EKF (pour éviter les conflits avec les roues). La ZED reste tout de même utilisée pour l’image et surtout les données IMU.
-
-`publish_tf: true` dans `ekf_config.yaml`. Un seul nœud doit publier cette TF (conflit sinon).
+L'odométrie visuelle ZED n'est plus fusionnée dans l'EKF (pour éviter les conflits avec les roues). La ZED reste tout de même utilisée pour l'image et surtout les données IMU. Si la ZED est désactivée (`enable_zed:=false`), `imu0` est coupé par `sensor_timeout` et l'EKF tourne avec `/odom_robot` seul ; le nœud EKF lui-même est conditionné à `enable_scout`.
 
 ### 3. `base_link` → `base_footprint` (statique via URDF Scout)
 

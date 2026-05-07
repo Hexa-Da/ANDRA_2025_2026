@@ -14,7 +14,15 @@ class PTZControllerVISCA(Node):
     
     def __init__(self):
         super().__init__('ptz_controller')
-        
+
+        # Paramètres réseau VISCA externalisés (au lieu de hardcodés)
+        self.declare_parameter('ptz_host', '192.168.5.163')
+        self.declare_parameter('ptz_visca_port', 1259)
+        self.declare_parameter('ptz_socket_timeout', 2.0)
+        self.ptz_host = self.get_parameter('ptz_host').get_parameter_value().string_value
+        self.ptz_visca_port = self.get_parameter('ptz_visca_port').get_parameter_value().integer_value
+        self.ptz_socket_timeout = self.get_parameter('ptz_socket_timeout').get_parameter_value().double_value
+
         # Connexion VISCA
         self.sock = None
         self._connect_visca()
@@ -31,9 +39,9 @@ class PTZControllerVISCA(Node):
         """Établit la connexion VISCA avec la caméra"""
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.settimeout(2.0)
-            self.sock.connect(('192.168.5.163', 1259))
-            self.get_logger().info('Connexion VISCA établie: 192.168.5.163:1259')
+            self.sock.settimeout(self.ptz_socket_timeout)
+            self.sock.connect((self.ptz_host, self.ptz_visca_port))
+            self.get_logger().info(f'Connexion VISCA établie: {self.ptz_host}:{self.ptz_visca_port}')
         except Exception as e:
             self.get_logger().error(f'Erreur de connexion VISCA: {e}')
             if self.sock:

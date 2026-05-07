@@ -1,4 +1,10 @@
 # Dépendances matérielles (YDLidar, Scout, ZED)
+#
+# NOTE scout_base : le code source est patché localement après clone pour
+# accepter "agilex" comme nom de port CAN valide (cf. TODO.md, fichier
+# `scout_base_ros.cpp`). Si vous re-clonez via `vcs import`, il faudra
+# ré-appliquer ce patch avant `colcon build`. Le commit ci-dessous est figé
+# sur la branche `humble` upstream pour la reproductibilité.
 
 repositories:
   dependencies/ydlidar_ros2_ws:
@@ -8,7 +14,7 @@ repositories:
   dependencies/scout_base:
     type: git
     url: https://github.com/agilexrobotics/scout_ros2.git
-    version: main
+    version: bdbb90471613831fb0b2ec01fecac043445313c4  # humble (état du 2026-05-07)
   dependencies/zed-ros2-wrapper:
     type: git
     url: https://github.com/stereolabs/zed-ros2-wrapper.git

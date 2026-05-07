@@ -24,7 +24,7 @@ ssh techlab@orin2.local
 
 S'il ne capte pas le réseau du Techlab, le robot crée automatiquement son propre réseau WiFi.
 
-Connectez votre ordinateur au WiFi du robot : **JetsonWIF** (Mdp : depinfonancy)
+Connectez votre ordinateur au WiFi du robot : **JetsonWIFI** (Mdp : depinfonancy)
 
 ```bash
 ssh techlab@orin2.local
@@ -56,7 +56,7 @@ source scripts/setup.sh
 # Ou compiler uniquement un workspace spécifique
 ./scripts/build.sh ydlidar        # Uniquement YDLidar
 ./scripts/build.sh ros2_ws        # Uniquement ros2_ws
-./scripts/build.sh scrout_base    # Uniquement scout_base
+./scripts/build.sh scout_base     # Uniquement scout_base
 ./scripts/build.sh zed            # Uniquement zed
 ```
 
@@ -124,8 +124,8 @@ Il existe deux façons de lancer le système :
 # Mode SLAM avec options
 ./scripts/launch.sh slam enable_lidar:=false enable_zed:=false
 
-# Mode AMCL (vérifie automatiquement que la carte est fournie)
-./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/andra.yaml
+# Mode AMCL (vérifie automatiquement que la carte est fournie et existe)
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte_2.yaml
 ```
 
 #### `navigation_stack.launch.py` (pour configuration avancée)
@@ -145,7 +145,7 @@ ros2 launch ros_launcher navigation_stack.launch.py \
 ros2 launch ros_launcher navigation_stack.launch.py \
   use_slam:=false \
   use_amcl:=true \
-  map_path:=ros2_ws/src/ros_launcher/map_results/andra.yaml 
+  map_path:=ros2_ws/src/ros_launcher/map_results/ma_carte_2.yaml
 ```
 
 ### 7. Lancer le nœud image_subscriber avec GPU (dans un terminal séparé)
@@ -226,8 +226,8 @@ ros2 run patrouille_autonome fusion_video_navigation
 ```
 
 **Ordre de lancement recommandé** :
-1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh amcl`)
-2. **Terminal 2** : Lancer `fusion_photo/video_navigation.py` 
+1. **Terminal 1** : Lancer le système principal (`./scripts/launch.sh amcl <carte.yaml>`)
+2. **Terminal 2** : Lancer `ros2 run patrouille_autonome fusion_photo_navigation` ou `fusion_video_navigation`
 
 ## Nœuds lancés automatiquement
 
@@ -262,21 +262,14 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
   - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
   - Déplace les vidéos corrompues vers `video/video_output/failed/` pour éviter les traitements répétés
-- **`position_publisher`** : Affichage de la position du robot lors des détections
-  - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
-  - S'abonne au topic `detection_status` (Bool) pour être notifié lorsqu'une fissure est détectée
-  - Affiche dans les logs la position (x, y, z) du robot au moment où une détection se produit
+- **`position_publisher`** *(WIP — voir `docs/STRUCTURE.md`)* : ce nœud souscrit à un topic `detection_status` (`std_msgs/Bool`) qui n'est **pas** publié par la chaîne actuelle (`image_subscriber` publie `/position_detectee` en `geometry_msgs/Point`). Il est lancé par le launch mais reste silencieux tant que la chaîne pose+détection n'est pas branchée.
 
 ### Nœuds de navigation et visualisation (navigation_utils)
 - **`odom_to_path`** : Visualisation du trajet du robot
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - Publie le Path sur `/robot_path` pour visualiser le trajet parcouru dans RViz2
   - Ajoute un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
-- **`report_fissures`** : Trace les positions détectées sur la carte
-  - Reçoit les positions depuis le topic `/position_detectee`
-  - Trace les points détectés sur la carte en utilisant le fichier YAML de la carte
-  - Paramètre ROS2 configurable : `map_yaml_path` (défaut: `ros2_ws/src/ros_launcher/map_results/andra.yaml`)
-  - Sauvegarde les images avec timestamp : `map_with_point_YYYY-MM-DD_HH-MM-SS.png`
+- **`report_fissures`** *(WIP — voir `docs/STRUCTURE.md`)* : reçoit les positions sur `/position_detectee` et trace les points sur la carte. Paramètre `map_yaml_path` à fournir explicitement (le défaut historique pointe vers une carte qui n'existe plus). Sauvegarde des images `map_with_point_*.png`.
 
 ### Localisation et cartographie
 
@@ -291,7 +284,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
 - **AMCL** (uniquement en mode AMCL) : Localise le robot sur une carte existante
   - **`map_server`** (`nav2_map_server`) : Charge la carte depuis le fichier YAML spécifié
   - **`amcl`** (`nav2_amcl`) : Localise le robot sur la carte en utilisant les scans LIDAR
-    - Publie la transformation `map` → `odom` (remplace `map_to_odom_fallback`)
+    - Publie la transformation `map` → `odom` (seul émetteur de cette TF en mode AMCL)
   - **`lifecycle_manager_localization`** (`nav2_lifecycle_manager`) : Gère le cycle de vie des nœuds AMCL et map_server
     - Assure que les nœuds démarrent dans le bon ordre
 
@@ -304,9 +297,8 @@ Les transformations statiques sont publiées par des nœuds `static_transform_pu
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
   - Translation fixe **(0.085, 0, 0.222)** m ; **yaw** = argument `laser_mount_yaw` (par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte), pitch et roll = **0**
-  
-- **`map_to_odom_fallback`** : Publie `map` → `odom` (uniquement en mode AMCL)
-  - Transformation temporaire (0, 0, 0, 0, 0, 0) remplacée par AMCL une fois actif
+
+> Aucun static `map → odom` de secours n'est publié : la TF dynamique est exclusivement produite par `slam_toolbox` (mode SLAM) ou `nav2_amcl` (mode AMCL). Avoir un static identité en parallèle d'AMCL crée un conflit de TF.
 
 ## Lancement manuel des nœuds (débogage)
 

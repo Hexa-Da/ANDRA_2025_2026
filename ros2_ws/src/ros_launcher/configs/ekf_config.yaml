@@ -4,6 +4,11 @@
 #   le même problème « deux capteurs sur la même variable » sur la vitesse).
 # - Lacet : yaw depuis /odom_robot + seulement vyaw IMU (pas d yaw absolu IMU,
 #   souvent bruyant sur ZED). imu0_relative limite les à-coups.
+#
+# NOTE: imu0 dépend de enable_zed dans navigation_stack.launch.py. Si la ZED
+# est désactivée, imu0 reste déclaré ici mais sensor_timeout (0.1 s) le coupe
+# automatiquement; le filtre tourne alors avec /odom_robot seul. Le nœud EKF
+# est conditionné à enable_scout côté launch (source pose primaire requise).
 ekf_filter_node:
   ros__parameters:
     frequency: 15.0

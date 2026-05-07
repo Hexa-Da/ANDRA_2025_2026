@@ -231,11 +231,16 @@ def generate_launch_description():
 
         # 6. Localisation et cartographie
 
+        # EKF : conditionné à enable_scout car /odom_robot (roues) est la source
+        # primaire pose+vitesses. L'IMU ZED n'apporte que vyaw : avec enable_zed:=false,
+        # l'EKF continue à tourner (sensor_timeout coupe imu0), seul le yaw rate est
+        # remplacé par celui du scout.
         Node(
             package='robot_localization',
             executable='ekf_node',
             name='ekf_filter_node',
-            parameters=[ekf_config]
+            parameters=[ekf_config],
+            condition=IfCondition(enable_scout),
         ),
 
         # SLAM après stabilisation odom/EKF — sinon 1er scan OK puis file TF pleine, carte figée.
@@ -294,13 +299,6 @@ def generate_launch_description():
                 ],
                 condition=IfCondition(use_amcl)
             ),
-            Node(
-                package='tf2_ros',
-                executable='static_transform_publisher',
-                name='map_to_odom_fallback',
-                arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom'],
-                condition=IfCondition(use_amcl)
-            )
         ]),
 
         # Nav2 (planification/controle + action navigate_to_pose)

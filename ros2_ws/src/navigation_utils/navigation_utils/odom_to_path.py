@@ -21,9 +21,17 @@ class OdomToPath(Node):
         self.path = Path()
         self.path.header.frame_id = 'odom'
         
-        self.min_distance = 0.1
+        # Paramètres ROS : distance min entre points + taille max du Path (FIFO)
+        # pour éviter une croissance illimitée en mission longue.
+        self.declare_parameter('min_distance', 0.1)
+        self.declare_parameter('max_path_size', 5000)
+        self.min_distance = float(self.get_parameter('min_distance').value)
+        self.max_path_size = max(1, int(self.get_parameter('max_path_size').value))
         
-        self.get_logger().info('Nœud odom_to_path démarré.')
+        self.get_logger().info(
+            f'Nœud odom_to_path démarré (min_distance={self.min_distance:.2f}m, '
+            f'max_path_size={self.max_path_size}).'
+        )
         
     def odom_callback(self, msg):
         """Callback appelé à chaque message d'odométrie"""
@@ -49,6 +57,10 @@ class OdomToPath(Node):
             pose_stamped.pose = current_pose
 
             self.path.poses.append(pose_stamped)
+            # Bornage FIFO du Path pour éviter la croissance illimitée en mission longue.
+            if len(self.path.poses) > self.max_path_size:
+                excess = len(self.path.poses) - self.max_path_size
+                del self.path.poses[:excess]
             self.path.header.stamp = self.get_clock().now().to_msg()
             self.path.header.frame_id = 'odom'
             self.path_publisher.publish(self.path)

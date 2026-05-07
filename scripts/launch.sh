@@ -2,6 +2,8 @@
 # Script de lancement du système complet
 # Usage: ./scripts/launch.sh [slam|amcl] [options...]
 
+set -eo pipefail
+
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -54,12 +56,17 @@ case "$MODE" in
         echo "  (défaut) π/2 rad (~1.570796327) — usage courant sans argument"
         echo "  laser_mount_yaw:=0.0            Création de carte / SLAM"
         echo ""
-        # si pas de carte specifier, on affiche un message d'erreur et on quitte le script
-        if [ -z "$2" ]; then
-            echo "Carte non spécifier ou erreur sur le chemin de la carte"
+        # si pas de carte spécifiée ou chemin invalide, on quitte le script
+        if [ -z "${2:-}" ]; then
+            echo "❌ Carte non spécifiée."
+            echo "   Usage: ./scripts/launch.sh amcl <chemin/vers/ma_carte.yaml>"
             exit 1
         fi
         MAP_PATH="$2"
+        if [ ! -f "$MAP_PATH" ]; then
+            echo "❌ Fichier carte introuvable: $MAP_PATH"
+            exit 1
+        fi
         shift 2  # Retirer le mode (amcl) et le chemin de carte
         ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true use_nav:=true map_path:="$MAP_PATH" "$@"
         ;;

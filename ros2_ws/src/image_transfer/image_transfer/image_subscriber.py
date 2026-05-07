@@ -1,5 +1,7 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
@@ -14,13 +16,20 @@ import torch
 class ImageSubscriber(Node):
     def __init__(self):
         super().__init__('image_subscriber')
+
+        # Callback groups : isole l'inférence YOLO (lente) du callback odométrie
+        # et des futures abonnements légers, pour ne pas bloquer le spin global.
+        self._inference_cb_group = MutuallyExclusiveCallbackGroup()
+        self._sensor_cb_group = MutuallyExclusiveCallbackGroup()
+
         self.position_pub = self.create_publisher(Point, 'position_detectee', 10)
         self.position = None
         self.subscription = self.create_subscription(
             Image,
             'photo_topic',
             self.listener_callback,
-            10
+            10,
+            callback_group=self._inference_cb_group,
         )
         self.get_logger().info("Abonne au topic /photo_topic")
         self.image_count = 0
@@ -29,7 +38,8 @@ class ImageSubscriber(Node):
             Odometry,
             '/odometry/filtered',
             self.odom_callback,
-            10
+            10,
+            callback_group=self._sensor_cb_group,
         )
 
         self.bridge = CvBridge()
@@ -307,11 +317,19 @@ class ImageSubscriber(Node):
 def main(args=None):
     rclpy.init(args=args)
     image_subscriber = ImageSubscriber()
+    # MultiThreadedExecutor : permet à odom_callback de tourner pendant que
+    # listener_callback fait l'inférence YOLO (callback groups séparés).
+    executor = MultiThreadedExecutor(num_threads=2)
+    executor.add_node(image_subscriber)
     try:
-        rclpy.spin(image_subscriber)
+        executor.spin()
     except KeyboardInterrupt:
         pass
     finally:
+        try:
+            executor.shutdown()
+        except Exception:
+            pass
         try:
             image_subscriber.destroy_node()
         except Exception:

@@ -114,6 +114,7 @@ class RobotSequenceVideo(Node):
         self.ffmpeg_process = None
         self.video_filename = None
         self.video_ready_flag_path = None
+        self._ffmpeg_log = None
         
         # État du balayage PTZ
         self.ptz_sweep_start_time: Time = None
@@ -265,14 +266,21 @@ class RobotSequenceVideo(Node):
         ffmpeg_cmd.append(self.video_filename)
         
         try:
+            # Logs FFmpeg redirigés vers fichier (au lieu de PIPE non drainé)
+            # pour éviter le blocage du process quand les buffers se remplissent
+            # sur de longs enregistrements.
+            log_path = os.path.join(self.video_output_dir, 'ffmpeg.log')
+            self._ffmpeg_log = open(log_path, 'a', buffering=1, encoding='utf-8')
+            self._ffmpeg_log.write(f"\n=== {_time.strftime('%Y-%m-%d %H:%M:%S')} ===\n")
             self.ffmpeg_process = subprocess.Popen(
                 ffmpeg_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=self._ffmpeg_log,
                 start_new_session=True,
             )
             self.record_start_time = self._now()
             self.get_logger().info(f"Démarrage enregistrement vidéo: {self.video_filename}")
+            self.get_logger().info(f"Logs FFmpeg: {log_path}")
             return True
         except FileNotFoundError:
             self.get_logger().error("FFmpeg non trouvé. Installez : sudo apt install ffmpeg")
@@ -330,6 +338,14 @@ class RobotSequenceVideo(Node):
 
         self.ffmpeg_process = None
         self.video_filename = None
+        # Ferme le handle de log FFmpeg s'il est ouvert.
+        log_handle = getattr(self, '_ffmpeg_log', None)
+        if log_handle is not None:
+            try:
+                log_handle.close()
+            except Exception:
+                pass
+            self._ffmpeg_log = None
 
     def trigger_video_publisher_once(self):
         """Lance le découpage en images via image_transfer/video_publisher en mode ponctuel."""

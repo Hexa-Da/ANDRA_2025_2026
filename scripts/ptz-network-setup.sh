@@ -1,11 +1,20 @@
 #!/bin/bash
 # Configuration réseau pour la caméra PTZ
+#
+# Variables d'environnement (avec défauts adaptés à la Jetson Orin du TechLab) :
+#   PTZ_INTERFACE       Interface Ethernet vers la PTZ        (def: enP8p1s0)
+#   PTZ_WIFI_INTERFACE  Interface WiFi à nettoyer côté routes (def: wlP1p1s0)
+#   PTZ_IP_ADDRESS      IP statique à poser sur l'Ethernet    (def: 192.168.5.100)
+#   PTZ_NETMASK         Masque CIDR                           (def: 24)
+#   PTZ_NETWORK         Réseau de la caméra                   (def: 192.168.5.0/24)
 
-INTERFACE="enP8p1s0"
-IP_ADDRESS="192.168.5.100"
-NETMASK="24"
-NETWORK="192.168.5.0/24"
-WIFI_INTERFACE="wlP1p1s0"
+set -eo pipefail
+
+INTERFACE="${PTZ_INTERFACE:-enP8p1s0}"
+IP_ADDRESS="${PTZ_IP_ADDRESS:-192.168.5.100}"
+NETMASK="${PTZ_NETMASK:-24}"
+NETWORK="${PTZ_NETWORK:-192.168.5.0/24}"
+WIFI_INTERFACE="${PTZ_WIFI_INTERFACE:-wlP1p1s0}"
 
 # Attendre que l'interface soit disponible
 for i in {1..10}; do

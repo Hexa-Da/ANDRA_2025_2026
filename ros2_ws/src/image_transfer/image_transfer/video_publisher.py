@@ -66,6 +66,9 @@ class VideoFilePublisher(Node):
         
         # Dictionnaire pour suivre la taille des fichiers (pour détecter les fichiers en cours d'écriture)
         self.file_sizes = {}
+        # Compteur d'échecs de validation par vidéo, pour étaler les retry sur plusieurs ticks
+        # (évite tout time.sleep dans le callback du timer ROS).
+        self.validation_failures = {}
 
     def is_video_marked_ready(self, video_path):
         """Vérifie que la vidéo est marquée comme terminée par sequence_video.py."""
@@ -134,25 +137,33 @@ class VideoFilePublisher(Node):
             self.get_logger().warn(f"Erreur lors de la validation de {os.path.basename(video_path)}: {e}")
             return False
 
-    def is_video_valid_with_retries(self, video_path):
-        """Valide la vidéo avec plusieurs tentatives pour laisser le MP4 se finaliser."""
-        for attempt in range(1, self.validation_retry_count + 1):
-            if self.is_video_valid(video_path):
-                if attempt > 1:
-                    self.get_logger().info(
-                        f"Vidéo valide après {attempt} tentative(s): {os.path.basename(video_path)}"
-                    )
-                return True
+    def validate_or_defer(self, video_path):
+        """Retourne 'valid', 'defer' ou 'failed' sans bloquer le timer ROS.
 
-            if attempt < self.validation_retry_count:
-                self.get_logger().warn(
-                    f"Validation échouée (tentative {attempt}/{self.validation_retry_count}) "
-                    f"pour {os.path.basename(video_path)}; nouvelle tentative dans "
-                    f"{self.validation_retry_delay_sec:.1f}s"
+        Les retries sont étalés sur plusieurs ticks du timer (validation_retry_count
+        échecs cumulés avant d'abandonner). Cela remplace l'ancienne boucle
+        time.sleep qui bloquait l'exécuteur ROS.
+        """
+        if self.is_video_valid(video_path):
+            attempts = self.validation_failures.pop(video_path, 0)
+            if attempts > 0:
+                self.get_logger().info(
+                    f"Vidéo valide après {attempts + 1} tentative(s): {os.path.basename(video_path)}"
                 )
-                time.sleep(self.validation_retry_delay_sec)
+            return 'valid'
 
-        return False
+        attempts = self.validation_failures.get(video_path, 0) + 1
+        self.validation_failures[video_path] = attempts
+
+        if attempts < self.validation_retry_count:
+            self.get_logger().warn(
+                f"Validation échouée ({attempts}/{self.validation_retry_count}) "
+                f"pour {os.path.basename(video_path)}; nouvelle tentative au prochain scan"
+            )
+            return 'defer'
+
+        self.validation_failures.pop(video_path, None)
+        return 'failed'
 
     def check_for_videos(self):
         try:
@@ -188,7 +199,10 @@ class VideoFilePublisher(Node):
                     continue  # Attendre que le fichier soit stable
                 
                 # Vérifier si la vidéo est valide avant de la traiter
-                if not self.is_video_valid_with_retries(video_path):
+                validation_result = self.validate_or_defer(video_path)
+                if validation_result == 'defer':
+                    continue
+                if validation_result == 'failed':
                     self.get_logger().warn(
                         f"Vidéo corrompue ou invalide détectée : {video_file}. Déplacement vers 'failed'"
                     )

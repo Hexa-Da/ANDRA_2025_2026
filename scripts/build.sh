@@ -2,11 +2,17 @@
 # Script de compilation des workspaces
 # Usage: ./scripts/build.sh [ydlidar|ros2_ws|scout_base|zed]
 
+set -eo pipefail
+
 # Obtenir le répertoire du script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Initialiser ROS2
+if [ ! -f /opt/ros/humble/setup.bash ]; then
+    echo "❌ Erreur: ROS2 Humble non trouvé (/opt/ros/humble/setup.bash)"
+    exit 1
+fi
 source /opt/ros/humble/setup.bash
 
 # Définir la cible de compilation
@@ -65,6 +71,7 @@ case "$BUILD_TARGET" in
         cd "$PROJECT_DIR"
         ;;
     *)
+        echo "❌ Cible inconnue: $BUILD_TARGET (attendu: ydlidar|ros2_ws|scout_base|zed|all)"
         exit 1
         ;;
 esac

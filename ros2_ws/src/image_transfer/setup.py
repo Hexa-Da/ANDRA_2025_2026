@@ -4,7 +4,7 @@ package_name = 'image_transfer'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='1.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -16,7 +16,7 @@ setup(
     maintainer='techlab',
     maintainer_email='antoine.richard@depinfonancy.net',
     description='Nœuds pour la capture et la transmission d\'images',
-    license='TODO: License declaration',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
