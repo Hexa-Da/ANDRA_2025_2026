@@ -24,6 +24,32 @@ class VideoFilePublisher(Node):
         self.declare_parameter('extract_rate', 30.0)
         self.extract_rate = self.get_parameter('extract_rate').get_parameter_value().double_value
         self.get_logger().info(f"Taux d'extraction: {self.extract_rate} images/seconde")
+
+        # Mode optionnel: traiter ponctuellement puis quitter
+        self.declare_parameter('run_once', False)
+        self.declare_parameter('run_once_timeout_sec', 45.0)
+        self.declare_parameter('scan_period_sec', 5.0)
+        self.declare_parameter('validation_retry_count', 5)
+        self.declare_parameter('validation_retry_delay_sec', 1.0)
+        # Log tous les N images sauvegardées pendant process_video (0 = désactivé)
+        self.declare_parameter('progress_log_every_saved_frames', 5)
+        self.run_once = self.get_parameter('run_once').get_parameter_value().bool_value
+        self.run_once_timeout_sec = self.get_parameter('run_once_timeout_sec').get_parameter_value().double_value
+        configured_scan_period = self.get_parameter('scan_period_sec').get_parameter_value().double_value
+        self.validation_retry_count = max(
+            1, self.get_parameter('validation_retry_count').get_parameter_value().integer_value
+        )
+        self.validation_retry_delay_sec = max(
+            0.1, self.get_parameter('validation_retry_delay_sec').get_parameter_value().double_value
+        )
+        self.progress_log_every_saved_frames = max(
+            0, self.get_parameter('progress_log_every_saved_frames').get_parameter_value().integer_value
+        )
+        self.scan_period_sec = max(0.2, configured_scan_period)
+        if self.run_once:
+            self.scan_period_sec = min(self.scan_period_sec, 1.0)
+        self.run_once_start = time.time()
+        self.should_exit = False
         
         # Création des dossiers
         os.makedirs(self.video_input_dir, exist_ok=True)  # Créer le dossier d'entrée s'il n'existe pas
@@ -31,9 +57,12 @@ class VideoFilePublisher(Node):
         os.makedirs(self.processed_dir, exist_ok=True)
         os.makedirs(self.failed_dir, exist_ok=True)
 
-        # Timer pour scanner le dossier toutes les 5 secondes
-        self.timer = self.create_timer(5.0, self.check_for_videos)
-        self.get_logger().info(f"Surveillance du dossier : {self.video_input_dir}")
+        # Timer périodique de scan
+        self.timer = self.create_timer(self.scan_period_sec, self.check_for_videos)
+        mode = "ponctuel" if self.run_once else "continu"
+        self.get_logger().info(
+            f"Surveillance du dossier ({mode}, période {self.scan_period_sec:.1f}s) : {self.video_input_dir}"
+        )
         
         # Dictionnaire pour suivre la taille des fichiers (pour détecter les fichiers en cours d'écriture)
         self.file_sizes = {}
@@ -105,6 +134,26 @@ class VideoFilePublisher(Node):
             self.get_logger().warn(f"Erreur lors de la validation de {os.path.basename(video_path)}: {e}")
             return False
 
+    def is_video_valid_with_retries(self, video_path):
+        """Valide la vidéo avec plusieurs tentatives pour laisser le MP4 se finaliser."""
+        for attempt in range(1, self.validation_retry_count + 1):
+            if self.is_video_valid(video_path):
+                if attempt > 1:
+                    self.get_logger().info(
+                        f"Vidéo valide après {attempt} tentative(s): {os.path.basename(video_path)}"
+                    )
+                return True
+
+            if attempt < self.validation_retry_count:
+                self.get_logger().warn(
+                    f"Validation échouée (tentative {attempt}/{self.validation_retry_count}) "
+                    f"pour {os.path.basename(video_path)}; nouvelle tentative dans "
+                    f"{self.validation_retry_delay_sec:.1f}s"
+                )
+                time.sleep(self.validation_retry_delay_sec)
+
+        return False
+
     def check_for_videos(self):
         try:
             if not os.path.exists(self.video_input_dir):
@@ -112,8 +161,13 @@ class VideoFilePublisher(Node):
                 return
             
             videos = [f for f in os.listdir(self.video_input_dir) if f.endswith('.mp4')]
+            ready_videos = 0
+            processed_count = 0
             
             if not videos:
+                if self.run_once and (time.time() - self.run_once_start) >= self.run_once_timeout_sec:
+                    self.get_logger().warn("Aucune vidéo détectée avant timeout en mode run_once")
+                    self.should_exit = True
                 return
 
             self.get_logger().info(f"Vidéos trouvées : {len(videos)} fichier(s)")
@@ -124,6 +178,7 @@ class VideoFilePublisher(Node):
                 # Ne traiter que les vidéos marquées "terminées" par sequence_video.py
                 if not self.is_video_marked_ready(video_path):
                     continue
+                ready_videos += 1
                 
                 # Vérifier si le fichier est stable (pas en cours d'écriture)
                 if not self.is_file_stable(video_path, min_age_seconds=2.0):
@@ -133,8 +188,10 @@ class VideoFilePublisher(Node):
                     continue  # Attendre que le fichier soit stable
                 
                 # Vérifier si la vidéo est valide avant de la traiter
-                if not self.is_video_valid(video_path):
-                    self.get_logger().warn(f"Vidéo corrompue ou invalide détectée : {video_file}. Déplacement vers 'failed'")
+                if not self.is_video_valid_with_retries(video_path):
+                    self.get_logger().warn(
+                        f"Vidéo corrompue ou invalide détectée : {video_file}. Déplacement vers 'failed'"
+                    )
                     failed_path = os.path.join(self.failed_dir, video_file)
                     try:
                         os.rename(video_path, failed_path)
@@ -143,6 +200,9 @@ class VideoFilePublisher(Node):
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers failed: {e}")
                     continue
                 
+                self.get_logger().info(
+                    f"État traitement : {video_file} stable et validée, début du découpage"
+                )
                 # Traiter la vidéo valide
                 success = self.process_video(video_path, video_file)
                 
@@ -156,7 +216,10 @@ class VideoFilePublisher(Node):
                     try:
                         os.rename(video_path, processed_path)
                         self.consume_video_ready_flag(video_path)
-                        self.get_logger().info(f"Vidéo traitée avec succès et déplacée vers : {processed_path}")
+                        self.get_logger().info(
+                            f"Vidéo traitée avec succès et déplacée vers : {processed_path}"
+                        )
+                        processed_count += 1
                     except Exception as e:
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers processed: {e}")
                 else:
@@ -164,9 +227,30 @@ class VideoFilePublisher(Node):
                     try:
                         os.rename(video_path, failed_path)
                         self.consume_video_ready_flag(video_path)
-                        self.get_logger().warn(f"Échec du traitement, vidéo déplacée vers : {failed_path}")
+                        self.get_logger().warn(
+                            f"Échec du traitement, vidéo déplacée vers : {failed_path}"
+                        )
+                        processed_count += 1
                     except Exception as e:
                         self.get_logger().error(f"Impossible de déplacer {video_file} vers failed: {e}")
+
+            if self.run_once:
+                elapsed = time.time() - self.run_once_start
+                if processed_count > 0:
+                    self.get_logger().info(
+                        f"Mode run_once: {processed_count} vidéo(s) traitée(s), arrêt du nœud"
+                    )
+                    self.should_exit = True
+                elif ready_videos > 0 and elapsed >= self.run_once_timeout_sec:
+                    self.get_logger().warn(
+                        f"Mode run_once: timeout après {elapsed:.1f}s sans traitement finalisé, arrêt du nœud"
+                    )
+                    self.should_exit = True
+                elif ready_videos == 0 and elapsed >= self.run_once_timeout_sec:
+                    self.get_logger().warn(
+                        f"Mode run_once: aucune vidéo prête (.done) après {elapsed:.1f}s, arrêt du nœud"
+                    )
+                    self.should_exit = True
                         
         except Exception as e:
             self.get_logger().error(f"Erreur lors de la vérification des vidéos : {e}")
@@ -189,6 +273,9 @@ class VideoFilePublisher(Node):
                 return False
 
             hop_frames = max(1, int(fps / self.extract_rate))  # Éviter division par zéro
+            self.get_logger().info(
+                f"Découpage {filename}: fps≈{fps:.2f}, extract_rate={self.extract_rate}, hop_frames={hop_frames}"
+            )
             frame_count = 0
             saved_count = 0
 
@@ -214,6 +301,12 @@ class VideoFilePublisher(Node):
                         self.get_logger().warn(f"Erreur publication image {saved_count}: {e}")
                     
                     saved_count += 1
+                    every = self.progress_log_every_saved_frames
+                    if every > 0 and saved_count % every == 0:
+                        self.get_logger().info(
+                            f"Progression {filename}: {saved_count} image(s) sauvegardée(s), "
+                            f"frame lue={frame_count}"
+                        )
 
                 frame_count += 1
 
@@ -236,7 +329,11 @@ def main(args=None):
     rclpy.init(args=args)
     node = VideoFilePublisher()
     try:
-        rclpy.spin(node)
+        if node.run_once:
+            while rclpy.ok() and not node.should_exit:
+                rclpy.spin_once(node, timeout_sec=0.5)
+        else:
+            rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:

@@ -40,9 +40,23 @@ case "$MODE" in
         echo "Lancement en mode AMCL..."
         echo "Navigation Nav2 activée par défaut (use_nav:=true)."
         echo "Pour localisation seule: ajouter use_nav:=false"
+        echo ""
+        echo "Options disponibles:"
+        echo ""
+        echo "  enable_lidar:=false           Désactiver le LIDAR"
+        echo "  enable_scout:=false           Désactiver Scout Base"
+        echo "  enable_zed:=false             Désactiver la caméra ZED"
+        echo "  enable_ptz:=false             Désactiver la caméra PTZ"
+        echo "  enable_image_transfer:=false  Désactiver les nœuds de capture et de traitement d'images"
+        echo "  enable_video_publisher:=true  Réactiver le scan périodique des vidéos (désactivé par défaut)"
+        echo ""
+        echo "Repère LiDAR (TF base_link → laser_frame) :"
+        echo "  (défaut) π/2 rad (~1.570796327) — usage courant sans argument"
+        echo "  laser_mount_yaw:=0.0            Création de carte / SLAM"
+        echo ""
         # si pas de carte specifier, on affiche un message d'erreur et on quitte le script
         if [ -z "$2" ]; then
-            echo "❌ Carte non specifier ou erreur sur le chemin de la carte"
+            echo "Carte non spécifier ou erreur sur le chemin de la carte"
             exit 1
         fi
         MAP_PATH="$2"

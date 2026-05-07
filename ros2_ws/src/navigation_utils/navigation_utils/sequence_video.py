@@ -29,6 +29,7 @@ import math
 import subprocess
 import os
 import signal
+import sys
 import time as _time
 from pathlib import Path
 
@@ -69,6 +70,7 @@ class RobotSequenceVideo(Node):
         self.declare_parameter('video_brightness', 1.0)
         self.declare_parameter('video_contrast', 1.0)
         self.declare_parameter('video_gamma', 1.0)
+        self.declare_parameter('auto_trigger_video_publisher', True)
         
         self.robot_speed = self.get_parameter('robot_speed').get_parameter_value().double_value
         self.enable_robot_motion = self.get_parameter('enable_robot_motion').get_parameter_value().bool_value
@@ -78,6 +80,7 @@ class RobotSequenceVideo(Node):
         self.video_brightness = self.get_parameter('video_brightness').get_parameter_value().double_value
         self.video_contrast = self.get_parameter('video_contrast').get_parameter_value().double_value
         self.video_gamma = self.get_parameter('video_gamma').get_parameter_value().double_value
+        self.auto_trigger_video_publisher = self.get_parameter('auto_trigger_video_publisher').get_parameter_value().bool_value
         
         os.makedirs(self.video_output_dir, exist_ok=True)
         
@@ -152,10 +155,18 @@ class RobotSequenceVideo(Node):
         twist.linear.x = float(linear_x)
         twist.angular.z = float(angular_z)
         self.cmd_vel_pub.publish(twist)
-    
+
     def stop_robot(self):
-        """Arrête le robot"""
-        self.move_robot(0.0, 0.0)
+        """Arrête le robot (tolérant contexte ROS invalide après interruption)."""
+        if not self.enable_robot_motion:
+            return
+        try:
+            twist = Twist()
+            twist.linear.x = 0.0
+            twist.angular.z = 0.0
+            self.cmd_vel_pub.publish(twist)
+        except Exception:
+            pass
     
     def move_ptz(self, pan_speed, tilt_speed):
         """Publie une commande de vitesse pour la PTZ via /ptz/cmd_vel"""
@@ -241,14 +252,14 @@ class RobotSequenceVideo(Node):
                 '-c:v', 'libx264',
                 '-preset', 'medium',
                 '-crf', '23',
-                '-movflags', '+faststart',
+                '-movflags', '+faststart+frag_keyframe+empty_moov',
             ])
         else:
             ffmpeg_cmd.extend([
                 '-c:v', 'libx264',
                 '-preset', 'ultrafast',
                 '-crf', '23',
-                '-movflags', '+faststart',
+                '-movflags', '+faststart+frag_keyframe+empty_moov',
             ])
         
         ffmpeg_cmd.append(self.video_filename)
@@ -257,7 +268,8 @@ class RobotSequenceVideo(Node):
             self.ffmpeg_process = subprocess.Popen(
                 ffmpeg_cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                start_new_session=True,
             )
             self.record_start_time = self._now()
             self.get_logger().info(f"Démarrage enregistrement vidéo: {self.video_filename}")
@@ -274,31 +286,70 @@ class RobotSequenceVideo(Node):
         if self.ffmpeg_process is None:
             return
         recorded_video_path = self.video_filename
+        clean_stop = False
 
         try:
-            self.ffmpeg_process.send_signal(signal.SIGINT)
-            self.ffmpeg_process.wait(timeout=5)
+            # FFmpeg tourne dans sa propre session: on signale son groupe
+            # pour garantir une fermeture propre du conteneur MP4.
+            os.killpg(self.ffmpeg_process.pid, signal.SIGINT)
+            self.ffmpeg_process.wait(timeout=30)
             self.get_logger().info(f"Enregistrement vidéo terminé: {self.video_filename}")
+            clean_stop = True
         except subprocess.TimeoutExpired:
-            self.get_logger().warn("Timeout lors de l'arrêt de ffmpeg, kill forcé")
-            self.ffmpeg_process.kill()
-            self.ffmpeg_process.wait()
+            self.get_logger().warn("Timeout SIGINT FFmpeg, tentative SIGTERM")
+            try:
+                os.killpg(self.ffmpeg_process.pid, signal.SIGTERM)
+                self.ffmpeg_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.get_logger().warn("FFmpeg ne répond pas au SIGTERM, kill forcé")
+                self.ffmpeg_process.kill()
+                self.ffmpeg_process.wait()
+        except ProcessLookupError:
+            # Processus déjà terminé entre-temps.
+            self.get_logger().warn("Processus FFmpeg introuvable au moment de l'arrêt")
+            clean_stop = self.ffmpeg_process.poll() is not None
         except Exception as e:
             self.get_logger().error(f"Erreur lors de l'arrêt de l'enregistrement: {e}")
             if self.ffmpeg_process.poll() is None:
                 self.ffmpeg_process.kill()
-        if recorded_video_path and os.path.exists(recorded_video_path):
+        if clean_stop and recorded_video_path and os.path.exists(recorded_video_path):
             self.video_ready_flag_path = f"{recorded_video_path}.done"
             try:
                 with open(self.video_ready_flag_path, 'w', encoding='utf-8') as flag_file:
                     flag_file.write(f"{os.path.basename(recorded_video_path)}\n")
                 self.get_logger().info(f"Marqueur de fin vidéo créé: {self.video_ready_flag_path}")
+                if self.auto_trigger_video_publisher:
+                    self.trigger_video_publisher_once()
             except Exception as e:
                 self.get_logger().error(f"Impossible de créer le marqueur de fin vidéo: {e}")
+        elif recorded_video_path and os.path.exists(recorded_video_path):
+            reason = "arrêt FFmpeg non propre"
+            self.get_logger().warn(
+                f"{reason} pour {os.path.basename(recorded_video_path)}: marqueur .done non créé"
+            )
 
         self.ffmpeg_process = None
         self.video_filename = None
-    
+
+    def trigger_video_publisher_once(self):
+        """Lance le découpage en images via image_transfer/video_publisher en mode ponctuel."""
+        try:
+            cmd = [
+                'ros2',
+                'run',
+                'image_transfer',
+                'video_publisher',
+                '--ros-args',
+                '-p', 'run_once:=true',
+                '-p', 'run_once_timeout_sec:=45.0',
+                '-p', 'scan_period_sec:=1.0',
+                '-p', 'extract_rate:=0.5',
+            ]
+            subprocess.Popen(cmd, start_new_session=True)
+            self.get_logger().info("Déclenchement de video_publisher (run_once)")
+        except Exception as e:
+            self.get_logger().warn(f"Impossible de lancer video_publisher en run_once: {e}")
+
     def update_ptz_sweep(self):
         """
         Pattern Scanner de Voûte : Balayage horizontal (Pan) de gauche à droite.
@@ -370,18 +421,34 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().warn("Arrêt manuel détecté...")
+        try:
+            node.get_logger().warn("Arrêt manuel détecté...")
+        except Exception:
+            sys.stderr.write("[sequence_video] Arrêt manuel (Ctrl+C)\n")
     finally:
-        node.stop_then_home_ptz()
-        node.stop_robot()
-        node.stop_video_recording()
-        
-        # Délai court pour que les paquets réseau (Socket + FFmpeg) partent
+        # stop_video_recording déclenche video_publisher (run_once).
+        # Le retour PTZ Home est ensuite lancé sans attendre la fin du découpage.
+        try:
+            node.stop_video_recording()
+        except Exception as e:
+            sys.stderr.write(f"[sequence_video] stop_video_recording: {e}\n")
+        try:
+            node.stop_then_home_ptz()
+        except Exception as e:
+            sys.stderr.write(f"[sequence_video] stop_then_home_ptz: {e}\n")
+        try:
+            node.stop_robot()
+        except Exception as e:
+            sys.stderr.write(f"[sequence_video] stop_robot: {e}\n")
+
         _time.sleep(0.5)
-        
+
         if rclpy.ok():
-            node.destroy_node()
-            rclpy.shutdown()
+            try:
+                node.destroy_node()
+                rclpy.shutdown()
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':

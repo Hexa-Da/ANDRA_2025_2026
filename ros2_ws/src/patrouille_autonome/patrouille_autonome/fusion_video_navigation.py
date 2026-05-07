@@ -46,6 +46,28 @@ def _stop_process(process):
             return
 
 
+def _send_ptz_home():
+    """Demande un retour PTZ Home via le topic preset."""
+    try:
+        subprocess.run(
+            [
+                'ros2',
+                'topic',
+                'pub',
+                '--once',
+                '/ptz/preset',
+                'std_msgs/msg/Int32',
+                '{data: -1}',
+            ],
+            check=False,
+            timeout=3.0,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
+
 def _stop_robot_motion():
     """Commande de sécurité pour arrêter le robot après interruption."""
     try:
@@ -123,6 +145,15 @@ def main():
             # Dès que la mission se termine (succès ou erreur), stopper la séquence vidéo.
             if mission_status is not None and video_process is not None and video_status is None:
                 _stop_process(video_process)
+                _send_ptz_home()
+                break
+
+            # Si la séquence vidéo se termine en premier,
+            # arrêter aussi la mission Nav2.
+            if video_status is not None and mission_process is not None and mission_status is None:
+                _stop_process(mission_process)
+                _send_ptz_home()
+                _stop_robot_motion()
                 break
 
             if mission_status is not None or video_status is not None:
@@ -134,6 +165,7 @@ def main():
         _stop_process(mission_process)
     finally:
         _stop_all(processes)
+        _send_ptz_home()
         _stop_robot_motion()
 
     if interrupted:

@@ -51,7 +51,7 @@ def generate_launch_description():
         'enable_image_transfer', default_value='true',
         description='Enable image transfer node')
     declare_enable_video_publisher = DeclareLaunchArgument(
-        'enable_video_publisher', default_value='true',
+        'enable_video_publisher', default_value='false',
         description='Enable video publisher node')
     declare_video_extract_rate = DeclareLaunchArgument(
         'video_extract_rate', default_value='10.0',

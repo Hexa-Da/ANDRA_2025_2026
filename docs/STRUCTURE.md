@@ -74,7 +74,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `trajectoire/` : Dossier des fichiers de trajectoire (`*.yaml`) par carte (ex: `ma_carte_traj.yaml`)
 - `src/patrouille_autonome/` : Package ROS2 d'orchestration mission + capture autonome
   - `fusion_photo_navigation` : Lance `trajectoire_mission` + `sequence_photo` en parallèle
-  - `fusion_video_navigation` : Lance `trajectoire_mission` + `sequence_video` en parallèle
+  - `fusion_video_navigation` : Lance `trajectoire_mission` + `sequence_video` en parallèle (arrêt uniformisé avec `fusion_photo_navigation`, PTZ Home explicitement envoyé par la fusion)
 - `src/ros_launcher/` : Package ROS2 de configuration et de lancement (SLAM, AMCL, EKF, Nav2)
   - `navigation_stack.launch.py` : Fichier de lancement principal 
   - `configs/` : Fichiers de configuration YAML

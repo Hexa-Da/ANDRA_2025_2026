@@ -351,7 +351,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Nouvelle idée : nous allons positionner la caméra derrière la tourelle.
   - Elle doit seulement prendre des photos/vidéos d'une arche ; elle n'a pas besoin de voir devant elle.
   - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
-  - Conception 3D de nouveaux support par Vincent
+  - Conception et impression 3D de nouveaux support par Vincent
 - [x] **Arret d'urgence** :
   - Les tests terrain ont montré trop de faux positifs LiDAR malgré plusieurs filtrages (angle, distance, confirmations temporelles/spatiales).
   - Décision actuelle : retrait de l'arrêt d'urgence logiciel dans `trajectoire_mission.py` pour éviter les arrêts intempestifs de mission.
@@ -366,8 +366,14 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
     - `fusion_photo_navigation` : lance `trajectoire_mission` + `sequence_photo`.
     - `fusion_video_navigation` : lance `trajectoire_mission` + `sequence_video`.
   - Paramétrage mission intégré : waypoint par défaut `ma_carte_traj.yaml`, `frame_id:=map`, option `--loop`.
-  - Fin de mission : arrêt automatique de la séquence photo/vidéo, retour PTZ en preset Home.
+  - Fin de mission : arrêt automatique de la séquence photo/vidéo avec comportement uniformisé entre `fusion_photo_navigation` et `fusion_video_navigation` (arrêt des processus + commande PTZ Home explicite côté fusion).
   - Arrêt robuste (`Ctrl+C`) : shutdown des deux nœuds de fusion + commande de sécurité `cmd_vel=0`.
+- [x] **Stabiliser la chaîne vidéo `sequence_video` -> `video_publisher`** :
+  - `sequence_video` crée désormais le marqueur `.done` après arrêt propre de FFmpeg et déclenche `video_publisher` en mode `run_once`.
+  - Le `video_publisher` permanent dans `navigation_stack.launch.py` est désactivé par défaut (`enable_video_publisher:=false`) pour éviter les doubles instances.
+  - Le découpage automatique est fortement réduit (`extract_rate:=0.5` lors du trigger) pour limiter le nombre d'images générées.
+  - Le shutdown de `sequence_video` a été réordonné/renforcé pour qu'un `Ctrl+C` ne bloque plus la finalisation vidéo et le déclenchement du traitement.
+  - Les logs d'état de traitement ont été ajoutés directement dans `video_publisher.py` (démarrage, progression, fin, déplacement vers `processed/failed`).
 - [ ] **Retoucher les séquences**
   - Aligner `sequence_photo` et `sequence_video` sur un usage "capture only" quand elles sont lancées via `patrouille_autonome` (ne jamais concurrencer Nav2 sur `/cmd_vel`).
   - Revoir le timing PTZ/capture pour éviter les captures pendant les phases d'accélération/virage (fenêtre stable ou waypoint atteint).

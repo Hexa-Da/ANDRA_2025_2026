@@ -253,10 +253,11 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Gère le preset Home (-1) via `/ptz/preset` (std_msgs/Int32)
   - Communication VISCA avec la caméra (192.168.5.163:1259)
 - **`video_publisher`** : Traitement des vidéos enregistrées et extraction d'images
-  - Surveille le dossier `video/video_output/` toutes les 5 secondes pour détecter de nouvelles vidéos `.mp4`
+  - Déclenché automatiquement par `sequence_video` à la création du marqueur `.done`
+  - Mode permanent possible en option : scan périodique du dossier `video/video_output/
   - Vérifie que les vidéos sont stables (pas en cours d'écriture) avant traitement
   - Valide les vidéos avant traitement (vérifie FPS et capacité de lecture)
-  - Extrait des images à un taux configurable (`extract_rate` ; via le launch : argument `video_extract_rate`)
+  - Extrait des images à un taux configurable (`extract_rate`) ; en déclenchement automatique `run_once`, la valeur utilisée est à 0.5 image par seconde
   - Sauvegarde les images extraites dans `ros2_ws/images_capturees/` avec le préfixe `from_vid_`
   - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
   - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
