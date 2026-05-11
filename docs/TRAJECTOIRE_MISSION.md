@@ -13,7 +13,7 @@ Exemple de lancement:
 ```bash
 cd ~/Documents/ANDRA_2025-2026
 source scripts/setup.sh
-./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte.yaml laser_mount_yaw:=0.0
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte.yaml
 ```
 
 ## 2) Nœud `trajectoire_mission`

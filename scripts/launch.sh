@@ -24,10 +24,6 @@ case "$MODE" in
         echo "  enable_ptz:=false             Désactiver la caméra PTZ"
         echo "  enable_image_transfer:=false  Désactiver les nœuds de capture et de traitement d'images"
         echo ""
-        echo "Repère LiDAR (TF base_link → laser_frame) :"
-        echo "  (défaut) π/2 rad (~1.570796327) — usage courant sans argument"
-        echo "  laser_mount_yaw:=0.0            Création de carte / SLAM"
-        echo ""
         echo ""
         echo "--> pour sauvegarder la carte, avant de couper les nœuds, executer :"
         echo "ros2 run nav2_map_server map_saver_cli -f ros2_ws/src/ros_launcher/map_results/ma_carte"
@@ -51,10 +47,6 @@ case "$MODE" in
         echo "  enable_ptz:=false             Désactiver la caméra PTZ"
         echo "  enable_image_transfer:=false  Désactiver les nœuds de capture et de traitement d'images"
         echo "  enable_video_publisher:=true  Réactiver le scan périodique des vidéos (désactivé par défaut)"
-        echo ""
-        echo "Repère LiDAR (TF base_link → laser_frame) :"
-        echo "  (défaut) π/2 rad (~1.570796327) — usage courant sans argument"
-        echo "  laser_mount_yaw:=0.0            Création de carte / SLAM"
         echo ""
         # si pas de carte spécifiée ou chemin invalide, on quitte le script
         if [ -z "${2:-}" ]; then

@@ -59,9 +59,6 @@ def generate_launch_description():
     declare_ydlidar_params_file = DeclareLaunchArgument(
         'ydlidar_params_file', default_value='ydlidar_TG15.yaml',
         description='Fichier YAML dans ros_launcher/configs pour le YDLidar TG15')
-    declare_laser_mount_yaw = DeclareLaunchArgument(
-        'laser_mount_yaw', default_value='1.570796327',
-        description= '0.0 aligné avant robot, 1.570796327 ≈ π/2 si le LiDAR est tourné de 90°.')
 
     # --- Resolve launch configurations AFTER declarations ---
     use_slam = LaunchConfiguration('use_slam')
@@ -76,7 +73,6 @@ def generate_launch_description():
     enable_video_publisher = LaunchConfiguration('enable_video_publisher')
     video_extract_rate = LaunchConfiguration('video_extract_rate')
     ydlidar_params_file = LaunchConfiguration('ydlidar_params_file')
-    laser_mount_yaw = LaunchConfiguration('laser_mount_yaw')
 
     return LaunchDescription([
         # 1. Declarations 
@@ -92,7 +88,6 @@ def generate_launch_description():
         declare_enable_video_publisher,
         declare_video_extract_rate,
         declare_ydlidar_params_file,
-        declare_laser_mount_yaw,
 
         # 2. Drivers matériels (conditionnels)
 
@@ -217,14 +212,14 @@ def generate_launch_description():
                 'base_link', 'zed_camera_link',
             ],
         ),
-        # base_link -> laser_frame : x ≈ 8,5 cm, z ≈ 22,2 cm ;yaw via laser_mount_yaw (0 ou π/2)
+        # base_link -> laser_frame : x ≈ 8,5 cm, z ≈ 22,2 cm ; yaw 0 (LiDAR aligné avant du robot)
         Node(
             package='tf2_ros',
             executable='static_transform_publisher',
             name='base_to_laser_tf',
             arguments=[
                 '0.085', '0.0', '0.222',
-                laser_mount_yaw, '0', '0',
+                '0.0', '0', '0',
                 'base_link', 'laser_frame',
             ],
         ),

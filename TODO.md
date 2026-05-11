@@ -347,11 +347,12 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Il faut créer une tourelle avec un plexiglas autour du LiDAR.
   - Problème : les scans ne passent à travers aucun matériau, même transparent.
   - Abandon de l'idée d'une nouvelle tourelle
-- [ ] **Changer la position de la caméra** :
+- [x] **Changer la position de la caméra** :
   - Nouvelle idée : nous allons positionner la caméra derrière la tourelle.
   - Elle doit seulement prendre des photos/vidéos d'une arche ; elle n'a pas besoin de voir devant elle.
   - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
   - Conception et impression 3D de nouveaux support par Vincent
+  - Nous n'avons donc pu besoin du paramètre `laser_mount_yaw`
 - [x] **Arret d'urgence** :
   - Les tests terrain ont montré trop de faux positifs LiDAR malgré plusieurs filtrages (angle, distance, confirmations temporelles/spatiales).
   - Décision actuelle : retrait de l'arrêt d'urgence logiciel dans `trajectoire_mission.py` pour éviter les arrêts intempestifs de mission.

@@ -85,7 +85,7 @@ Le fichier `ros2_ws/src/ros_launcher/config.rviz` contient une configuration pr�
 - Affiche les données du LIDAR en temps réel
 - Points colorés selon l'intensité du signal
 - **Repère d’affichage** : avec RViz2 (plugin Humble), le scan est transformé dans le **Fixed Frame** (`odom` ou `map`).
-- **Alignement avec l’avant du robot** : TF **`base_link` → `laser_frame`** via **`laser_mount_yaw`** — défaut **π/2** ; **`0.0`** pour la **création de carte (SLAM)**.
+- **Alignement avec l’avant du robot** : TF **`base_link` → `laser_frame`** avec **yaw = 0** : le scan est publié dans le même repère d’orientation que l’avant du robot.
 - **Utilité** : Vérifier que le LIDAR fonctionne correctement
 
 #### 4. **Path** (Trajet du robot)

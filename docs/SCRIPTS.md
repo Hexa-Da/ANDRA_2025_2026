@@ -73,7 +73,7 @@ Lancer le système complet :
 # Avec options (la carte est toujours le 2e argument)
 ./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte.yaml \
   enable_zed:=false enable_ptz:=false enable_image_transfer:=false \
-  enable_video_publisher:=false laser_mount_yaw:=0.0
+  enable_video_publisher:=false
 ```
 
 ### `scripts/ptz-network-setup.sh` - Configuration réseau PTZ

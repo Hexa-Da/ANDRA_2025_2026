@@ -74,7 +74,5 @@ Ce lien vient de l'URDF officiel Agilex (`scout_description`) et fournit une fra
 |-----------|--------|
 | **Type** | `static_transform_publisher` |
 | **Translation** | **(0.085, 0, 0.222)** m — soit **x ≈ 8,5 cm, z ≈ 22,2 cm** |
-| **Rotation** | `yaw` = argument ROS `laser_mount_yaw` (par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte), pitch et roll = **0** |
+| **Rotation** | **yaw = 0**, pitch et roll = **0** (LiDAR aligné sur l’avant du robot |
 | **Publié par** | `navigation_stack.launch.py` (`base_to_laser_tf`) |
-
-Exemples : `laser_mount_yaw:=0.0` (avant du robot), `laser_mount_yaw:=1.570796327` (LiDAR tourné de 90° autour de Z).

@@ -296,7 +296,7 @@ Les transformations statiques sont publiées par des nœuds `static_transform_pu
   - Translation **(0.185, 0, 0.192)** m ; rotation rpy **(0, 0, 0)** 
   
 - **`base_to_laser_tf`** : Publie `base_link` → `laser_frame` (LIDAR)
-  - Translation fixe **(0.085, 0, 0.222)** m ; **yaw** = argument `laser_mount_yaw` (par défaut `1.570796327` pour π/2 rad, sinon `0.0` pour la création de carte), pitch et roll = **0**
+  - Translation fixe **(0.085, 0, 0.222)** m ; rotation **yaw = 0**, pitch et roll = **0** (LiDAR aligné sur l’avant du robot)
 
 > Aucun static `map → odom` de secours n'est publié : la TF dynamique est exclusivement produite par `slam_toolbox` (mode SLAM) ou `nav2_amcl` (mode AMCL). Avoir un static identité en parallèle d'AMCL crée un conflit de TF.
 
