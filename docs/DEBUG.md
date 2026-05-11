@@ -120,3 +120,13 @@ Pour visioner les informations de la zed2i dans RViz :
 ```bash
 ros2 launch zed_display_rviz2 display_zed_cam.launch.py camera_model:=zed2i
 ```
+
+## Vidéos longues (lecture hors éditeur)
+
+Les enregistrements continus traités sous `video/video_output/processed/` peuvent être très lourds. L’éditeur de code n’est pas adapté pour les lire. La méthode fiable est de **copier le fichier sur ton ordinateur** avec `scp` lancé **depuis le PC**.
+
+```bash
+scp techlab@192.168.40.100:/home/techlab/Documents/ANDRA_2025-2026/video/video_output/processed/video_continuous_2026-05-11_15-45-51.mp4 /Users/hexa-da/Desktop
+```
+
+Le dernier argument est le dossier (ou fichier) de destination sur ta machine. Pour un dossier entier, ajoute l’option `-r` à `scp`.
