@@ -4,6 +4,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[french]{babel}
 \usepackage{graphicx}
+\usepackage{wrapfig}
 \usepackage{caption}
 \usepackage[hidelinks]{hyperref}
 \usepackage{parskip}
@@ -265,7 +266,7 @@ Notre première descente au laboratoire de Bure, prévue pour le vendredi 6 fév
     \item \textbf{Base mobile Agilex Scout Mini :} Fonctionnelle. Le driver \texttt{scout\_base} communique avec le robot via l'interface CAN \texttt{agilex} et publie correctement les données odométriques sur \texttt{/odom\_robot}.
     \item \textbf{Caméra PTZ Marshall CV-605 :} Fonctionnelle. La caméra est accessible via son adresse IP statique grâce au script \texttt{ptz-network-setup.sh}. Le contrôle pan/tilt/zoom est opérationnel via le protocole VISCA over IP, et les nœuds de séquence automatique (\texttt{sequence\_photo} et \texttt{sequence\_video}) sont en place.
     \item \textbf{Caméra ZED2i :} Partiellement fonctionnelle. Le package \texttt{zed\_wrapper} est installé et la caméra est détectée, elle publie les données visuelles et inertielles (IMU). Cependant, la cohérence des données renvoyées n'a pas encore été vérifiée.
-    \item \textbf{LiDAR 2D :} Non résolu. Le diagnostic a identifié un port micro USB arraché sur la carte Radar\_Con. Un branchement de secours via USB-C pour assurer le rôle de ce branchement arraché va être tenté.
+    \item \textbf{LiDAR 2D :} Non résolu. Le diagnostic a identifié un port micro USB arraché sur la carte Radar\_Con. Un branchement de secours via USB-C pour assurer le rôle de ce branchement arraché va être tenté. (cf. figure 10)
     \item \textbf{Hotspot Jetson :} Configuré et validé. Le robot, équipé de sa propre carte réseau, crée automatiquement un réseau Wi-Fi \texttt{JetsonWIFI} lorsqu'il ne capte pas le réseau du TechLab, permettant la connexion SSH en galerie via \texttt{ssh techlab@orin2.local}.
 \end{itemize}
 
@@ -278,6 +279,23 @@ L'objectif principal de cette échéance de février est double :
 \end{enumerate}
 
 Cette descente permettra ainsi de vérifier la cohérence entre l'environnement de simulation du TechLab et la réalité des tunnels, tout en fournissant à l'équipe IA les données nécessaires à l'amélioration du modèle de détection.
+
+\vspace{0.25cm}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.25\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/ricoh.jpg}
+        \captionof{figure}\\{Ricoh Theta de l'ANDRA}
+    \end{minipage}%
+    \hspace{2cm}
+    \begin{minipage}[c]{0.25\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/chipset_lidar.jpg}
+        \captionof{figure}\\{Chipset cassé du LiDAR}
+    \end{minipage}
+\end{figure}
 
 \paragraph{Contraintes et limitations :} Malgré ces avancées, plusieurs défis subsistent à l'approche de cette première descente dans les tunnels de l'ANDRA : 
 
@@ -324,6 +342,12 @@ Le second semestre s'ouvre sur les enseignements tirés de la première descente
 
 \subsection{Résolution du problème LiDAR}
 
+\begin{wrapfigure}{r}{0.2\textwidth} % 'r' pour right, 0.4 = 40% de la largeur de page
+    \vspace{-1.5cm}
+    \centering
+    \includegraphics[width=\linewidth]{images/chipset_lidar_repare.jpg}
+\end{wrapfigure}
+
 Le problème LiDAR, identifié depuis le premier semestre, a été définitivement résolu le 18 février 2026. Le diagnostic avait révélé que le port micro USB de la carte Radar\_Con était arraché, empêchant l'alimentation du moteur nécessaire à la rotation continue du Lidar. Un branchement de secours via le port USB-C s'est avéré fonctionnel.
 
 La résolution a nécessité deux corrections :
@@ -334,7 +358,9 @@ La résolution a nécessité deux corrections :
 
 \subsection{Optimisation YOLO sur Jetson}
 
-Afin d'exploiter pleinement le GPU de la Jetson Orin Nano pour la détection de fissures, une chaîne d'optimisation complète a été mise en place. Une image Docker spécialisée (\texttt{Dockerfile.jetson}), basée sur \texttt{dustynv/l4t-pytorch:r36.2.0}, a été construite pour isoler l'environnement de détection. Cette image intègre ROS~2 Humble, PyTorch avec CUDA et la bibliothèque Ultralytics, garantissant la compatibilité GPU native sur la plateforme Jetson.
+Afin d'exploiter pleinement le GPU de la Jetson Orin Nano pour la détection de fissures, une chaîne d'optimisation complète a été mise en place. Une image Docker spécialisée (\texttt{Dockerfile.jetson}), basée sur \texttt{dustynv/l4t-pytorch:r36.2.0}, a été construite pour isoler l'environnement de détection.
+
+Cette image intègre ROS~2 Humble, PyTorch avec CUDA et la bibliothèque Ultralytics, garantissant la compatibilité GPU native sur la plateforme Jetson.
 
 Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli sur le modèle PyTorch.
 
@@ -369,9 +395,33 @@ Les visualisations RViz mettaient en évidence une trajectoire non planaire, sig
 
 Pour la cartographie, une configuration dédiée \texttt{ydlidar\_TG15.yaml} a été consolidée, puis une plateforme imprimée en 3D a été utilisée pour libérer le LiDAR des perturbations causées par les piliers de la tourelle. Ainsi, deux modes de montage ont été conservés selon l'usage (cartographie ou navigation), avec adaptation du paramètre \texttt{laser\_mount\_yaw} :
 \begin{itemize}
-    \item \texttt{\(\pi/2\)} pour le montage original (hérité de l'année dernière);
-    \item \texttt{0.0} pour la création de carte en SLAM (LiDAR aligné avec l'avant du robot).
+    \item $\pi/2$ pour le montage original (hérité de l'année dernière) ;
+    \item $0.0$ pour la création de carte en SLAM (LiDAR aligné avec l'avant du robot).
 \end{itemize}
+
+\vspace{0.5cm}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/avant.JPG}        
+        \small \textit{Montage original}
+    \end{minipage}%
+    \hspace{0.25cm}
+    \begin{minipage}[c]{0.1\textwidth}
+        \centering
+        \Huge $\Rightarrow$
+    \end{minipage}%
+    \hspace{0.25cm}
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/premier_platine.jpg}
+        \small \textit{Platine imprimée en 3D}
+    \end{minipage}
+    \caption{Évolution du montage du LiDAR pour la cartographie.}
+    \label{fig:evolution_lidar}
+\end{figure}
 
 \subsubsection{Mise à jour EKF + SLAM}
 
@@ -401,6 +451,15 @@ La seconde descente a constitué le jalon principal du semestre 2. Elle a permis
     \item \textbf{Cartographie initiale encourageante :} une première tentative de cartographie des tunnels a été réalisée, mais reste insatisfaisante, car les dérives restent encore trop importantes. La carte créée est donc difficilement exploitable.
 \end{itemize}
 
+\vspace{0.25cm}
+
+\begin{figure}[htbp] 
+    \centering
+    \includegraphics[width=0.4\textwidth]{images/test_andra.png}
+    \caption{Première tentative de cartographie des tunnels.}
+    \label{fig:carto_tunnels}
+\end{figure}
+
 \subsection{Navigation autonome sur carte}
 
 Le semestre 2 a aussi marqué la transition vers un premier prototype de navigation autonome orientée mission avec des waypoints, basée sur AMCL et Nav2. Le point central de cette transition est l'usage de RViz comme interface de création et de validation des trajectoires, en particulier via \texttt{2D Nav Goal}.
@@ -410,6 +469,15 @@ Le semestre 2 a aussi marqué la transition vers un premier prototype de navigat
     \item \textbf{Nœud de mission :} création du nœud \texttt{trajectoire\_mission.py}, qui lit une trajectoire YAML puis envoie séquentiellement des goals \texttt{navigate\_to\_pose}.
     \item \textbf{Trajectoires construites depuis RViz :} les scripts s'appuient sur les objectifs posés manuellement avec \texttt{2D Nav Goal}. Chaque pose est récupérée, puis l'ensemble est enregistré dans un YAML de waypoints.
 \end{itemize}
+
+\vspace{0.5cm}
+
+\begin{figure}[htbp] 
+    \centering
+    \includegraphics[width=0.4\textwidth]{images/screen_rviz.png}
+    \caption{Screen RViz}
+    \label{fig:rviz}
+\end{figure}
 
 \subsection{Fusion navigation + acquisition}
 
@@ -423,7 +491,48 @@ Une refonte complète de la tourelle a d’abord été envisagée, avec un habil
 
 La stratégie retenue repose donc sur un montage plus pragmatique : positionner la caméra derrière la tourelle sur une platine imprimée en 3D pour cet usage, et conserver le LiDAR dans une position dominante sur une nouvelle platine dédiée imprimée également en 3D, afin de lui garantir un champ de scan aussi dégagé que possible. L’objectif est d’exploiter au maximum la précision du LiDAR pour la cartographie et la navigation, tout en maintenant la capacité de capture d’images de l’arche d'un tunnel.
 
+\vspace{0.25cm}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/assemblage.png}        
+    \end{minipage}%
+    \hspace{0cm}
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/eclate.png}
+    \end{minipage}
+    \caption{Premier prototype avec plexiglas}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/platine_lidar.png}
+        \small \textit{Platine LiDAR}
+    \end{minipage}%
+    \hspace{0.25cm}
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/montage_final.png}
+    \end{minipage}
+    \hspace{0.25cm}
+    \begin{minipage}[c]{0.275\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/platine_ptz.png}
+        \small \textit{Platine PTZ}
+    \end{minipage}
+    \caption{Montage final}
+\end{figure}
+
+\newpage
+
 \subsubsection{Orchestration logicielle}
+
+Une fois le déplacement et l'acquisition stabilisés séparément, l'enjeu est de les enchaîner de manière fiable sur le terrain : lancer les séquences de prise de vue sans bloquer la progression entre waypoints, tout en conservant un comportement de navigation acceptable face aux obstacles et en garantissant un arrêt propre en fin de mission. Les choix suivants matérialisent cette orchestration dans le package \texttt{patrouille\_autonome}.
 
 \begin{itemize}
     \item \textbf{Orchestration photo/navigation :} script \texttt{fusion\_photo\_navigation} pour exécuter une mission de waypoints en parallèle d'une séquence photo.
@@ -441,9 +550,7 @@ Le dataset 360° capturé sur les deux descentes constitue la base de travail du
     \item \textbf{Entraînement d'un modèle adapté :} Un nouveau modèle de détection sera entraîné spécifiquement sur ces images 360°, afin de permettre une analyse continue de l'ensemble de la voûte pendant les déplacements du robot.
 \end{enumerate}
 
-
 \newpage
-
 
 % --- Gestion de projet ---
 \section{Gestion de projet}
@@ -457,7 +564,6 @@ Une fois affecté, le sujet a révélé une composante robotique majeure que nou
 Dans ce contexte, la priorité a été donnée à l'appropriation technique plutôt qu'à la mise en place de processus de gestion de projet complexes. Nous avons rapidement établi le contact avec l'équipe précédente pour récupérer l'historique des travaux (dépôt GitHub et Drive). Si l'accès aux ressources logicielles s'est fait sans encombre, l'accès physique au robot, situé au TechLab, a nécessité davantage de coordination logistique.
 
 \subsection{}
-
 
 % --- Résultats ---
 \section{Résultats}
