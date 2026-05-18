@@ -46,7 +46,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Contenu typique** :
 - `backup_robot_usine.img.zst.sha256` : somme SHA256 attendue pour le fichier nommé `backup_robot_usine.img.zst`.
 
-**Ce qui n’est en principe pas dans Git** : le fichier `backup_robot_usine.img.zst` (très volumineux). Il doit être archivé ailleurs (disque, NAS, clé USB). Avant restauration, vérifiez l’intégrité avec `sha256sum` comme dans `docs/BACKUP.md`.
+**Ce qui n’est en principe pas dans Git** : le fichier `backup_robot_usine.img.zst` (très volumineux). Une copie pour l’équipe est tenue sur le **drive associé au projet** ; d’autres copies peuvent exister sur disque, NAS ou clé USB. Avant restauration, vérifiez l’intégrité avec `sha256sum` comme dans `docs/BACKUP.md`.
 
 **Intérêt** : Éviter de reflasher ou de conserver une image corrompue ; traçabilité alignée sur la procédure officielle de sauvegarde.
 

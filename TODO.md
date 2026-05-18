@@ -337,6 +337,8 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Surveillance LiDAR `/scan` pendant l'exécution des goals.
   - Si obstacle frontal sous seuil (`emergency_stop_distance`), annulation du goal en cours et arrêt de la mission.
 
+**Sauvegarde disque (image usine)** : en début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. L’archive d’image compressée elle-même sera **disponible sur le drive associé au projet** (trop volumineuse pour Git), pour que toute l’équipe puisse la récupérer. L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
+
 ---
 
 ## Problèmes actuels / en cours de résolution
