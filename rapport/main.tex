@@ -16,6 +16,7 @@
 \usepackage{csquotes}
 \usepackage{graphbox}
 \usepackage{biblatex} 
+\usepackage{overpic} 
 \addbibresource{bibliography.bib}
 \usepackage[a4paper, top=2.5cm, bottom=3.5cm, left=2.5cm, right=2.5cm, footskip=1cm]{geometry}
 
@@ -342,7 +343,7 @@ Le second semestre s'ouvre sur les enseignements tirés de la première descente
 
 \subsection{Résolution du problème LiDAR}
 
-\begin{wrapfigure}{r}{0.2\textwidth} % 'r' pour right, 0.4 = 40% de la largeur de page
+\begin{wrapfigure}{r}{0.25\textwidth} % 'r' pour right, 0.4 = 40% de la largeur de page
     \vspace{-1.5cm}
     \centering
     \includegraphics[width=\linewidth]{images/chipset_lidar_repare.jpg}
@@ -439,6 +440,16 @@ La fusion d'état a été simplifiée pour gagner en robustesse :
     \item il n’y a plus de frames parasites ni de doublons TF qui contredisent cette chaîne.
 \end{itemize}
 
+\vspace{0.5cm}
+
+% Schéma d'architecture — à placer ici
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\linewidth]{images/archi_ros2.png}
+    \caption{Architecture ROS2}
+    \label{fig:archi_ros2}
+\end{figure}
+
 \subsection{Résultats de la seconde descente}
 
 La seconde descente a constitué le jalon principal du semestre 2. Elle a permis de valider en conditions réelles une version nettement plus mature de la stack logicielle.
@@ -453,11 +464,20 @@ La seconde descente a constitué le jalon principal du semestre 2. Elle a permis
 
 \vspace{0.25cm}
 
-\begin{figure}[htbp] 
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.4\textwidth]{images/test_andra.png}
-    \caption{Première tentative de cartographie des tunnels.}
-    \label{fig:carto_tunnels}
+    \begin{minipage}[c]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/robot_galerie.jpg}
+        \small \textit{Le robot en galerie}
+    \end{minipage}%
+    \hspace{0.5cm}
+    \begin{minipage}[c]{0.35\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/test_andra.png}
+        \small \textit{Première  cartographie}
+    \end{minipage}
+    \caption{Seconde descente}
 \end{figure}
 
 \subsection{Navigation autonome sur carte}
@@ -472,11 +492,14 @@ Le semestre 2 a aussi marqué la transition vers un premier prototype de navigat
 
 \vspace{0.5cm}
 
-\begin{figure}[htbp] 
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.4\textwidth]{images/screen_rviz.png}
-    \caption{Screen RViz}
-    \label{fig:rviz}
+    \begin{overpic}[width=0.5\textwidth]{images/screen_rviz.png}
+        \put(20,60){\small\color{white}\textbf{Carte}}
+        \put(50,30){\small\color{white}\textbf{Robot}}
+        \put(70,70){\small\color{white}\textbf{Trajectoire}}
+    \end{overpic}
+    \caption{Visualisation RViz2}
 \end{figure}
 
 \subsection{Fusion navigation + acquisition}
@@ -528,7 +551,7 @@ La stratégie retenue repose donc sur un montage plus pragmatique : positionner 
     \caption{Montage final}
 \end{figure}
 
-\newpage
+Ce nouveau positionnement a aussi permis de simplifier la configuration logicielle : le paramètre \texttt{laser\_mount\_yaw}, qui compensait auparavant l'angle de montage du LiDAR par rapport à l'axe du robot, n'est plus nécessaire. Le LiDAR étant maintenant aligné avec l'avant du robot sur sa platine dédiée, la valeur par défaut est directement applicable, aussi bien pour la cartographie que pour la navigation.
 
 \subsubsection{Orchestration logicielle}
 
@@ -555,6 +578,17 @@ Le dataset 360° capturé sur les deux descentes constitue la base de travail du
 % --- Gestion de projet ---
 \section{Gestion de projet}
 
+\subsection{Organisation de l'équipe}
+
+Le projet a été conduit par quatre étudiants avec une répartition naturelle en deux binômes :
+
+\begin{itemize}
+    \item \textbf{Lucas et Adrien :} axe IA — annotation du dataset 360°, entraînement et évaluation du modèle de détection.
+    \item \textbf{Vincent et Paul-Antoine :} axe robotique — drivers, navigation autonome, mécanique de la tourelle.
+\end{itemize}
+
+Les ressources partagées (dépôt GitHub \nolinkurl{https://github.com/Hexa-Da/ANDRA_2025_2026} et Drive modèles YOLO) ont été le point de coordination central entre les deux binômes.
+
 \subsection{Démarrage et contexte initial}
 
 En raison d'aléas administratifs liés à l'affectation des sujets, le projet n'a débuté officiellement que fin novembre. Cette période de latence a toutefois été mise à profit pour nous auto-former, en autonomie, à la prise en main du modèle de détection YOLO. Anticipant une problématique centrée sur l'analyse d'image, cette montée en compétence nous avait été conseillée par nos encadrants.
@@ -563,12 +597,32 @@ Une fois affecté, le sujet a révélé une composante robotique majeure que nou
 
 Dans ce contexte, la priorité a été donnée à l'appropriation technique plutôt qu'à la mise en place de processus de gestion de projet complexes. Nous avons rapidement établi le contact avec l'équipe précédente pour récupérer l'historique des travaux (dépôt GitHub et Drive). Si l'accès aux ressources logicielles s'est fait sans encombre, l'accès physique au robot, situé au TechLab, a nécessité davantage de coordination logistique.
 
-\subsection{}
-
 % --- Résultats ---
 \section{Résultats}
 
+À l'issue de cette année, les objectifs initiaux sont en grande partie atteints :
+
+\begin{itemize}
+    \item \textbf{Navigation autonome :} le robot effectue des rondes sur une carte pré-établie via AMCL + Nav2, avec enchaînement de waypoints définis depuis RViz.
+    \item \textbf{Acquisition d'images :} la séquence PTZ (5 prises par arrêt) couvre désormais l'intégralité de l'arche. La séquence vidéo permet une acquisition continue à basse vitesse.
+    \item \textbf{Détection de fissures :} l'inférence TensorRT sur Jetson offre une accélération de 3 à 5 fois par rapport au modèle PyTorch. La détection est fonctionnelle sur images PTZ.
+    \item \textbf{Fusion navigation/acquisition :} le package \texttt{patrouille\_autonome} orchestre déplacement et capture simultanément.
+\end{itemize}
+
+Les travaux restants concernent principalement l'axe IA (annotation et entraînement sur données 360°) et la fiabilisation de la cartographie (réduction de la dérive odométrique).
+
 % --- Conclusion et Ouvertures ---
 \section{Conclusion et Ouvertures}
+
+Ce projet aura permis de remettre en service un système robotique complet, de résoudre les blocages matériels hérités, et de franchir les deux étapes clés fixées par l'ANDRA : une acquisition fiable des images de galerie et un premier déplacement autonome sur carte.
+
+Les prochaines équipes pourront s'appuyer sur une infrastructure stable et documentée. Les pistes d'amélioration prioritaires sont :
+
+\begin{itemize}
+    \item \textbf{Modèle de détection 360° :} entraîner un modèle YOLOv11 sur le dataset panoramique collecté, pour une analyse continue pendant les rondes.
+    \item \textbf{Cartographie fiable :} réduire la dérive liée à la roue avant gauche (voilage connu) et produire des cartes exploitables des galeries.
+    \item \textbf{Association image/position :} finaliser les nœuds \texttt{show\_pos}, \texttt{position\_publisher} et \texttt{report\_fissures} pour localiser chaque fissure détectée sur la carte.
+    \item \textbf{Extension du modèle IA :} couvrir tous les types de revêtement de mur (actuellement limité au type GER).
+\end{itemize}
 
 \end{document}
