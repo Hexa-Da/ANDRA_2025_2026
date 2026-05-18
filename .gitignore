@@ -19,6 +19,9 @@ ros2_ws/images_capturees/
 ros2_ws/images_capturees_techlab/
 video/video_output/
 
+# Image disque robot (conservation du .sha256 dans backup/ uniquement)
+backup/*.img.zst
+
 # Note: Les cartes .pgm sont importantes, on les garde
 # Si vous voulez les ignorer, décommentez la ligne suivante :
 # ros2_ws/src/ros_launcher/map_results/*.pgm

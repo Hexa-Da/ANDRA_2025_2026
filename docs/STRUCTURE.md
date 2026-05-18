@@ -7,6 +7,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 ```
 ~/Documents/ANDRA_2025-2026/
 ├── docs/                        # Documentation du projet
+├── backup/                      # Empreinte SHA256 de l'image disque usine (voir docs/BACKUP.md)
 ├── docker/                      # Environnement Docker ROS2 pour visualiser le robot et traiter les images
 ├── ros2_ws/                     # Workspace principal (code robot, navigation, ros_launcher, etc)
 ├── dependencies/                # Dépendances externes (workspaces ROS2)
@@ -23,6 +24,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 **Rôle** : Documentation complète du projet
 
 **Contenu** :
+- `BACKUP.md` : Sauvegarde et restauration de l’image disque NVMe
 - `DEMARRAGE_ROBOT.md` : Guide de démarrage des nœuds sur le robot
 - `DEBUG.md` : Commandes de débogage et vérification du système
 - `DETECTION_YOLO.md` : Nœud `image_subscriber` sur GPU, modèles PyTorch/TensorRT
@@ -35,6 +37,18 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
 
 **Intérêt** : Centralise toute la documentation pour faciliter la compréhension et la maintenance du projet.
+
+---
+
+### `backup/`
+**Rôle** : Conserver une **empreinte** pour l’image disque du robot, documentée dans `docs/BACKUP.md`.
+
+**Contenu typique** :
+- `backup_robot_usine.img.zst.sha256` : somme SHA256 attendue pour le fichier nommé `backup_robot_usine.img.zst`.
+
+**Ce qui n’est en principe pas dans Git** : le fichier `backup_robot_usine.img.zst` (très volumineux). Il doit être archivé ailleurs (disque, NAS, clé USB). Avant restauration, vérifiez l’intégrité avec `sha256sum` comme dans `docs/BACKUP.md`.
+
+**Intérêt** : Éviter de reflasher ou de conserver une image corrompue ; traçabilité alignée sur la procédure officielle de sauvegarde.
 
 ---
 

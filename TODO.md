@@ -46,6 +46,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Documentation de l'arbre TF (`TF_TREE.md`)
 - [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
 - [x] Guide mission trajectoire AMCL/Nav2 (`docs/TRAJECTOIRE_MISSION.md`)
+- [x] Procédure sauvegarde / restauration image disque (`docs/BACKUP.md`)
 
 ### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
