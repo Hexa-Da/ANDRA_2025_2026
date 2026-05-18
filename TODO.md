@@ -309,7 +309,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] **SLAM** : Paramétrage du nœud SLAM Toolbox dans `slam_config.yaml` pour assurer la compatibilité avec le LiDAR TG15 et le pipeline EKF :
     - Définition stricte des frames (`odom_frame: odom`, `base_frame: base_link`, `map_frame: map`).
 
-## Seconde descente - Vendredi 10 avril 2026
+### Seconde descente - Vendredi 10 avril 2026
 - [x] **Réalisation** : Seconde descente dans les tunnels ANDRA effectuée avec succès
 - [x] **Caméra 360** : Caméra 360 de nouveau prêtée par l'ANDRA, jeu de données supplémentaire créé
 - [x] **Système opérationnel** :
@@ -337,7 +337,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Surveillance LiDAR `/scan` pendant l'exécution des goals.
   - Si obstacle frontal sous seuil (`emergency_stop_distance`), annulation du goal en cours et arrêt de la mission.
 
-**Sauvegarde disque (image usine)** : en début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. L’archive d’image compressée elle-même sera **disponible sur le drive associé au projet** (trop volumineuse pour Git), pour que toute l’équipe puisse la récupérer. L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
+### Backup
+- [x] **Sauvegarde disque** : 
+  - En début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. 
+  - Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. 
+- [x] **Création de l'archive** :
+  - L’archive d’image compressée (trop volumineuse pour Git) sera fournie sur une **clé USB transmise avec le robot** à l’équipe suivante / pour maintenance.
+  - L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
 
 ---
 
@@ -477,4 +483,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 21 avril 2026
+**Dernière mise à jour** : 18 mai 2026

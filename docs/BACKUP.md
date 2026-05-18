@@ -4,7 +4,7 @@ Ce document décrit la procédure permettant de réaliser une image de sauvegard
 
 ## Dépôt Git : dossier `backup/`
 
-À la racine du projet, le dossier **`backup/`** sert à versionner **`backup_robot_usine.img.zst.sha256`** (empreinte SHA256 de l’image). Le fichier **`backup_robot_usine.img.zst`** lui-même n’est en principe **pas** dans le dépôt (plusieurs centaines de gigaoctets). Pour le partage entre membres du projet, cette archive est **disponible sur le drive associé au projet** ; vous pouvez aussi la conserver sur un autre support (disque dur, NAS, clé USB) si vous travaillez hors ligne. Lors d’une nouvelle sauvegarde, mettez à jour le fichier `.sha256` dans `backup/` pour refléter la nouvelle image, afin que l’équipe puisse vérifier toute copie avec `sha256sum -c`.
+À la racine du projet, le dossier **`backup/`** sert à versionner **`backup_robot_usine.img.zst.sha256`** (empreinte SHA256 de l’image). Le fichier **`backup_robot_usine.img.zst`** lui-même n’est en principe **pas** dans le dépôt (plusieurs centaines de gigaoctets). La copie de travail de l’archive pour l’équipe est fournie sur une **clé USB jointe au robot** (transmission projet à projet) ; vous pouvez en dupliquer le contenu ailleurs (disque, NAS) pour vos sauvegardes personnelles. Lors d’une nouvelle sauvegarde, mettez à jour le fichier `.sha256` dans `backup/` pour refléter la nouvelle image, afin que l’équipe puisse vérifier toute copie avec `sha256sum -c`.
 
 ## 🛠️ Prérequis
 
