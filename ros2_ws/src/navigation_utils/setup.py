@@ -26,7 +26,6 @@ setup(
         'console_scripts': [
             'odom_to_path = navigation_utils.odom_to_path:main',
             'report_fissures = navigation_utils.report_fissures:main',
-            'show_pos = navigation_utils.show_pos:main',
             'sequence_photo = navigation_utils.sequence_photo:main',
             'sequence_video = navigation_utils.sequence_video:main',
             'trajectoire_mission = navigation_utils.trajectoire_mission:main',

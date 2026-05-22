@@ -36,7 +36,7 @@ ros2_ws/models/
 # Images générées par report_fissures
 map_with_point_*.png
 map_with_points_*.png
-ros2_ws/src/ros_launcher/map_with_point_*.png
+ros2_ws/map_detections/
 
 # Fichiers temporaires
 *.swp

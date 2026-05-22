@@ -51,9 +51,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
-- [ ] `position_publisher` : Publie la position courante du robot (extraite depuis `/odometry/filtered`)
-- [ ] `show_pos` : Affichage de la position du robot
-- [ ] `report_fissures` : Tracé des positions détectées sur la carte
+- [x] `report_fissures` : Tracé des positions détectées sur la carte 
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP
 
 ### Implémentation de nœuds ROS2
@@ -390,9 +388,10 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Uniformiser le comportement de fin : arrêt propre des séquences, `cmd_vel=0`, retour PTZ Home, fermeture sans processus orphelin.
   - Clarifier les paramètres d'orchestration (distance/rythme de capture, loop, vitesse, waypoint file) et leurs valeurs par défaut.
 - [ ] **Associer chaque média à la pose robot** :
-  - Réviser les nœuds `show_pos.py`, `position_publisher.py`.
+  - Réviser les nœuds `show_pos.py`, `position_publisher.py` (inutile).
   - Comprendre comment fonctionne `report_fissures.py`.
-  - Les intégrer au système.
+  - `report_fissures` intégré au launch (`/position_detectee` → PNG).
+  - Lier chaque image YOLO sauvegardée au même horodatage / métadonnées que le point carte.
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :

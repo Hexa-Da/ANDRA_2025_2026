@@ -262,14 +262,12 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - Publie chaque image extraite sur le topic `/photo_topic` pour traitement par `image_subscriber`
   - Déplace les vidéos traitées vers `video/video_output/processed/` après traitement réussi
   - Déplace les vidéos corrompues vers `video/video_output/failed/` pour éviter les traitements répétés
-- **`position_publisher`** *(WIP — voir `docs/STRUCTURE.md`)* : ce nœud souscrit à un topic `detection_status` (`std_msgs/Bool`) qui n'est **pas** publié par la chaîne actuelle (`image_subscriber` publie `/position_detectee` en `geometry_msgs/Point`). Il est lancé par le launch mais reste silencieux tant que la chaîne pose+détection n'est pas branchée.
-
 ### Nœuds de navigation et visualisation (navigation_utils)
 - **`odom_to_path`** : Visualisation du trajet du robot
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - Publie le Path sur `/robot_path` pour visualiser le trajet parcouru dans RViz2
   - Ajoute un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
-- **`report_fissures`** *(WIP — voir `docs/STRUCTURE.md`)* : reçoit les positions sur `/position_detectee` et trace les points sur la carte. Paramètre `map_yaml_path` à fournir explicitement (le défaut historique pointe vers une carte qui n'existe plus). Sauvegarde des images `map_with_point_*.png`.
+- **`report_fissures`** : reçoit `/position_detectee` (publié par `image_subscriber`) et trace chaque détection sur la carte (`map_yaml_path`, défaut `ma_carte_2.yaml` du package `ros_launcher`). PNG dans `ros2_ws/map_detections/`. Lancé si `enable_image_transfer:=true` ; en AMCL, `launch.sh` aligne `map_yaml_path` sur `map_path`.
 
 ### Localisation et cartographie
 
@@ -336,9 +334,6 @@ ros2 run image_transfer image_publisher
 # Publisher de vidéos (traitement des vidéos enregistrées)
 ros2 run image_transfer video_publisher
 
-# Publisher de position
-ros2 run image_transfer position_publisher
-
 # Controle de la PTZ
 ros2 run image_transfer ptz_controller
 
@@ -354,10 +349,7 @@ ros2 run patrouille_autonome fusion_photo_navigation
 # Fusion autonome vidéo (mission + sequence_video)
 ros2 run patrouille_autonome fusion_video_navigation
 
-# Rapport des fissures (trace sur la carte)
+# Rapport des fissures (ma_carte_2 par default)
 ros2 run navigation_utils report_fissures
-
-# Afficher la position du robot
-ros2 run navigation_utils show_pos
 ```
 

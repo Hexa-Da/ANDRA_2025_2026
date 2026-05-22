@@ -56,7 +56,7 @@ ros2 topic echo /odom_robot
 # Odométrie filtrée par le filtre EKF (nav_msgs/Odometry)
 # Publié par : EKF
 # Souscrit par : image_subscriber, odom_to_path, sequence_photo, sequence_video
-# (position_publisher et show_pos sont WIP, voir docs/STRUCTURE.md)
+# Souscrit par : report_fissures (carte PNG)
 ros2 topic echo /odometry/filtered
 
 # Trajet du robot (nav_msgs/Path)

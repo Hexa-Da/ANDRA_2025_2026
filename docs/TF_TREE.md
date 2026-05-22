@@ -34,7 +34,7 @@ Corrige la dérive d'odométrie en recadrant le robot sur la carte. **Aucun stat
 | **Publié par** | `scout_base` (driver des roues) |
 | **Topic odométrie associé** | `/odom_robot` |
 
-C'est bien le **driver scout** qui publie cette TF, pas l'EKF. L'EKF est configuré avec `publish_tf: false` (`configs/ekf_config.yaml`) et n'alimente que le **topic** `/odometry/filtered` (consommé par `image_subscriber`, `position_publisher`, `odom_to_path`, `sequence_*`). Cela évite tout conflit de TF sur l'arête `odom -> base_link`.
+C'est bien le **driver scout** qui publie cette TF, pas l'EKF. L'EKF est configuré avec `publish_tf: false` (`configs/ekf_config.yaml`) et n'alimente que le **topic** `/odometry/filtered` (consommé par `image_subscriber`, `odom_to_path`, `sequence_*`). Cela évite tout conflit de TF sur l'arête `odom -> base_link`.
 
 **Sources fusionnées par l'EKF** (voir `configs/ekf_config.yaml`) :
 

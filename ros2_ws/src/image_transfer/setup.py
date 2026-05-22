@@ -22,7 +22,6 @@ setup(
         'console_scripts': [
             'image_publisher = image_transfer.image_publisher:main',
             'image_subscriber = image_transfer.image_subscriber:main',
-            'position_publisher = image_transfer.position_publisher:main',
             'ptz_controller = image_transfer.ptz_controller:main',
             'video_publisher = image_transfer.video_publisher:main',
         ],

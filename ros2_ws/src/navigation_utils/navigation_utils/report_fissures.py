@@ -1,32 +1,62 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-from geometry_msgs.msg import Point
-
-from PIL import Image
-import matplotlib.pyplot as plt
-import yaml
 import os
 from datetime import datetime
+from typing import Optional, Tuple
+
+import matplotlib.pyplot as plt
+import rclpy
+import yaml
+from ament_index_python.packages import get_package_share_directory
+from geometry_msgs.msg import Point
+from PIL import Image
+from rclpy.node import Node
 
 
-def tracer_point(point, yaml_path):
-    with open(yaml_path, 'r') as f:
-        data = yaml.safe_load(f)
+def resolve_map_yaml_path(yaml_path_param: str) -> str:
+    """
+    Précondition : yaml_path_param est une chaîne (vide = défaut package ros_launcher).
+    Postcondition : chemin absolu vers un fichier .yaml de carte, ou chaîne vide si introuvable.
+    """
+    if not yaml_path_param.strip():
+        share_dir: str = get_package_share_directory('ros_launcher')
+        return os.path.join(share_dir, 'map_results', 'ma_carte_2.yaml')
+    if os.path.isabs(yaml_path_param):
+        return yaml_path_param
+    return os.path.abspath(yaml_path_param)
 
-    pgm_path = data['image']
-    resolution = data['resolution']
-    origin = data['origin'][:2]
+
+def resolve_output_dir(output_dir_param: str) -> str:
+    """Précondition : output_dir_param non vide ou vide (défaut ros2_ws/map_detections)."""
+    if not output_dir_param.strip():
+        return os.path.abspath(os.path.join('ros2_ws', 'map_detections'))
+    if os.path.isabs(output_dir_param):
+        return output_dir_param
+    return os.path.abspath(output_dir_param)
+
+
+def tracer_point(
+    point: Tuple[float, float],
+    yaml_path: str,
+    output_dir: str,
+) -> Optional[str]:
+    """
+    Préconditions : yaml_path existe ; point = (x, y) dans le repère carte (m).
+    Postcondition : retourne le chemin PNG créé, ou None si échec.
+    """
+    with open(yaml_path, 'r', encoding='utf-8') as f:
+        data: dict = yaml.safe_load(f)
+
+    pgm_path: str = str(data['image'])
+    resolution: float = float(data['resolution'])
+    origin: list = data['origin'][:2]
 
     if not os.path.isabs(pgm_path):
         pgm_path = os.path.join(os.path.dirname(yaml_path), pgm_path)
-    
-    # Vérifier que le fichier PGM existe
+
     if not os.path.exists(pgm_path):
-        print(f"ERREUR: Fichier PGM non trouvé : {pgm_path}")
-        print(f"Vérifiez que le fichier existe ou créez-le.")
-        return  # Sortir de la fonction sans erreur
+        print(f'ERREUR: Fichier PGM non trouvé : {pgm_path}')
+        return None
 
     img = Image.open(pgm_path)
     width, height = img.size
@@ -34,67 +64,75 @@ def tracer_point(point, yaml_path):
     plt.figure()
     plt.imshow(img, cmap='gray', origin='upper')
 
-    pixel_x = (point[0] - origin[0]) / resolution
-    pixel_y = (height - 1) - ((point[1] - origin[1]) / resolution)
+    pixel_x: float = (point[0] - float(origin[0])) / resolution
+    pixel_y: float = (height - 1) - ((point[1] - float(origin[1])) / resolution)
 
     plt.scatter(pixel_x, pixel_y, c='red', s=50, label=f'{point}')
     plt.axis('off')
-    plt.title("Carte + Point détecté")
+    plt.title('Carte + Point détecté')
 
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     plt.legend(by_label.values(), by_label.keys())
 
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
-    output_filename = f"map_with_point_{timestamp}.png"
+    os.makedirs(output_dir, exist_ok=True)
+    timestamp: str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_filename: str = os.path.join(output_dir, f'map_with_point_{timestamp}.png')
 
     plt.savefig(output_filename, bbox_inches='tight', pad_inches=0.1)
-    print(f"[Carte] Image enregistrée sous : {output_filename}")
     plt.close()
+    return output_filename
 
 
 class MapPointPlotter(Node):
-    def __init__(self):
-        super().__init__('map_point_plotter')
-        
-        # Déclarer le paramètre pour le chemin du fichier YAML
-        self.declare_parameter('map_yaml_path', 
-                              'ros2_ws/src/ros_launcher/map_results/andra.yaml')
-        
-        # Obtenir le chemin du fichier YAML
-        yaml_path_param = self.get_parameter('map_yaml_path').get_parameter_value().string_value
-        
-        # Résoudre le chemin relatif depuis le répertoire du projet
-        if not os.path.isabs(yaml_path_param):
-            project_dir = os.path.expanduser('~/Documents/ANDRA_2025-2026')
-            self.yaml_path = os.path.join(project_dir, yaml_path_param)
-        else:
-            self.yaml_path = yaml_path_param
-        
-        # Vérifier que le fichier existe
+    def __init__(self) -> None:
+        super().__init__('report_fissures')
+
+        self.declare_parameter('map_yaml_path', '')
+        self.declare_parameter('output_dir', '')
+
+        yaml_path_param: str = (
+            self.get_parameter('map_yaml_path').get_parameter_value().string_value
+        )
+        output_dir_param: str = (
+            self.get_parameter('output_dir').get_parameter_value().string_value
+        )
+
+        self.yaml_path: str = resolve_map_yaml_path(yaml_path_param)
+        self.output_dir: str = resolve_output_dir(output_dir_param)
+
         if not os.path.exists(self.yaml_path):
             self.get_logger().error(f'Fichier YAML non trouvé : {self.yaml_path}')
-            self.get_logger().error('Vérifiez le paramètre map_yaml_path ou le chemin du fichier')
+            self.get_logger().error(
+                'Fournir map_yaml_path (ex. carte AMCL ou ma_carte_2.yaml du package ros_launcher)'
+            )
         else:
-            self.get_logger().info(f'Utilisation du fichier carte : {self.yaml_path}')
-        
+            self.get_logger().info(f'Carte : {self.yaml_path}')
+            self.get_logger().info(f'Sortie PNG : {self.output_dir}')
+
         self.subscription = self.create_subscription(
             Point,
             'position_detectee',
             self.listener_callback,
-            10)
-        self.get_logger().info('MapPointPlotter prêt et abonné à /position_detectee')
+            10,
+        )
+        self.get_logger().info('Abonné à /position_detectee')
 
-    def listener_callback(self, msg):
-        self.get_logger().info(f'Point reçu : ({msg.x}, {msg.y})')
-        if os.path.exists(self.yaml_path):
-            tracer_point((msg.x, msg.y), self.yaml_path)
-        else:
-            self.get_logger().error(f'Impossible de tracer le point : fichier {self.yaml_path} introuvable')
+    def listener_callback(self, msg: Point) -> None:
+        self.get_logger().info(f'Détection à ({msg.x:.3f}, {msg.y:.3f})')
+        if not os.path.exists(self.yaml_path):
+            self.get_logger().error(f'Carte introuvable : {self.yaml_path}')
+            return
+        saved: Optional[str] = tracer_point(
+            (float(msg.x), float(msg.y)),
+            self.yaml_path,
+            self.output_dir,
+        )
+        if saved:
+            self.get_logger().info(f'Carte enregistrée : {saved}')
 
 
-def main(args=None):
+def main(args: Optional[list] = None) -> None:
     rclpy.init(args=args)
     node = MapPointPlotter()
     try:

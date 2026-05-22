@@ -60,7 +60,7 @@ case "$MODE" in
             exit 1
         fi
         shift 2  # Retirer le mode (amcl) et le chemin de carte
-        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true use_nav:=true map_path:="$MAP_PATH" "$@"
+        ros2 launch ros_launcher navigation_stack.launch.py use_slam:=false use_amcl:=true use_nav:=true map_path:="$MAP_PATH" map_yaml_path:="$MAP_PATH" "$@"
         ;;
     *)
         echo "Option non reconnue. Choisissez slam ou amcl. Par défaut : slam"

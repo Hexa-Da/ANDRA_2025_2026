@@ -49,7 +49,13 @@ def generate_launch_description():
         description='Enable PTZ camera')
     declare_enable_image_transfer = DeclareLaunchArgument(
         'enable_image_transfer', default_value='true',
-        description='Enable image transfer node')
+        description='Enable image transfer nodes')
+    default_map_yaml = os.path.join(
+        pkg_share, 'map_results', 'ma_carte_2.yaml')
+    declare_map_yaml_path = DeclareLaunchArgument(
+        'map_yaml_path',
+        default_value=default_map_yaml,
+        description='YAML map for report_fissures')
     declare_enable_video_publisher = DeclareLaunchArgument(
         'enable_video_publisher', default_value='false',
         description='Enable video publisher node')
@@ -70,6 +76,7 @@ def generate_launch_description():
     enable_zed = LaunchConfiguration('enable_zed')
     enable_ptz = LaunchConfiguration('enable_ptz')
     enable_image_transfer = LaunchConfiguration('enable_image_transfer')
+    map_yaml_path = LaunchConfiguration('map_yaml_path')
     enable_video_publisher = LaunchConfiguration('enable_video_publisher')
     video_extract_rate = LaunchConfiguration('video_extract_rate')
     ydlidar_params_file = LaunchConfiguration('ydlidar_params_file')
@@ -85,6 +92,7 @@ def generate_launch_description():
         declare_enable_zed,
         declare_enable_ptz,
         declare_enable_image_transfer,
+        declare_map_yaml_path,
         declare_enable_video_publisher,
         declare_video_extract_rate,
         declare_ydlidar_params_file,
@@ -142,15 +150,13 @@ def generate_launch_description():
 
         # 4. Nœuds applicatifs (conditionnels)
 
-        ExecuteProcess(
-            cmd=['ros2', 'run', 'image_transfer', 'position_publisher'],
+        Node(
+            package='navigation_utils',
+            executable='report_fissures',
+            name='report_fissures',
+            parameters=[{'map_yaml_path': map_yaml_path}],
             output='screen',
             emulate_tty=True,
-            condition=IfCondition(enable_image_transfer),
-        ),
-        ExecuteProcess(
-            cmd=['ros2', 'run', 'navigation_utils', 'report_fissures'],
-            output='screen',
             condition=IfCondition(enable_image_transfer),
         ),
 
