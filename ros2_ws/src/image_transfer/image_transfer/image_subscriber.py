@@ -1,3 +1,4 @@
+import gc
 import rclpy
 from rclpy.node import Node
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
@@ -7,7 +8,9 @@ from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
 from ultralytics import YOLO
 from geometry_msgs.msg import Point
+from typing import Optional, Tuple
 import cv2
+import numpy as np
 import os
 import time
 import torch
@@ -96,9 +99,15 @@ class ImageSubscriber(Node):
         else:
             raise FileNotFoundError("Modele YOLO non trouve (best.engine ou best.pt)")
         
-        self.model = None
+        self.model: Optional[YOLO] = None
         self._model_loaded = False
-        self.get_logger().info("Modele charge au premier callback (lazy loading)")
+        self._tensorrt_disabled = False
+        # Jetson + ZED/AMCL : TensorRT OK vers 3.3 Go CUDA, echoue vers 2.4 Go (NvMap).
+        self._min_gpu_free_gb = float(os.environ.get('MIN_GPU_FREE_GB', '3.0'))
+        self.get_logger().info(
+            f"Modele charge au premier callback (lazy loading, seuil TensorRT: "
+            f"{self._min_gpu_free_gb} GB CUDA)"
+        )
         # Reglages d'inference conservateurs pour tenir sur GPU Jetson.
         self.gpu_imgsz = 640
         # Option pour dessiner les boxes (desactivable pour performance)
@@ -158,58 +167,113 @@ class ImageSubscriber(Node):
                 self.position_pub.publish(point_msg)
                 self.get_logger().info("Position detectee publiee")
 
-    def _check_gpu_memory(self, min_gb=1.0):
-        """Verifie si assez de memoire GPU est disponible."""
+    def _get_gpu_free_gb(self) -> Optional[Tuple[float, float]]:
+        """
+        Retourne (libre_GB, total_GB) via cudaMemGetInfo (mem_get_info).
+        Precondition: CUDA disponible.
+        Invariant: ne compte pas seulement les allocations PyTorch (ZED/SLAM partagent le pool).
+        """
         if not self._gpu_available:
-            return False
+            return None
         try:
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
-            props = torch.cuda.get_device_properties(0)
-            total = props.total_memory / 1024**3
-            allocated = torch.cuda.memory_allocated(0) / 1024**3
-            free = total - allocated
-            self.get_logger().info(f"GPU: {free:.2f}/{total:.2f} GB libre")
-            return free >= min_gb
+            free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+            free_gb = free_bytes / (1024 ** 3)
+            total_gb = total_bytes / (1024 ** 3)
+            return free_gb, total_gb
         except Exception as e:
             self.get_logger().warn(f"Impossible de verifier GPU: {e}")
+            return None
+
+    def _check_gpu_memory(self, min_gb: float = 1.0) -> bool:
+        """Verifie si assez de memoire GPU CUDA est disponible (tous processus confondus)."""
+        stats = self._get_gpu_free_gb()
+        if stats is None:
+            return False
+        free_gb, total_gb = stats
+        self.get_logger().info(f"GPU CUDA: {free_gb:.2f}/{total_gb:.2f} GB libre")
+        return free_gb >= min_gb
+
+    def _unload_model(self) -> None:
+        """
+        Libere le modele YOLO/TensorRT avant un changement de backend.
+        Precondition: appele avant de recharger un autre modele (evite segfault NvMap/TRT).
+        """
+        self.model = None
+        self._model_loaded = False
+        gc.collect()
+        if self._gpu_available:
+            try:
+                torch.cuda.synchronize()
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+
+    def _warmup_tensorrt(self) -> bool:
+        """
+        Premiere inference test : Ultralytics deserialise l'engine TRT ici, pas au YOLO().
+        Precondition: self.model charge avec best.engine.
+        """
+        if self.model is None:
+            return False
+        try:
+            dummy: np.ndarray = np.zeros(
+                (self.gpu_imgsz, self.gpu_imgsz, 3), dtype=np.uint8
+            )
+            self.model(dummy, device=0, verbose=False)
+            return True
+        except Exception as e:
+            self.get_logger().warn(f"Warmup TensorRT echoue: {type(e).__name__}: {e}")
             return False
 
-    def _load_model(self):
+    def _switch_to_pytorch_cpu(self, reason: str) -> None:
+        """Bascule vers best.pt sur CPU apres echec ou manque de memoire GPU."""
+        if not self.pytorch_path:
+            raise RuntimeError("Pas de modele PyTorch (best.pt) pour le fallback CPU")
+        self.get_logger().warn(f"{reason} -> fallback PyTorch CPU")
+        self._unload_model()
+        self._tensorrt_disabled = True
+        self.model_path = self.pytorch_path
+        self.use_tensorrt = False
+        self.device = 'cpu'
+
+    def _load_model(self) -> None:
         """Charge YOLO au premier callback."""
         if self._model_loaded:
             return
-        
+
         try:
-            # Pour TensorRT: verifier memoire GPU sinon segfault
+            if self.use_tensorrt and self._tensorrt_disabled:
+                self._switch_to_pytorch_cpu("TensorRT desactive pour cette session")
+
             if self.use_tensorrt:
-                if not self._check_gpu_memory(min_gb=1.5):
-                    if self.pytorch_path:
-                        self.get_logger().warn("Memoire GPU insuffisante pour TensorRT, fallback PyTorch CPU")
-                        self.model_path = self.pytorch_path
-                        self.use_tensorrt = False
-                        self.device = 'cpu'
-                    else:
-                        self.get_logger().error("Pas assez de memoire GPU et pas de modele PyTorch disponible")
-                        raise RuntimeError("GPU memory insufficient for TensorRT")
+                if not self._check_gpu_memory(min_gb=self._min_gpu_free_gb):
+                    self._switch_to_pytorch_cpu(
+                        f"Memoire GPU < {self._min_gpu_free_gb} GB (reserve ZED/SLAM)"
+                    )
 
             self.get_logger().info(f"Chargement {'TensorRT' if self.use_tensorrt else 'PyTorch'}...")
             self.model = YOLO(self.model_path, task='segment')
-            self._model_loaded = True
-            
+
             if self.use_tensorrt:
-                self.get_logger().info("TensorRT charge (inference GPU)")
+                if not self._warmup_tensorrt():
+                    if not self.pytorch_path:
+                        raise RuntimeError("Warmup TensorRT echoue, pas de best.pt")
+                    self._switch_to_pytorch_cpu("Warmup TensorRT (NvMap/CUDA)")
+                    self.model = YOLO(self.model_path, task='segment')
+                    self.get_logger().info("Fallback PyTorch CPU reussi (warmup)")
+                else:
+                    self.get_logger().info("TensorRT valide (warmup GPU OK)")
             else:
                 self.get_logger().info(f"PyTorch charge (device: {self.device})")
-                    
+
+            self._model_loaded = True
+
         except Exception as e:
             self.get_logger().error(f"Erreur chargement modele: {e}")
-            # Tentative fallback PyTorch si TensorRT a echoue
             if self.use_tensorrt and self.pytorch_path:
-                self.get_logger().warn("Echec TensorRT, tentative PyTorch CPU...")
-                self.model_path = self.pytorch_path
-                self.use_tensorrt = False
-                self.device = 'cpu'
+                self._switch_to_pytorch_cpu("Echec chargement TensorRT")
                 try:
                     self.model = YOLO(self.model_path, task='segment')
                     self._model_loaded = True
@@ -265,15 +329,9 @@ class ImageSubscriber(Node):
                 
                 # TensorRT ne peut PAS tourner sur CPU - basculer sur PyTorch
                 if self.use_tensorrt and self.pytorch_path:
-                    self.get_logger().warn("Erreur TensorRT, rechargement en PyTorch CPU...")
-                    try:
-                        torch.cuda.empty_cache()
-                    except Exception:
-                        pass
-                    self.model_path = self.pytorch_path
-                    self.use_tensorrt = False
-                    self.device = 'cpu'
+                    self._switch_to_pytorch_cpu("Erreur TensorRT")
                     self.model = YOLO(self.model_path, task='segment')
+                    self._model_loaded = True
                     self.get_logger().info("Modele PyTorch charge, retry inference...")
                     results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
                 # PyTorch: fallback GPU -> CPU
@@ -327,6 +385,10 @@ def main(args=None):
         pass
     finally:
         try:
+            image_subscriber._unload_model()
+        except Exception:
+            pass
+        try:
             executor.shutdown()
         except Exception:
             pass
@@ -337,7 +399,6 @@ def main(args=None):
         try:
             rclpy.shutdown()
         except Exception:
-            # Ignorer l'erreur si rclpy est déjà shutdown
             pass
 
 if __name__ == '__main__':

@@ -45,6 +45,7 @@ Le modèle est chargé **au premier callback** sur `/photo_topic`.
 |----------|--------|
 | **`FORCE_PYTORCH=1`** | Force l’usage de `best.pt` ; ignore `best.engine` même sur GPU. |
 | **`GPU_RETRY_INTERVAL`** | Nombre d’images entre deux tentatives de repasser sur **GPU** après un repli **CPU** en PyTorch (défaut : **`50`**). |
+| **`MIN_GPU_FREE_GB`** | Mémoire CUDA libre minimale avant TensorRT (défaut : **`3.0`**). Un warmup teste l’engine au chargement ; en dessous de ~3 Go avec ZED/AMCL actifs, fallback CPU. |
 
 D’autres mécanismes (mémoire GPU insuffisante, erreurs d’inférence) peuvent déclencher des bascules automatiques TensorRT → PyTorch CPU ou CUDA → CPU ; voir le code pour le détail.
 

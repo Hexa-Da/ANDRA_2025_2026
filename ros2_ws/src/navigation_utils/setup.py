@@ -11,7 +11,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
-    install_requires=['setuptools', 'pillow', 'matplotlib'],
+    install_requires=['setuptools', 'pillow'],
     zip_safe=True,
     maintainer='techlab',
     maintainer_email='antoine.richard@depinfonancy.net',

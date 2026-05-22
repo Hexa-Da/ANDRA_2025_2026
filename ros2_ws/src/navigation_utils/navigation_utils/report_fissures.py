@@ -4,12 +4,11 @@ import os
 from datetime import datetime
 from typing import Optional, Tuple
 
-import matplotlib.pyplot as plt
 import rclpy
 import yaml
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from geometry_msgs.msg import Point
-from PIL import Image
+from PIL import Image, ImageDraw
 from rclpy.node import Node
 
 
@@ -69,29 +68,34 @@ def tracer_point(
         print(f'ERREUR: Fichier PGM non trouvé : {pgm_path}')
         return None
 
-    img = Image.open(pgm_path)
+    with Image.open(pgm_path) as pgm_img:
+        img: Image.Image = pgm_img.convert('RGB')
     width, height = img.size
 
-    plt.figure()
-    plt.imshow(img, cmap='gray', origin='upper')
+    pixel_x: int = round((point[0] - float(origin[0])) / resolution)
+    pixel_y: int = round((height - 1) - ((point[1] - float(origin[1])) / resolution))
 
-    pixel_x: float = (point[0] - float(origin[0])) / resolution
-    pixel_y: float = (height - 1) - ((point[1] - float(origin[1])) / resolution)
+    # Marqueur lisible, taille proportionnelle à la carte (export 1:1 pixels PGM).
+    marker_radius: int = max(6, min(width, height) // 120)
+    outline_w: int = max(2, marker_radius // 5)
+    x0: int = pixel_x - marker_radius
+    y0: int = pixel_y - marker_radius
+    x1: int = pixel_x + marker_radius
+    y1: int = pixel_y + marker_radius
 
-    plt.scatter(pixel_x, pixel_y, c='red', s=50, label=f'{point}')
-    plt.axis('off')
-    plt.title('Carte + Point détecté')
-
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys())
+    draw = ImageDraw.Draw(img)
+    draw.ellipse(
+        (x0, y0, x1, y1),
+        fill='#e53935',
+        outline='#ffffff',
+        width=outline_w,
+    )
 
     os.makedirs(output_dir, exist_ok=True)
     timestamp: str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     output_filename: str = os.path.join(output_dir, f'map_with_point_{timestamp}.png')
 
-    plt.savefig(output_filename, bbox_inches='tight', pad_inches=0.1)
-    plt.close()
+    img.save(output_filename, format='PNG', compress_level=1)
     return output_filename
 
 
