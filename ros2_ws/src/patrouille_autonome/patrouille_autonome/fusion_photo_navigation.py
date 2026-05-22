@@ -102,7 +102,7 @@ def main():
     parser.add_argument(
         '--capture-interval',
         type=float,
-        default=5.0,
+        default=30.0,
         help="Durée d'arrêt à chaque waypoint pour captures PTZ (secondes). "
              "Transmis à sequence_photo via le paramètre stop_duration.",
     )

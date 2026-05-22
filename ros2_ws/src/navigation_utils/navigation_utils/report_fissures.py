@@ -95,7 +95,7 @@ def tracer_point(
     )
 
     os.makedirs(output_dir, exist_ok=True)
-    timestamp: str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamp: str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f')
     output_filename: str = os.path.join(output_dir, f'map_with_point_{timestamp}.png')
 
     img.save(output_filename, format='PNG', compress_level=1)
