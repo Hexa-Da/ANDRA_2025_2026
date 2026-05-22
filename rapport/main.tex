@@ -374,7 +374,7 @@ Afin d'exploiter pleinement le GPU de la Jetson Orin Nano~\cite{jetson_orin} pou
 
 Cette image intègre ROS~2~\cite{ros2}, PyTorch avec CUDA et la bibliothèque Ultralytics~\cite{ultralytics_yolo}, garantissant la compatibilité GPU native sur la plateforme Jetson.
 
-Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}~\cite{tensorrt}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli sur le modèle PyTorch. Grâce à ce gain de performance, le nœud charge désormais le modèle en mode segmentation (\texttt{task='segment'}), afin de tracer le contour des fissures plutôt que de simples boîtes englobantes.
+Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}~\cite{tensorrt}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec replis PyTorch CPU si la mémoire GPU est insuffisante. Grâce à ce gain de performance, le nœud charge désormais le modèle en mode segmentation (\texttt{task='segment'}), publie la pose sur \texttt{/position\_detectee} à chaque fissure détectée, et trace le contour des fissures plutôt que de simples boîtes englobantes.
 
 L'ensemble est orchestré par le script \texttt{docker/launch\_jetson.sh}, qui lance le conteneur avec la configuration réseau host, le montage des volumes nécessaires et la vérification automatique des dépendances.
 
@@ -576,29 +576,35 @@ Le dataset 360° capturé sur les deux descentes constitue la base de travail du
     \item \textbf{Entraînement d'un modèle adapté :} Un nouveau modèle de détection YOLO sera entraîné spécifiquement sur ces images 360°, afin de permettre une analyse continue de l'ensemble de la voûte pendant les déplacements du robot.
 \end{enumerate}
 
+\subsection{Association image/position sur carte}
 
-Ce chantier constitue une évolution à moyen terme, distincte de la dernière mission technique que nous finalisons pour clore l'année (voir section~\ref{sec:association_pose}).
+La dernière brique logicielle de l'année consistait à relier détection et position : savoir où sur la carte se trouve chaque fissure détectée lors d'une prise de vue. Cette chaîne est aujourd'hui validée en laboratoire et clôt le périmètre fonctionnel défini pour 2025-2026.
 
-\subsection{Association image--position sur carte}
-\label{sec:association_pose}
+Le nœud \texttt{image\_subscriber} détecte les fissures sur les images reçues (\texttt{/photo\_topic}) et, à chaque détection, publie la pose courante du robot sur \texttt{/position\_detectee}.
 
-La détection de fissures par YOLO et la navigation autonome fonctionnent séparément, mais il manque encore le lien entre les deux : savoir \emph{où} sur la carte se trouve chaque fissure détectée lors d'une prise de vue. C'est la dernière brique logicielle que nous finalisons avant la soutenance finale du 12 juin 2026. Une fois cette chaîne opérationnelle, le périmètre défini pour l'année 2025-2026 sera considéré comme bouclé.
-
-\subsubsection{Chaîne existante et blocages}
-
-Le nœud \texttt{image\_subscriber} détecte déjà les fissures sur les images reçues et publie la position courante du robot sur \texttt{/position\_detectee} lorsqu'une fissure est identifiée. Cette position provient de l'odométrie filtrée fournie par l'EKF~\cite{robot_localization}.
-
-Trois nœuds complémentaires, hérités des années précédentes, doivent être révisés et reconnectés :
-
+Le nœud \texttt{report\_fissures} s'abonne à ce topic et, pour chaque message :
 \begin{itemize}
-    \item \textbf{\texttt{show\_pos} :} nœud de diagnostic qui affiche en continu la position du robot depuis \texttt{/odometry/filtered}. Il sert à valider que la pose remontée est cohérente avant de l'associer à une détection.
-    \item \textbf{\texttt{position\_publisher} :} conçu pour enregistrer la pose du robot au moment exact d'une détection. Actuellement, il souscrit à un topic \texttt{detection\_status} qui n'est pas publié par la chaîne actuelle — d'où un blocage à corriger pour aligner ce nœud sur \texttt{/position\_detectee}.
-    \item \textbf{\texttt{report\_fissures} :} reçoit les coordonnées sur \texttt{/position\_detectee} et trace chaque point détecté sur la carte SLAM/AMCL correspondante (fichier \texttt{.yaml} + \texttt{.pgm}), en produisant une image \texttt{map\_with\_point\_*.png}.
+    \item affiche la position en \texttt{odom} puis, après conversion TF, en \texttt{map} ;
+    \item trace le point sur la carte et enregistre un PNG dans \texttt{ros2\_ws/map\_detections/}.
 \end{itemize}
+
+Les anciens nœuds de diagnostic \texttt{show\_pos} et \texttt{position\_publisher}, hérités des années précédentes et branchés sur des topics obsolètes, ont été retirés : leur rôle est couvert directement par \texttt{image\_subscriber} et \texttt{report\_fissures}.
+
+\vspace{0.5cm}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/position.png}
+        \captionof{figure}\\{Exemple de position lié a une détection}
+    \end{minipage}
+\end{figure}
 
 \newpage
 
 % --- Gestion de projet ---
+\addtocontents{toc}{\protect\newpage}
 \section{Gestion de projet}
 
 \subsection{Démarrage et contexte initial}
@@ -619,7 +625,6 @@ Lucas et Adrien ont pris en charge toute la chaîne de détection et d'analyse d
     \item tri et annotation des jeux de données (images PTZ et panoramiques 360°) ;
     \item entraînement et évaluation du modèle YOLO sur images PTZ, puis tentative de création d'un second modèle adapté aux images panoramiques 360° ;
     \item comparaison des performances d'inférence entre PyTorch et TensorRT~\cite{tensorrt,jetson_orin} ;
-    \item contribution à la finalisation de \texttt{report\_fissures}, pour associer chaque fissure détectée à une position sur la carte.
 \end{itemize}
 
 \paragraph{Binôme robotique — Vincent et Paul-Antoine.}
@@ -629,13 +634,14 @@ Vincent et Paul-Antoine ont assuré la remise en service du robot, sa fiabilisat
     \item développement des scripts de lancement et rédaction de la documentation ;
     \item conception des séquences photo et vidéo (\texttt{sequence\_photo}, \texttt{sequence\_video}) ;
     \item résolution des pannes matérielles (LiDAR~\cite{ydlidar_tg15}, alimentation Jetson~\cite{jetson_orin}) ;
-    \item conception et impression 3D des platines LiDAR et PTZ ;
-    \item implémentation de la navigation AMCL~\cite{nav2_amcl_docs} + Nav2~\cite{nav2}, du package \texttt{patrouille\_autonome} et de la procédure de sauvegarde disque.
+    \item conception et impression 3D des nouvelles platines LiDAR et PTZ ;
+    \item implémentation de la navigation autonome via waypoints AMCL~\cite{nav2_amcl_docs} + Nav2~\cite{nav2} \item création d'un backup, procédure de sauvegarde disque.
+    \item finalisation de \texttt{report\_fissures} : association de chaque fissure détectée à une position sur la carte (odom $\rightarrow$ map, tracé PNG).
 \end{itemize}
 
 \subsection{Calendrier et jalons}
 
-Au-delà de la répartition des tâches entre binômes, le projet a suivi une progression temporelle marquée par des échéances décisives. Depuis la prise en main du robot fin novembre, jusqu'à la finalisation de la chaîne image-position avant la soutenance de juin, chaque période a concentré des enjeux techniques distincts : reconstruction de l'infrastructure, validation terrain, puis montée en autonomie. Le tableau suivant synthétise ces cinq étapes en croisant, pour chaque jalon, l'objectif visé au moment de l'échéance et le bilan que nous en tirons aujourd'hui.
+Au-delà de la répartition des tâches entre binômes, le projet a suivi une progression temporelle marquée par des échéances décisives. Depuis la prise en main du robot fin novembre jusqu'à la validation de la chaîne image-position au printemps 2026, chaque période a concentré des enjeux techniques distincts : reconstruction de l'infrastructure, validation terrain, montée en autonomie, puis bouclage de la géolocalisation des détections. Le tableau suivant synthétise ces cinq étapes en croisant, pour chaque jalon, l'objectif visé au moment de l'échéance et le bilan que nous en tirons aujourd'hui.
 
 \begin{table}[htbp]
     \centering
@@ -651,7 +657,7 @@ Au-delà de la répartition des tâches entre binômes, le projet a suivi une pr
         \hline
         2\textsuperscript{ème} descente & 10 Avr & Nav autonome & Nav2 + cartographie partielle \\
         \hline
-        Soutenance finale & 12 Juin & Bilan annuel & Association image/position \\
+        Soutenance finale & 12 Juin & Bilan annuel & 11/11 nœuds + image/position \\
         \hline
     \end{tabular}
     \caption{Calendrier du projet 2025-2026}
@@ -695,15 +701,15 @@ L'objectif est qu'une équipe 2026-2027 puisse remettre le robot en service en m
 % --- Résultats ---
 \section{Résultats}
 
-Cette section présente un bilan structuré des travaux réalisés, en distinguant les objectifs atteints, partiellement atteints et reportés.
+Cette section présente un bilan structuré des travaux réalisés tout au long de l'année, en distinguant les objectifs atteints, partiellement atteints et reportés.
 
 \subsection{Infrastructure logicielle}
 
-La stack ROS2~\cite{ros2} a été reconstruite intégralement à partir des sources de l'équipe précédente. À l'issue de l'année, 10/13 nœuds ROS2 sont opérationnels, couvrant la capture d'images, le contrôle PTZ, la navigation, la détection IA et la fusion mission/acquisition. 5 scripts de cycle de vie et plus de 10 guides de documentation garantissent la reproductibilité pour les équipes suivantes.
+La stack ROS2~\cite{ros2} a été reconstruite à partir des sources de l'équipe 2024-2025, puis réorganisée en trois packages (\texttt{image\_transfer}, \texttt{navigation\_utils}, \texttt{patrouille\_autonome}) et un lanceur central \texttt{ros\_launcher} (EKF, SLAM/AMCL, drivers Scout/LiDAR/ZED). À l'issue de l'année, \textbf{11 nœuds applicatifs} sont opérationnels : capture et contrôle PTZ, séquences photo/vidéo, détection YOLO, rapport de positions sur carte, mission Nav2 et patrouille autonome. Cinq scripts (\texttt{setup}, \texttt{build}, \texttt{launch}, TensorRT, Docker GPU) et plus de dix guides Markdown avec une image NVMe sauvegardée visent une lancement et une compréhension rapide par l'équipe suivante.
 
 \subsection{Acquisition d'images}
 
-La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gauche/haut/droite) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à 0.06 m/s avec balayage PTZ sinusoïdal. Au total, 1400+ images ont été capturées lors des deux descentes via la caméra PTZ, auxquelles s'ajoutent 100+ (donc 600+ avec cubemap) images panoramiques 360° collectées grâce à la caméra Ricoh Theta prêtée par l'ANDRA.
+La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gauche/haut/droite) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à 0.06 m/s avec balayage PTZ sinusoïdal. Au total, 500+ images ont été capturées puis annotées grâce aux deux descentes via la caméra PTZ, auxquelles s'ajoutent 110+ images panoramiques 360° collectées et également annotées grâce à la caméra Ricoh Theta prêtée par l'ANDRA.
 
 \begin{figure}[htbp]
      \centering
@@ -721,6 +727,8 @@ La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gau
      \caption{Exemple de détection de fissures sur image PTZ en galerie}
 \end{figure}
 
+\vspace{-0.2cm}
+
 \subsection{Performances IA}
 
 La conversion du modèle PyTorch \texttt{best.pt} en moteur TensorRT \texttt{best.engine}~\cite{tensorrt} a permis d'accélérer significativement l'inférence sur la Jetson Orin Nano~\cite{jetson_orin}. Les mesures ont été réalisées en conditions opérationnelles sur la chaîne complète \texttt{image\_subscriber} (conteneur Docker, images PTZ en 640$\times$640), et non sur l'inférence seule du réseau :
@@ -731,11 +739,11 @@ La conversion du modèle PyTorch \texttt{best.pt} en moteur TensorRT \texttt{bes
     \item \textbf{Gain :} facteur $\times$4 environ (soit une réduction de 75\,\% du temps de traitement).
 \end{itemize}
 
-Cette accélération a permis de basculer le modèle vers la segmentation d'images dans \texttt{image\_subscriber} (\texttt{task='segment'}), afin d'affiner le contour des fissures au-delà des simples boîtes englobantes. À terme, elle ouvre aussi la voie à une détection quasi temps-réel pendant les déplacements du robot ; il faudra encore adapter \texttt{video\_publisher} pour traiter le flux vidéo aussi vite que l'inférence le permet.
+Cette accélération a permis de basculer le modèle vers la segmentation d'images dans \texttt{image\_subscriber} (\texttt{task='segment'}), afin d'affiner le contour des fissures au-delà des simples boîtes englobantes. À terme, elle ouvre aussi la voie à une détection quasi temps-réel pendant les déplacements du robot.
 
 \subsection{Navigation autonome}
 
-Le robot est capable d'effectuer des missions de navigation autonome sur carte pré-établie en mode AMCL~\cite{nav2_amcl_docs} + Nav2~\cite{nav2} :
+Le robot est capable d'effectuer des missions de navigation autonome sur carte pré-établie en mode AMCL~\cite{nav2_amcl_docs} + Nav2~\cite{nav2} avec un fichiers de waypoints défini :
 
 \begin{itemize}
     \item missions de 10 waypoints validées en laboratoire au TechLab ;
@@ -745,19 +753,19 @@ Le robot est capable d'effectuer des missions de navigation autonome sur carte p
 
 \subsection{Cartographie}
 
-Les premiers essais de cartographie SLAM~\cite{slam_toolbox,wikipedia_slam} dans les tunnels réels ont produit des cartes partielles encourageantes. Cependant, la dérive odométrique ($\approx$ [X] cm/m parcouru) rend ces cartes encore difficilement exploitables pour de longs parcours autonomes. En laboratoire, nous avons réussi a fiabiliser cette cartographie, les cartes sont exploitables et ont servi de base aux tests de navigation AMCL~\cite{nav2_amcl_docs}.
+Les premiers essais de cartographie SLAM~\cite{slam_toolbox,wikipedia_slam} dans les tunnels réels ont produit des cartes partielles encourageantes. Cependant, la dérive odométrique rend ces cartes encore difficilement exploitables pour de longs parcours autonomes. En laboratoire, nous avons réussi a fiabiliser cette cartographie en donnant plus d'imortance aux scans du LiDAR avec une refonte de l'architecture de la tourelle, les cartes sont maintenant exploitables et ont servi de base aux tests de navigation AMCL~\cite{nav2_amcl_docs}.
 
-Les causes principales de dérive sont identifiées : voilage de la roue avant gauche (héritage de l'année précédente) et perturbations du LiDAR par les piliers de la tourelle (complètement résolu par la conception des nouvelles platines 3D).
+Les causes principales de dérive ont été identifiées : voilage de la roue avant gauche (héritage de l'année précédente) et perturbations du LiDAR par les piliers de la tourelle (complètement résolu par la conception des nouvelles platines 3D).
 
 \begin{figure}[htbp]
     \centering
-     \begin{minipage}[c]{0.4\textwidth}
+     \begin{minipage}[t]{0.35\textwidth}
         \centering
          \includegraphics[width=\linewidth]{images/ma_carte_2.png}
          \small \textit{Dérive corrigée — labo TechLab}
      \end{minipage}
      \hspace{0.5cm}
-     \begin{minipage}[c]{0.4\textwidth}
+     \begin{minipage}[t]{0.5\textwidth}
         \centering
          \includegraphics[width=\linewidth]{images/test_andra_slam.png}
          \small \textit{Avec dérive — tunnel ANDRA}
@@ -768,7 +776,7 @@ Les causes principales de dérive sont identifiées : voilage de la roue avant g
 
 \subsection{Géolocalisation des fissures}
 
-La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\_subscriber} $\rightarrow$ \texttt{/position\_detectee} $\rightarrow$ \texttt{report\_fissures}, qui associe chaque média détecté à la pose du robot sur la carte (section~\ref{sec:association_pose}), en s'appuyant sur l'odométrie filtrée~\cite{robot_localization}. Les nœuds \texttt{show\_pos}, \texttt{position\_publisher} et \texttt{report\_fissures} sont en cours de révision pour corriger les topics obsolètes et le chemin de carte par défaut. Cette brique clôt le périmètre fonctionnel défini pour 2025-2026 : détection, navigation autonome et localisation des fissures sur carte.
+La chaîne \texttt{image\_subscriber} $\rightarrow$ \texttt{/position\_detectee} $\rightarrow$ \texttt{report\_fissures} associe chaque détection à la pose du robot sur la carte, en s'appuyant sur l'odométrie filtrée~\cite{robot_localization} et la TF \texttt{map} $\leftarrow$ \texttt{odom}. À chaque fissure identifiée, les coordonnées sont journalisées en \texttt{odom} et en \texttt{map}, puis matérialisées par un PNG horodaté (\texttt{map\_with\_point\_*.png}). Cette brique clôt le périmètre fonctionnel 2025-2026 : détection, navigation autonome et localisation des fissures sur carte.
 
 \subsection{Tableau de synthèse}
 
@@ -792,15 +800,15 @@ La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\
         \hline
         Localisation robuste & \textcolor{green!60!black}{Atteint} & Nouvelle architecture validée \\
         \hline
-        Association image/position & \textcolor{orange}{En cours} & Dernière mission \\
+        Association image/position & \textcolor{green!60!black}{Atteint} & Création de PNG annotée OK \\
         \hline
-        Dataset 360° & \textcolor{orange}{Partiel} & Annotation à terminer \\
+        Annotation des Dataset & \textcolor{orange}{Partiel} & Annotation à terminer \\
         \hline
         Cartographie galeries & \textcolor{orange}{Partiel} & A réessayé avec les corrections \\
         \hline
         Modèle IA 360° & \textcolor{red!70!black}{Reporté} & Hors périmètre annuel \\
         \hline
-        Rapports automatiques & \textcolor{red!70!black}{Reporté} & Base posée : \texttt{report\_fissures} \\
+        Rapports automatiques & \textcolor{red!70!black}{Reporté} & Création de rapport auto \\
         \hline
         IA tous types de murs & \textcolor{red!70!black}{Reporté} & Actuellement limité au GER \\
         \hline
@@ -816,19 +824,19 @@ La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\
 
 Ce projet nous a confrontés, dès les premières semaines, à une réalité courante en ingénierie embarquée : la partie la plus difficile n'est pas toujours la conception, mais la reprise d'un système existant dont les fondations ont disparu. La perte de l'image système du robot, héritée de l'année précédente, a imposé une réinstallation complète et une compréhension approfondie de chaque composant avant de pouvoir avancer.
 
-Malgré ce point de départ contraint, l'équipe a franchi deux étapes clés : une acquisition fiable et automatisée des images de galerie, et un premier déplacement autonome sur carte pré-établie. Le pipeline de détection de fissures est accéléré grâce à TensorRT~\cite{tensorrt}, le robot effectue des missions de waypoints via Nav2~\cite{nav2}, et la fusion navigation/acquisition est prototypée dans le package \texttt{patrouille\_autonome}. La finalisation de la chaîne d'association image--position (section~\ref{sec:association_pose}) constitue la dernière mission technique de l'année et clôt le périmètre défini pour 2025-2026.
+Malgré ce point de départ contraint, l'équipe a franchi trois étapes clés : une acquisition fiable et automatisée des images de galerie, un premier déplacement autonome sur carte pré-établie, et l'association de chaque fissure détectée à sa position sur la carte. Le pipeline de détection de fissures est accéléré grâce à TensorRT~\cite{tensorrt}, le robot effectue des missions de waypoints via Nav2~\cite{nav2}, la fusion navigation/acquisition est prototypée dans le package \texttt{patrouille\_autonome}, et la chaîne image--position (section~\ref{sec:association_pose}) est opérationnelle avec les 11 nœuds applicatifs validés.
 
 Les limites connues — dérive odométrique, cartographie imprécise en tunnel, modèle IA limité au type GER et absence de caméra 360° permanente — sont documentées et laissées ouvertes pour l'équipe 2026-2027. La documentation produite, l'image disque de sauvegarde et le dépôt GitHub constituent une base de départ solide pour cette transmission.
 
 \subsection{Ouvertures}
 
-Les pistes d'amélioration sont organisées par priorité pour guider l'équipe 2026-2027. Les éléments listés ci-dessous relèvent du périmètre de l'année suivante : le projet 2025-2026 se concentre sur la boucle détection + navigation + géolocalisation des fissures sur carte.
+Les pistes d'amélioration sont organisées par priorité pour guider l'équipe 2026-2027. La boucle détection + navigation + géolocalisation des fissures sur carte est en place pour 2025-2026 ; les éléments ci-dessous visent surtout la montée en maturité terrain et les extensions (360°, rapports historiques).
 
 \paragraph{Court terme — reprise par l'équipe suivante.}
 \begin{itemize}
     \item \textbf{Séquences en mode patrouille :} aligner \texttt{sequence\_photo} et \texttt{sequence\_video} sur un usage « capture only » lorsqu'elles sont lancées via \texttt{patrouille\_autonome}, afin d'éliminer tout conflit sur le topic \texttt{/cmd\_vel} avec Nav2.
     \item \textbf{Dataset 360° :} trier, annoter et entraîner un modèle YOLOv11 sur les images panoramiques collectées lors des deux descentes.
-    \item \textbf{Affiner \texttt{report\_fissures} :} enrichir les rapports générés (historique, comparaison inter-rondes) à partir de la base posée en fin d'année.
+    \item \textbf{Enrichir \texttt{report\_fissures} :} ajouter historique et comparaison inter-rondes au tracé carte déjà fonctionnel.
 \end{itemize}
 
 \paragraph{Moyen terme — fiabilité du système.}

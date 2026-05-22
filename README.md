@@ -1,51 +1,131 @@
-# Contexte
-Ce travail a été réalisé par les étudiants en projet industrie en partenariat avec l'ANDRA sur l'année scolaire 2024-2025. Il consiste en la mise en place du déplacement et de la détection de fissures de façon autonome dans les galeries du site de Bure.
+# ANDRA 2025–2026 — Robotique et détection de fissures en galerie
 
-# Equipement 
-Ce projet se base sur un robot Agilex Scout Mini équipé d'une ZED2 (caméra de profondeur), d'un LIDAR, d'une caméra 360° (dite PTZ) et d'une Jetson Orin Nano.
-L'objectif est ici de combiner l'ensemble des capteurs d'estimation de position (vélocité des roues, IMU intégré de la ZED2, LIDAR) pour créer une carte de l'environnement et d'estimer la position du robot. A partir de la, une IA reconnaît la fissure via le flux vidéo qui provient de la PTZ.
+Projet industrie de l’[École des Mines de Nancy](https://mines-nancy.univ-lorraine.fr/) en partenariat avec l’[ANDRA](https://www.andra.fr/) (année scolaire 2025–2026).
 
-# Ce qui a été fait 
-- L'IA est convaincante et fonctionne plutôt bien. 
-- Le robot est capable de prendre une carte en entrée et d'estimer sa position 
-- Le robot est capable d'avancer en ligne droite pendant 1 mètre, s'arrêter pour prendre une image puis recommencer
+**Thème :** *Robotique et IA en environnements complexes — exploration de la galerie souterraine de l’ANDRA avec un robot et détection avancée de fissures.*
 
-# Ce qui marche pas / mal
-- L'estimation de position relative est objectivement mauvaise, cela est principalement dû au fait que les capteurs sont d'entrées de gamme et ne sont pas fait pour se reposer uniquement sur eux (ils sont censés être utilisés en tant que complément par exemple avec un GPS). Nous soupçonnons que les vibrations du robot entraîne des erreurs qui finissent par diverger (intégration double de l'accélération)
-- La cartographie fonctionne en conséquence assez mal étant donné que pour cartographier, le robot a besoin de connaître sa position relative
+---
 
-# Ce qu'il reste à faire 
-- Améliorer le positionnement, cela peut se faire à l'aide de capteurs de meilleur qualité mais surtout d'utiliser les étiquettes au sein de l'ANDRA pour se recalibrer. PS: En réalité ce problème n'en est pas vraiment un car de nombreux robots, y compris au TechLab et au Loria, ont déjà résolu ce problème (Spot ou le Unitree GO2 sont plutôt bons). 
+## Contexte
 
-- Améliorer l'autonomie du robot, pour l'instant la mission est uniquement d'avancer en ligne droite, à terme l'objectif est que le robot se balade de façon autonome dans l'ensemble des galeries. 
+Dans le cadre du projet **Cigéo** (stockage géologique en profondeur, site de Bure), le cisaillement entre jointures de galerie peut provoquer l’apparition et l’évolution de **fissures** sur les parois. Sur des kilomètres de galeries, leur suivi manuel est répétitif et chronophage.
 
-- L'IA est pour l'instant restreinte à un unique type de mur (GER), en effet, la segmentation des fissures est un problème difficile, nous n'avons donc entrainé notre IA sur un unique type de mur, il faudrait le faire pour chacun de la galerie (force à vous) 
+Ce projet vise à **automatiser l’inspection** : un robot mobile parcourt la galerie, capture les parois, détecte les fissures par vision (IA), et **géoréférence** chaque détection sur une carte pour un suivi dans le temps.
 
-# Détails sur le travail réalisé
+---
 
-- Nous avons utilisé ROS2 humble pour le projet, nous vous conseillons FORTEMENT de soit garder cette version soit s'assurer que la version de l'OS (Humble cible **Ubuntu 22.04 (Jammy)** comme distribution par défaut) est bien compatible avec la distribution ROS choisie. 
+## Équipe
 
-- Nous utilisons YOLOv11 pour la détection d'images, nous vous conseillons de garder cela car c'est à la fois facile d'utilisation (pas besoin de s'embêter 
-avec pytorch ou CUDA tout est géré par défaut) et permet d'obtenir des résultats corrects. Pour la segmentation, utiliser des masques sur LabelStudio, vous utiliserez ensuite un script permettant de transformer les masques en bouding box compréhensibles par YOLO, en réalité assez peu d'informations est perdue, ce n'est pas dérangeant. 
+| Membre | Rôle principal |
+|--------|----------------|
+| **Guichard Vincent**, **Paris Paul-Antoine** | Robotique : ROS2, capteurs, navigation, intégration terrain |
+| **Lefebvre Adrien**, **Dame Lucas** | IA : datasets, entraînement et évaluation YOLO (PTZ et 360°) |
 
-- Pour le LIDAR, nous avons utilisé le SDK officiel : https://github.com/YDLIDAR/ydlidar_ros2_driver/tree/humble, qui n'est malheuresement pas mis à jour et avec une documentation plus que minimaliste. Ce qu'il faut savoir c'est que la commande ``ros2 launch ydlidar_ros2_driver ydlidar_launch.py`` publie sur le topic /scan les données du LIDAR. Le LIDAR peut ne pas être correctement orienté (pas dans la même direction que l'avant du robot), il faut donc faire une rotation, pour cela dans un autre terminal vous pouvez lancer la commande ``ros2 run tf2_ros static_transform_publisher 0 0 0 1.57 0 0 base_link laser_frame``.
+Encadrement : TechLab, tuteurs Mines Nancy, intervenant ANDRA.
 
-- Pour la ZED2, nous avons encore une fois utilisé le SDK officiel : https://www.stereolabs.com/docs/ros2 ; celui la est bien mieux documenté, vous n'aurez normalement pas de problème. Il faut cependant noter que lorsque vous arrêtez votre programme, il peut arriver que le noeud ROS de la ZED2 ne s'arrête pas correctement, il faut donc aller le fermer "manuellement", ChatGPT est votre ami si vous ne savez pas comment faire. 
+Le rapport détaillé est disponible sur le dépôt : [@ANDRA_2025_2026.pdf](./@ANDRA_2025_2026.pdf)
 
-- Pour les roues du robot, le CAN est configuré sur la "mauvaise interface", il faut donc lancer la commande : ``sudo ip link set can1 up type can bitrate 500000`` avant de pouvoir recevoir les informations. Il existe un repo pour récupérer les données des roues mais nous ne sommes pas sûr duquel nous avons utilisé, probablement celui la : https://github.com/agilexrobotics/scout_ros2. Dans tous les cas, vous pouvez regarder le fichier de lancement qui configure tout si vous voulez plus d'informations. Les informations des roues sont publiés sur le topic /odom_robot
+---
 
-- Pour la PTZ, nous utilisons un protocole qui s'appelle RTSP permettant de récupérer le flux vidéo. Nous avons ensuite développer des noeuds ROS qui utilisent l'IA que nous avons entrainé pour détecter les fissures. Un noeud appelé ``publisher`` envoie une frame du flux toutes les 10 secondes sur le topic (à remplir) tandis que le noeud ``subscriber`` fait le travail d'analyse. L'IA étant précise et possèdant un nombre de couches important, l'analyse d'une image met environ 5 secondes, ce qui n'est pas particulièrement problématique si l'on considère que le robot va travailler de nuit. 
+## Plateforme robot
 
-# Démonstration de notre travail
+| Composant | Rôle |
+|-----------|------|
+| **Agilex Scout Mini** | Base mobile (odométrie roues, bus CAN) |
+| **NVIDIA Jetson Orin Nano** | Calcul embarqué (ROS2, inférence GPU) |
+| **YDLidar TG15** | LiDAR 2D — localisation AMCL, cartographie, obstacles |
+| **Stereolabs ZED2i** | Profondeur + IMU (fusion orientation via EKF) |
+| **Marshall CV-605 (PTZ)** | Prises de vue haute résolution des parois (RTSP / VISCA) |
+| **Caméra 360°** (Ricoh Theta, prêt ANDRA) | Acquisition panoramique pour un futur modèle continu |
 
-- Pour faire une démo de ce que nous avons fait, vous avez besoin de plusieurs choses : un accès SSH à la Jetson, un PC avec de préférence une carte graphique NVIDIA (je n'ai pas testé sur d'autres je ne sais pas si ça marche quand même) sous Linux avec un environnement X11 et docker-compose d'installé (si vous n'en n'avez pas ou que vous ne comprenez pas ce que j'ai écris vous devriez pouvoir utiliser un des ordis du techlab sans trop de soucis) et de télécharger l'archive contenant le docker (save_docker.zip sur le drive). 
+---
 
-- Connectez vous en SSH à la Jetson (`ssh techlab@192.168.40.100` ou `ssh techlab@orin2.local` si vous êtes sur **Techlab-wifi**, mdp : `depinfonancy` ; pour le hotspot terrain `JetsonWIFI`, voir `docs/HOTSPOT.md` et `docs/DEMARRAGE_ROBOT.md`). Lancez la commande décrite dans la section sur les roues du robot (cela permet de s'assurer que les informations des roues sont sur la bonne interface (demander à Antoine si besoin)). Ouvrez un deuxième terminal SSH et lancez la commande pour la rotation du LIDAR. Enfin, allez dans le dossier ``ros_launcher`` et lancez la commande ``ros2 launch navigation_stack.launch.py``. Normalement, beaucoup d'informations vont s'afficher provenant de tous les noeuds décrits précédemment, si vous avez une erreur lisez bien les logs et chercher sur Google/ChatGPT. La commande précédente lancera le SLAM (lire le rapport).
+## Chaîne fonctionnelle (vue d’ensemble)
 
-- Pour observer les avancées de votre robot, sur votre PC sous linux, lancer le fichier de lancement ``./launch.sh`` se trouvant dans l'archive mentionnée précemment. Normalement, l'image docker va se télécharger et vous ouvrir une fenêtre RViz2 (outil de visualisation). Faites ensuite, file -> Open Config et sélectionnez la configuration se trouvant dans le dossier /tmp/config.rviz. Si vous êtes sur le même réseau que le robot (c'est normalement le cas si vous avez réussi à vous connecter en SSH) vous devriez voir apparaitre votre petit robot avec la carte se dessinant autour de ce dernier. 
+```mermaid
+flowchart LR
+  subgraph capteurs [Capteurs]
+    Scout[Scout Mini]
+    Lidar[LiDAR TG15]
+    PTZ[Caméra PTZ]
+    ZED[ZED2i]
+  end
+  subgraph logiciel [Stack ROS2]
+    Nav[AMCL + Nav2]
+    Cap[Séquences photo / vidéo]
+    YOLO[YOLO / TensorRT]
+    Map[report_fissures]
+  end
+  Scout --> Nav
+  Lidar --> Nav
+  PTZ --> Cap --> YOLO
+  ZED --> Nav
+  YOLO --> Map
+  Nav --> Map
+```
 
-- Pour lancer AMCL avec une carte prédéfinnie, utilisez la commande suivante : ``ros2 launch navigation_stack.launch.py use_slam:=false use_amcl:=true map_path:=wall_techlab.yaml`` (où wall_techlab.yaml correspond à vos métadonnées de votre carte).
+1. **Navigation** — Localisation sur carte préétablie (**AMCL** + **Nav2**), missions par waypoints ; le SLAM seul dérive trop sur de longues distances avec les capteurs actuels, il est utilisé uniquement pour la création de carte.
+2. **Acquisition** — Séquences **step-and-go** (5 photos PTZ) ou **vidéo** à basse vitesse ; fusion possible avec une mission de navigation autonome (`patrouille_autonome`).
+3. **Détection** — Modèle **YOLOv11** entraîné sur des images de galerie Bure (`best.pt`, accélération **TensorRT** sur Jetson).
+4. **Géolocalisation des fissures** — Chaque détection publie une pose ; `report_fissures` la projette sur la carte.
 
-# Contact 
+---
 
-En cas de problèmes que vous n'arrivez pas à résoudre, contactez moi par mail (eliott.leboeuf@gmail.com) ou Messenger, j'essayerai de vous répondre, bonne chance ! 
+## Structure du dépôt
+
+```
+ANDRA_2025-2026/
+├── docs/              # Guides opérationnels (démarrage, debug, YOLO, TF, backup…)
+├── scripts/           # setup.sh, build.sh, launch.sh, réseau PTZ, TensorRT…
+├── ros2_ws/           # Workspace principal (packages ROS2)
+├── dependencies/      # Drivers : scout_base, ydlidar, zed-ros2-wrapper
+├── docker/            # Images RViz (PC) et inférence GPU (Jetson)
+├── video/             # Enregistrement vidéo PTZ hors ROS
+└── backup/            # Empreinte SHA256 de l’image disque 
+```
+
+Détail des dossiers et packages : [`docs/STRUCTURE.md`](docs/STRUCTURE.md).
+
+---
+
+## Démarrage rapide
+
+Sur le robot (Jetson), après clonage du dépôt :
+
+```bash
+# Installation des dépendances et sourcing des workspaces
+./scripts/setup.sh
+
+# Compilation
+./scripts/build.sh
+
+# Lancement (SLAM par défaut, ou AMCL avec une carte)
+./scripts/launch.sh
+./scripts/launch.sh amcl ros2_ws/src/ros_launcher/map_results/ma_carte_2.yaml
+```
+
+Options modulaires (désactiver un capteur en panne) : voir [`docs/SCRIPTS.md`](docs/SCRIPTS.md) et [`docs/DEMARRAGE_ROBOT.md`](docs/DEMARRAGE_ROBOT.md).
+
+Connexion réseau (TechLab ou hotspot `JetsonWIFI` en galerie) : [`docs/HOTSPOT.md`](docs/HOTSPOT.md).
+
+---
+
+## Documentation
+
+| Sujet | Fichier |
+|-------|---------|
+| Structure du projet | [`docs/STRUCTURE.md`](docs/STRUCTURE.md) |
+| Démarrage des nœuds | [`docs/DEMARRAGE_ROBOT.md`](docs/DEMARRAGE_ROBOT.md) |
+| Détection YOLO / TensorRT | [`docs/DETECTION_YOLO.md`](docs/DETECTION_YOLO.md) |
+| Missions waypoints (AMCL) | [`docs/TRAJECTOIRE_MISSION.md`](docs/TRAJECTOIRE_MISSION.md) |
+| RViz2 et cartes | [`docs/VISUALISATION.md`](docs/VISUALISATION.md) |
+| Arbre TF | [`docs/TF_TREE.md`](docs/TF_TREE.md) |
+| Débogage ROS2 et commande SSH utile| [`docs/DEBUG.md`](docs/DEBUG.md) |
+| Sauvegarde image disque | [`docs/BACKUP.md`](docs/BACKUP.md) |
+| Docker (RViz / Jetson) | [`docker/README.md`](docker/README.md) |
+
+---
+
+## Licence et usage
+
+Projet académique et partenariat industriel ANDRA — usage interne équipe projet / TechLab / ANDRA.
