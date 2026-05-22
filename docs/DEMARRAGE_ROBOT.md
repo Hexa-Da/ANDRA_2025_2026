@@ -267,7 +267,7 @@ Le fichier `navigation_stack.launch.py` lance automatiquement :
   - S'abonne au topic `/odometry/filtered` pour obtenir la position du robot (publiée par EKF)
   - Publie le Path sur `/robot_path` pour visualiser le trajet parcouru dans RViz2
   - Ajoute un point au Path tous les 10 cm minimum (`min_distance = 0.1`)
-- **`report_fissures`** : reçoit `/position_detectee` (publié par `image_subscriber`) et trace chaque détection sur la carte (`map_yaml_path`, défaut `ma_carte_2.yaml` du package `ros_launcher`). PNG dans `ros2_ws/map_detections/`. Lancé si `enable_image_transfer:=true` ; en AMCL, `launch.sh` aligne `map_yaml_path` sur `map_path`.
+- **`report_fissures`** : reçoit `/position_detectee` en **`odom`** (`image_subscriber` / `/odometry/filtered`), convertit en **`map`** via TF (`map` ← `odom`, AMCL ou 2D Pose Estimate), trace sur la carte (`map_yaml_path`, défaut `ma_carte_2.yaml` si `ros_launcher` sourcé). PNG dans `ros2_ws/map_detections/`. 
 
 ### Localisation et cartographie
 

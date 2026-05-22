@@ -238,6 +238,19 @@ class ImageSubscriber(Node):
         self.use_tensorrt = False
         self.device = 'cpu'
 
+    def _load_pytorch_cpu_model(self) -> None:
+        """
+        Charge best.pt sur CPU.
+        Precondition: self.model_path pointe vers best.pt, pas de modele actif.
+        Postcondition: self._model_loaded True seulement si YOLO() reussit.
+        """
+        try:
+            self.model = YOLO(self.model_path, task='segment')
+        except Exception:
+            self._unload_model()
+            raise
+        self._model_loaded = True
+
     def _load_model(self) -> None:
         """Charge YOLO au premier callback."""
         if self._model_loaded:
@@ -261,7 +274,7 @@ class ImageSubscriber(Node):
                     if not self.pytorch_path:
                         raise RuntimeError("Warmup TensorRT echoue, pas de best.pt")
                     self._switch_to_pytorch_cpu("Warmup TensorRT (NvMap/CUDA)")
-                    self.model = YOLO(self.model_path, task='segment')
+                    self._load_pytorch_cpu_model()
                     self.get_logger().info("Fallback PyTorch CPU reussi (warmup)")
                 else:
                     self.get_logger().info("TensorRT valide (warmup GPU OK)")
@@ -275,8 +288,7 @@ class ImageSubscriber(Node):
             if self.use_tensorrt and self.pytorch_path:
                 self._switch_to_pytorch_cpu("Echec chargement TensorRT")
                 try:
-                    self.model = YOLO(self.model_path, task='segment')
-                    self._model_loaded = True
+                    self._load_pytorch_cpu_model()
                     self.get_logger().info("Fallback PyTorch CPU reussi")
                     return
                 except Exception as e2:
@@ -330,10 +342,20 @@ class ImageSubscriber(Node):
                 # TensorRT ne peut PAS tourner sur CPU - basculer sur PyTorch
                 if self.use_tensorrt and self.pytorch_path:
                     self._switch_to_pytorch_cpu("Erreur TensorRT")
-                    self.model = YOLO(self.model_path, task='segment')
-                    self._model_loaded = True
-                    self.get_logger().info("Modele PyTorch charge, retry inference...")
-                    results = self.model(img, device='cpu', imgsz=self.gpu_imgsz, verbose=False)
+                    try:
+                        self._load_pytorch_cpu_model()
+                        self.get_logger().info(
+                            "Modele PyTorch charge, retry inference..."
+                        )
+                        results = self.model(
+                            img,
+                            device='cpu',
+                            imgsz=self.gpu_imgsz,
+                            verbose=False,
+                        )
+                    except Exception:
+                        self._unload_model()
+                        raise
                 # PyTorch: fallback GPU -> CPU
                 elif device_id != 'cpu' and not self.use_tensorrt:
                     self.get_logger().warn("Fallback PyTorch CPU")

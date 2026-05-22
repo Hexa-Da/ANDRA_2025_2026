@@ -51,7 +51,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ### Vérification/Nettoyage des nœuds ROS2 présents
 - [x] `image_publisher` : Capture des images depuis la caméra PTZ, sauvegarde dans `images_capturees/`
 - [x] `image_subscriber` : Détection YOLO des fissures, sauvegarde dans `images_detectees/`
-- [x] `report_fissures` : Tracé des positions détectées sur la carte 
+- [x] `report_fissures` : Tracé des positions détectées sur la carte (odom → map via TF, Pillow)
 - [x] `ptz_controller` : Contrôle PTZ de la caméra Marshall CV-605 via protocole VISCA over IP
 
 ### Implémentation de nœuds ROS2
@@ -335,18 +335,6 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Surveillance LiDAR `/scan` pendant l'exécution des goals.
   - Si obstacle frontal sous seuil (`emergency_stop_distance`), annulation du goal en cours et arrêt de la mission.
 
-### Backup
-- [x] **Sauvegarde disque** : 
-  - En début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. 
-  - Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. 
-- [x] **Création de l'archive** :
-  - L’archive d’image compressée (trop volumineuse pour Git) sera fournie sur une **clé USB transmise avec le robot** à l’équipe suivante / pour maintenance.
-  - L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
-
----
-
-## Problèmes actuels / en cours de résolution
-
 ### Impossible de rendre le robot autonome (les piliers de la tourelle cachent trop le LiDAR)
 - [x] **Conception d'une nouvelle tourelle** :
   - Les premiers tests de navigation AMCL révèlent que le LiDAR sera aussi essentiel lors de la navigation autonome. La localisation seule sur la carte ne suffit pas.
@@ -365,6 +353,23 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Décision actuelle : retrait de l'arrêt d'urgence logiciel dans `trajectoire_mission.py` pour éviter les arrêts intempestifs de mission.
   - Stratégie retenue : s'appuyer sur l'évitement Nav2 (comportement d'esquive jugé globalement fiable) plutôt que forcer un stop logiciel instable.
   - Action future si nécessaire : réintroduire un arrêt d'urgence uniquement avec une source capteur plus robuste / dédiée.
+
+### Backup
+- [x] **Sauvegarde disque** : 
+  - En début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. 
+  - Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. 
+- [x] **Création de l'archive** :
+  - L’archive d’image compressée (trop volumineuse pour Git) sera fournie sur une **clé USB transmise avec le robot** à l’équipe suivante / pour maintenance.
+  - L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
+
+### Chaîne de détection révisé pour tracer la position de la detection sur une carte
+- [x] **`image_subscriber`** : mémoire CUDA globale (`mem_get_info`), `MIN_GPU_FREE_GB`, warmup TensorRT, fallbacks CPU ; doc `docs/DETECTION_YOLO.md`
+- [x] **`report_fissures`** : plus de dépendance build `ros_launcher` ; carte par défaut au runtime ; tracé Pillow (plus matplotlib)
+- [x] **`report_fissures`** : `/position_detectee` en odom → conversion map via TF (AMCL / 2D Pose Estimate) ; PNG dans `ros2_ws/map_detections/`
+
+---
+
+## Problèmes actuels / en cours de résolution
 
 ### Fusion de l'analyse et de la navigation
 - [x] **Rendre les séquences autonomes** :
@@ -390,7 +395,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] **Associer chaque média à la pose robot** :
   - Réviser les nœuds `show_pos.py`, `position_publisher.py` (inutile).
   - Comprendre comment fonctionne `report_fissures.py`.
-  - `report_fissures` intégré au launch (`/position_detectee` → PNG).
+  - `report_fissures` : odom → map via TF, tracé PNG (Pillow), intégré au launch (`/position_detectee`).
   - Lier chaque image YOLO sauvegardée au même horodatage / métadonnées que le point carte.
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
@@ -482,4 +487,4 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ---
 
-**Dernière mise à jour** : 18 mai 2026
+**Dernière mise à jour** : 22 mai 2026

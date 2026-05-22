@@ -11,7 +11,6 @@ from geometry_msgs.msg import Point, PointStamped
 from PIL import Image, ImageDraw
 from rclpy.duration import Duration
 from rclpy.node import Node
-from rclpy.time import Time
 import tf2_geometry_msgs  # noqa: F401 — enregistre PointStamped pour tf2
 from tf2_ros import Buffer, TransformException, TransformListener
 
@@ -161,10 +160,12 @@ class MapPointPlotter(Node):
         """
         Précondition : /position_detectee est en repère odom (EKF world_frame=odom).
         Postcondition : (x, y) en repère map, ou None si TF map←odom indisponible.
+        Invariant : stamp = now() pour demander la TF AMCL/SLAM au temps courant
+        (Time(0) = « latest » en cache, peut être obsolète).
         """
         stamped_odom: PointStamped = PointStamped()
         stamped_odom.header.frame_id = self.odom_frame
-        stamped_odom.header.stamp = Time(seconds=0).to_msg()
+        stamped_odom.header.stamp = self.get_clock().now().to_msg()
         stamped_odom.point = msg
         try:
             stamped_map: PointStamped = self.tf_buffer.transform(

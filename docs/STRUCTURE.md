@@ -79,7 +79,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
   - `ptz_controller` : Contrôle de la caméra PTZ Marshall CV-605
 - `src/navigation_utils/` : Package ROS2 pour les utilitaires de navigation et visualisation
   - `odom_to_path` : Conversion de l'odométrie en Path pour visualisation dans RViz2
-  - `report_fissures` : Trace les détections (`/position_detectee`) sur la carte (PNG dans `ros2_ws/map_detections/`)
+  - `report_fissures` : `/position_detectee` (odom) → TF map → PNG dans `ros2_ws/map_detections/`
   - `sequence_photo` : Séquence Step-and-Go avec 5 captures PTZ en boucle
   - `sequence_video` : Enregistrement vidéo continu avec balayage PTZ automatique
   - `trajectoire_mission` : Exécute une mission Nav2 à partir d'un fichier de waypoints (`x`, `y`, `yaw`)

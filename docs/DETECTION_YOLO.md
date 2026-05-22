@@ -47,7 +47,16 @@ Le modèle est chargé **au premier callback** sur `/photo_topic`.
 | **`GPU_RETRY_INTERVAL`** | Nombre d’images entre deux tentatives de repasser sur **GPU** après un repli **CPU** en PyTorch (défaut : **`50`**). |
 | **`MIN_GPU_FREE_GB`** | Mémoire CUDA libre minimale avant TensorRT (défaut : **`3.0`**). Un warmup teste l’engine au chargement ; en dessous de ~3 Go avec ZED/AMCL actifs, fallback CPU. |
 
-D’autres mécanismes (mémoire GPU insuffisante, erreurs d’inférence) peuvent déclencher des bascules automatiques TensorRT → PyTorch CPU ou CUDA → CPU ; voir le code pour le détail.
+### Mémoire GPU et bascules (mai 2026)
+
+Sur **Jetson Orin** avec ZED + AMCL/SLAM actifs, TensorRT peut réussir vers **~3,3 Go** CUDA libres et échouer (NvMap) vers **~2,4 Go**. Le nœud :
+
+1. Mesure la mémoire avec **`torch.cuda.mem_get_info`** 
+2. Refuse TensorRT si la mémoire libre est **< `MIN_GPU_FREE_GB`** (défaut **3.0**).
+3. Exécute un **warmup** (première inférence factice 640×640) juste après le chargement de `best.engine` — c’est là qu’Ultralytics désérialise l’engine ; en cas d’échec, bascule **`best.pt` sur CPU** et désactive TensorRT pour la session (`_tensorrt_disabled`).
+4. Libère proprement le modèle (`_unload_model` + `gc` + `empty_cache`) avant tout changement de backend ou à l’arrêt du nœud (évite segfault NvMap).
+
+D’autres erreurs d’inférence en cours d’exécution déclenchent aussi TensorRT → PyTorch CPU, ou PyTorch GPU → CPU selon le cas ; repli GPU PyTorch retenté tous les **`GPU_RETRY_INTERVAL`** images.
 
 ## Conversion `best.pt` → `best.engine`
 

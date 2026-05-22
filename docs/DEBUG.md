@@ -29,9 +29,9 @@ ros2 topic echo /photo_topic
 # Vérifier la fréquence de publication
 ros2 topic hz /photo_topic
 
-# Positions où des fissures ont été détectées (geometry_msgs/Point)
-# Publié par : image_subscriber
-# Souscrit par : report_fissures
+# Positions où des fissures ont été détectées (geometry_msgs/Point, repère odom)
+# Publié par : image_subscriber (pose au moment de la détection, depuis /odometry/filtered)
+# Souscrit par : report_fissures (conversion odom→map via TF avant tracé PNG)
 ros2 topic echo /position_detectee
 ```
 
@@ -56,7 +56,6 @@ ros2 topic echo /odom_robot
 # Odométrie filtrée par le filtre EKF (nav_msgs/Odometry)
 # Publié par : EKF
 # Souscrit par : image_subscriber, odom_to_path, sequence_photo, sequence_video
-# Souscrit par : report_fissures (carte PNG)
 ros2 topic echo /odometry/filtered
 
 # Trajet du robot (nav_msgs/Path)
