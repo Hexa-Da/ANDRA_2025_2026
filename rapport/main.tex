@@ -374,7 +374,7 @@ Afin d'exploiter pleinement le GPU de la Jetson Orin Nano~\cite{jetson_orin} pou
 
 Cette image intègre ROS~2~\cite{ros2}, PyTorch avec CUDA et la bibliothèque Ultralytics~\cite{ultralytics_yolo}, garantissant la compatibilité GPU native sur la plateforme Jetson.
 
-Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}~\cite{tensorrt}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli sur le modèle PyTorch.
+Un script de conversion (\texttt{scripts/convert\_to\_tensorrt.sh}) permet de transformer le modèle PyTorch \texttt{best.pt} en un moteur TensorRT \texttt{best.engine}~\cite{tensorrt}, offrant une accélération de l'inférence de l'ordre de 3 à 5 fois par rapport au modèle PyTorch. Le code du nœud \texttt{image\_subscriber} a été adapté pour détecter et utiliser automatiquement le moteur TensorRT s'il est disponible, avec un repli sur le modèle PyTorch. Grâce à ce gain de performance, le nœud charge désormais le modèle en mode segmentation (\texttt{task='segment'}), afin de tracer le contour des fissures plutôt que de simples boîtes englobantes.
 
 L'ensemble est orchestré par le script \texttt{docker/launch\_jetson.sh}, qui lance le conteneur avec la configuration réseau host, le montage des volumes nécessaires et la vérification automatique des dépendances.
 
@@ -611,7 +611,7 @@ Dans ce contexte, la priorité a été donnée à l'appropriation technique plut
 
 \subsection{Organisation de l'équipe}
 
-Une fois le projet lancé, nous nous sommes répartis en deux binômes complémentaires, selon les compétences et affinités de chacun. Cette organisation a permis de travailler en parallèle sur deux axes techniques fortement couplés, sans bloquer l'avancement global.
+Une fois le projet lancé, nous nous sommes répartis en deux binômes complémentaires, selon les compétences et affinités de chacun. Cette organisation a permis de travailler en parallèle sur deux axes techniques, afin d'éviter de bloquer l'avancement global.
 
 \paragraph{Binôme IA — Lucas et Adrien.}
 Lucas et Adrien ont pris en charge toute la chaîne de détection et d'analyse d'images :
@@ -625,7 +625,7 @@ Lucas et Adrien ont pris en charge toute la chaîne de détection et d'analyse d
 \paragraph{Binôme robotique — Vincent et Paul-Antoine.}
 Vincent et Paul-Antoine ont assuré la remise en service du robot, sa fiabilisation matérielle, la navigation autonome et son couplage avec les séquences d'acquisition :
 \begin{itemize}
-    \item installation et configuration des drivers (\texttt{scout\_base}~\cite{scout_ros2}, ZED~\cite{zed_ros2_wrapper}, LiDAR~\cite{ydlidar_ros2_driver}, PTZ~\cite{marshall_cv605}) ;
+    \item installation et configuration des drivers (\texttt{scout\_base}, ZED, LiDAR, PTZ) ;
     \item développement des scripts de lancement et rédaction de la documentation ;
     \item conception des séquences photo et vidéo (\texttt{sequence\_photo}, \texttt{sequence\_video}) ;
     \item résolution des pannes matérielles (LiDAR~\cite{ydlidar_tg15}, alimentation Jetson~\cite{jetson_orin}) ;
@@ -671,7 +671,7 @@ Les deux binômes se sont synchronisés régulièrement pour arbitrer les choix 
 Trois risques majeurs se sont concrétisés au cours de l'année. Leur matérialisation et les mesures correctives apportées sont présentées ci-dessous.
 
 \paragraph{Perte de l'image disque.}
-En début d'année, l'image système du robot — contenant l'ensemble de l'environnement configuré par l'équipe précédente — a été supprimée sans sauvegarde. La réinstallation complète de tous les drivers et la reconfiguration de l'architecture ROS2~\cite{ros2} ont mobilisé plusieurs semaines. En réponse, une image complète du disque NVMe a été réalisée en fin de projet et une clé USB de restauration sera transmise avec le robot.
+En début d'année, l'image système du robot — contenant l'ensemble de l'environnement configuré par l'équipe précédente — a été supprimée sans sauvegarde. La réinstallation complète de tous les drivers et la reconfiguration de l'architecture ROS2~\cite{ros2} ont mobilisé plusieurs semaines, voir plusieurs mois. En réponse, une image complète du disque NVMe a été réalisée en fin de projet et une clé USB de restauration sera transmise avec le robot.
 
 \paragraph{Pannes matérielles.}
 Deux incidents ont perturbé les plannings : le port micro USB arraché sur la carte du LiDAR (résolu par une soudure USB-C) et le connecteur d'alimentation de la Jetson arraché lors de la première descente (résolu en une semaine par Paul-Antoine). L'architecture modulaire \texttt{enable\_*} du launch file a permis de maintenir le développement en parallèle malgré ces indisponibilités.
@@ -684,10 +684,10 @@ L'intégration d'une caméra 360° permanente n'a pas pu être finalisée, le Te
 La transmission du projet d'une équipe à l'autre est le défi structurel de ce projet depuis plusieurs années. Pour éviter de répéter l'expérience du début d'année, plusieurs livrables de continuité ont été produits :
 
 \begin{itemize}
-    \item \textbf{Dépôt GitHub documenté :} code, guides Markdown, \texttt{TODO.md} avec l'état précis de chaque tâche.
-    \item \textbf{Documentation opérationnelle :} plus de 10 guides couvrant le démarrage, le débogage, la visualisation, la navigation, la connexion réseau et la sauvegarde.
+    \item \textbf{Dépôt GitHub :} code, config docker, config rviz et la \texttt{TODO.md} utilisé.
+    \item \textbf{Documentation opérationnelle :} plus de 10 guides couvrant le démarrage, le débogage, la visualisation, la navigation, la connexion réseau etc.
     \item \textbf{Image disque NVMe :} transmise sur clé USB avec le robot.
-    \item \textbf{Modèles YOLO :} \texttt{best.pt} (PTZ) et \texttt{best.engine} (TensorRT~\cite{tensorrt}) conservés sur le Drive partagé.
+    \item \textbf{Modèles YOLO :} \texttt{best.pt} et \texttt{best.engine} (TensorRT~\cite{tensorrt}) conservés sur le Drive partagé avec les datasets annoté.
 \end{itemize}
 
 L'objectif est qu'une équipe 2026-2027 puisse remettre le robot en service en moins d'une demi-journée, sans dépendre d'une connaissance préalable du système.
@@ -699,76 +699,72 @@ Cette section présente un bilan structuré des travaux réalisés, en distingua
 
 \subsection{Infrastructure logicielle}
 
-La stack ROS2~\cite{ros2} a été reconstruite intégralement à partir des sources de l'équipe précédente. À l'issue de l'année, [X] nœuds ROS2 sont opérationnels, couvrant la capture d'images, le contrôle PTZ, la navigation, la détection IA et la fusion mission/acquisition. [X] scripts de cycle de vie et plus de 10 guides de documentation garantissent la reproductibilité pour les équipes suivantes.
+La stack ROS2~\cite{ros2} a été reconstruite intégralement à partir des sources de l'équipe précédente. À l'issue de l'année, 10/13 nœuds ROS2 sont opérationnels, couvrant la capture d'images, le contrôle PTZ, la navigation, la détection IA et la fusion mission/acquisition. 5 scripts de cycle de vie et plus de 10 guides de documentation garantissent la reproductibilité pour les équipes suivantes.
 
 \subsection{Acquisition d'images}
 
-La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gauche/haut/droite) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à [X] m/s avec balayage PTZ sinusoïdal. Au total, [X] images ont été capturées lors des deux descentes via la caméra PTZ, auxquelles s'ajoutent [X] images panoramiques 360° collectées grâce à la caméra Ricoh Theta prêtée par l'ANDRA.
+La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gauche/haut/droite) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à 0.06 m/s avec balayage PTZ sinusoïdal. Au total, 1400+ images ont été capturées lors des deux descentes via la caméra PTZ, auxquelles s'ajoutent 100+ (donc 600+ avec cubemap) images panoramiques 360° collectées grâce à la caméra Ricoh Theta prêtée par l'ANDRA.
 
-% TODO : insérer ici une figure côte à côte — image brute PTZ | même image avec bounding boxes YOLO
-% \begin{figure}[htbp]
-%     \centering
-%     \begin{minipage}[c]{0.42\textwidth}
-%         \includegraphics[width=\linewidth]{images/VOTRE_IMAGE_BRUTE.jpg}
-%         \small \textit{Image brute (PTZ)}
-%     \end{minipage}
-%     \hspace{0.5cm}
-%     \begin{minipage}[c]{0.42\textwidth}
-%         \includegraphics[width=\linewidth]{images/VOTRE_IMAGE_YOLO.jpg}
-%         \small \textit{Détection YOLO}
-%     \end{minipage}
-%     \caption{Exemple de détection de fissures sur image PTZ en galerie}
-% \end{figure}
+\begin{figure}[htbp]
+     \centering
+     \begin{minipage}[c]{0.475\textwidth}
+         \includegraphics[width=\linewidth]{images/image.jpg}
+         \centering
+         \small \textit{Image brute (PTZ)}
+     \end{minipage}
+     \hspace{0.5cm}
+     \begin{minipage}[c]{0.475\textwidth}
+         \includegraphics[width=\linewidth]{images/detection.jpg}
+         \centering
+         \small \textit{Détection YOLO}
+     \end{minipage}
+     \caption{Exemple de détection de fissures sur image PTZ en galerie}
+\end{figure}
 
 \subsection{Performances IA}
 
-La conversion du modèle PyTorch \texttt{best.pt} en moteur TensorRT \texttt{best.engine}~\cite{tensorrt} a permis d'accélérer significativement l'inférence sur la Jetson Orin Nano~\cite{jetson_orin}. Les mesures effectuées en conditions réelles donnent :
+La conversion du modèle PyTorch \texttt{best.pt} en moteur TensorRT \texttt{best.engine}~\cite{tensorrt} a permis d'accélérer significativement l'inférence sur la Jetson Orin Nano~\cite{jetson_orin}. Les mesures ont été réalisées en conditions opérationnelles sur la chaîne complète \texttt{image\_subscriber} (conteneur Docker, images PTZ en 640$\times$640), et non sur l'inférence seule du réseau :
 
 \begin{itemize}
-    \item \textbf{PyTorch :} $\approx$ [X] ms par image ;
-    \item \textbf{TensorRT :} $\approx$ [X] ms par image ;
-    \item \textbf{Gain :} facteur $\times$[X] (soit une réduction de [X]\,\% du temps de traitement).
+    \item \textbf{PyTorch :} $\approx$ 125 à 200\,ms par image (5 à 8 images/s) ;
+    \item \textbf{TensorRT :} $\approx$ 33 à 40\,ms par image (25 à 30 images/s) ;
+    \item \textbf{Gain :} facteur $\times$4 environ (soit une réduction de 75\,\% du temps de traitement).
 \end{itemize}
 
-Cette accélération permet d'envisager, à terme, une détection quasi temps-réel pendant les déplacements du robot.
+Cette accélération a permis de basculer le modèle vers la segmentation d'images dans \texttt{image\_subscriber} (\texttt{task='segment'}), afin d'affiner le contour des fissures au-delà des simples boîtes englobantes. À terme, elle ouvre aussi la voie à une détection quasi temps-réel pendant les déplacements du robot ; il faudra encore adapter \texttt{video\_publisher} pour traiter le flux vidéo aussi vite que l'inférence le permet.
 
 \subsection{Navigation autonome}
 
 Le robot est capable d'effectuer des missions de navigation autonome sur carte pré-établie en mode AMCL~\cite{nav2_amcl_docs} + Nav2~\cite{nav2} :
 
 \begin{itemize}
-    \item missions de [X] waypoints validées en laboratoire au TechLab ;
+    \item missions de 10 waypoints validées en laboratoire au TechLab ;
     \item trajectoires définies depuis RViz (\texttt{2D Nav Goal}) et enregistrées en YAML ;
-    \item fusion navigation/acquisition via le package \texttt{patrouille\_autonome} (prototype validé en labo).
+    \item fusion navigation/acquisition via le package \texttt{patrouille\_autonome}.
 \end{itemize}
-
-% TODO : insérer ici une capture RViz avec waypoints tracés et trajectoire parcourue
-% \begin{figure}[htbp]
-%     \centering
-%     \includegraphics[width=0.55\textwidth]{images/VOTRE_RVIZ_MISSION.png}
-%     \caption{Mission Nav2 — trajectoire avec waypoints en laboratoire}
-% \end{figure}
 
 \subsection{Cartographie}
 
-Les premiers essais de cartographie SLAM~\cite{slam_toolbox,wikipedia_slam} dans les tunnels réels ont produit des cartes partielles encourageantes. Cependant, la dérive odométrique ($\approx$ [X] cm/m parcouru) rend ces cartes encore difficilement exploitables pour de longs parcours autonomes. En laboratoire, les cartes sont exploitables et ont servi de base aux tests de navigation AMCL~\cite{nav2_amcl_docs}.
+Les premiers essais de cartographie SLAM~\cite{slam_toolbox,wikipedia_slam} dans les tunnels réels ont produit des cartes partielles encourageantes. Cependant, la dérive odométrique ($\approx$ [X] cm/m parcouru) rend ces cartes encore difficilement exploitables pour de longs parcours autonomes. En laboratoire, nous avons réussi a fiabiliser cette cartographie, les cartes sont exploitables et ont servi de base aux tests de navigation AMCL~\cite{nav2_amcl_docs}.
 
-Les causes principales de dérive sont identifiées : voilage de la roue avant gauche (héritage de l'année précédente) et perturbations du LiDAR par les piliers de la tourelle (partiellement résolu par les nouvelles platines 3D).
+Les causes principales de dérive sont identifiées : voilage de la roue avant gauche (héritage de l'année précédente) et perturbations du LiDAR par les piliers de la tourelle (complètement résolu par la conception des nouvelles platines 3D).
 
-% TODO : insérer ici une comparaison carte SLAM labo (propre) vs tunnel (dérivée)
-% \begin{figure}[htbp]
-%     \centering
-%     \begin{minipage}[c]{0.42\textwidth}
-%         \includegraphics[width=\linewidth]{images/VOTRE_CARTE_LABO.png}
-%         \small \textit{Carte SLAM — laboratoire}
-%     \end{minipage}
-%     \hspace{0.5cm}
-%     \begin{minipage}[c]{0.42\textwidth}
-%         \includegraphics[width=\linewidth]{images/VOTRE_CARTE_TUNNEL.png}
-%         \small \textit{Carte SLAM — tunnel ANDRA}
-%     \end{minipage}
-%     \caption{Comparaison de la qualité de cartographie selon l'environnement}
-% \end{figure}
+\begin{figure}[htbp]
+    \centering
+     \begin{minipage}[c]{0.4\textwidth}
+        \centering
+         \includegraphics[width=\linewidth]{images/ma_carte_2.png}
+         \small \textit{Dérive corrigée — labo TechLab}
+     \end{minipage}
+     \hspace{0.5cm}
+     \begin{minipage}[c]{0.4\textwidth}
+        \centering
+         \includegraphics[width=\linewidth]{images/test_andra_slam.png}
+         \small \textit{Avec dérive — tunnel ANDRA}
+     \end{minipage}
+ \vspace{0.5cm}
+ \caption{Comparaison de la qualité de cartographie selon l'environnement}
+\end{figure}
 
 \subsection{Géolocalisation des fissures}
 
@@ -778,7 +774,7 @@ La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\
 
 \begin{table}[htbp]
     \centering
-    \begin{tabular}{|p{5.5cm}|c|p{5cm}|}
+    \begin{tabular}{|p{5.5cm}|c|p{6.5cm}|}
         \hline
         \textbf{Objectif} & \textbf{Statut} & \textbf{Commentaire} \\
         \hline
@@ -788,25 +784,25 @@ La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\
         \hline
         Séquence vidéo & \textcolor{green!60!black}{Atteint} & Fonctionnelle \\
         \hline
-        Inférence TensorRT & \textcolor{green!60!black}{Atteint} & $\times$[X] sur Jetson \\
+        Inférence TensorRT & \textcolor{green!60!black}{Atteint} & $\times$4 sur Jetson \\
         \hline
         Navigation AMCL + Nav2 & \textcolor{green!60!black}{Atteint} & Validé en labo \\
         \hline
-        Fusion navigation/acquisition & \textcolor{orange}{Partiel} & Prototype labo, non testé en galerie \\
+        Fusion navigation/acquisition & \textcolor{green!60!black}{Atteint} & Prototype labo validé \\
         \hline
-        Association image/position & \textcolor{orange}{En cours} & Dernière mission — chaîne \texttt{report\_fissures} \\
+        Localisation robuste & \textcolor{green!60!black}{Atteint} & Nouvelle architecture validée \\
         \hline
-        Dataset 360° & \textcolor{orange}{Partiel} & Collecté, annotation reportée \\
+        Association image/position & \textcolor{orange}{En cours} & Dernière mission \\
         \hline
-        Cartographie galeries & \textcolor{orange}{Partiel} & Cartes créées, dérive encore trop forte \\
+        Dataset 360° & \textcolor{orange}{Partiel} & Annotation à terminer \\
         \hline
-        Modèle IA 360° & \textcolor{red!70!black}{Reporté} & Hors périmètre annuel, équipe suivante \\
+        Cartographie galeries & \textcolor{orange}{Partiel} & A réessayé avec les corrections \\
         \hline
-        Localisation robuste & \textcolor{red!70!black}{Reporté} & Dérive roue + capteurs insuffisants \\
+        Modèle IA 360° & \textcolor{red!70!black}{Reporté} & Hors périmètre annuel \\
         \hline
-        Rapports automatiques complets & \textcolor{red!70!black}{Reporté} & Base posée via \texttt{report\_fissures} \\
+        Rapports automatiques & \textcolor{red!70!black}{Reporté} & Base posée : \texttt{report\_fissures} \\
         \hline
-        IA tous types de murs & \textcolor{red!70!black}{Reporté} & Actuellement limité au type GER \\
+        IA tous types de murs & \textcolor{red!70!black}{Reporté} & Actuellement limité au GER \\
         \hline
     \end{tabular}
     \caption{Bilan des objectifs de l'année 2025-2026}
@@ -820,7 +816,7 @@ La dernière mission de l'année consiste à finaliser la chaîne \texttt{image\
 
 Ce projet nous a confrontés, dès les premières semaines, à une réalité courante en ingénierie embarquée : la partie la plus difficile n'est pas toujours la conception, mais la reprise d'un système existant dont les fondations ont disparu. La perte de l'image système du robot, héritée de l'année précédente, a imposé une réinstallation complète et une compréhension approfondie de chaque composant avant de pouvoir avancer.
 
-Malgré ce point de départ contraint, l'équipe a franchi les deux étapes clés fixées par l'ANDRA~\cite{andra_cigeo} : une acquisition fiable et automatisée des images de galerie, et un premier déplacement autonome sur carte pré-établie. Le pipeline de détection de fissures est accéléré grâce à TensorRT~\cite{tensorrt}, le robot effectue des missions de waypoints via Nav2~\cite{nav2}, et la fusion navigation/acquisition est prototypée dans le package \texttt{patrouille\_autonome}. La finalisation de la chaîne d'association image--position (section~\ref{sec:association_pose}) constitue la dernière mission technique de l'année et clôt le périmètre défini pour 2025-2026.
+Malgré ce point de départ contraint, l'équipe a franchi deux étapes clés : une acquisition fiable et automatisée des images de galerie, et un premier déplacement autonome sur carte pré-établie. Le pipeline de détection de fissures est accéléré grâce à TensorRT~\cite{tensorrt}, le robot effectue des missions de waypoints via Nav2~\cite{nav2}, et la fusion navigation/acquisition est prototypée dans le package \texttt{patrouille\_autonome}. La finalisation de la chaîne d'association image--position (section~\ref{sec:association_pose}) constitue la dernière mission technique de l'année et clôt le périmètre défini pour 2025-2026.
 
 Les limites connues — dérive odométrique, cartographie imprécise en tunnel, modèle IA limité au type GER et absence de caméra 360° permanente — sont documentées et laissées ouvertes pour l'équipe 2026-2027. La documentation produite, l'image disque de sauvegarde et le dépôt GitHub constituent une base de départ solide pour cette transmission.
 
