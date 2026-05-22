@@ -7,20 +7,31 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 import rclpy
 import yaml
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
 from geometry_msgs.msg import Point
 from PIL import Image
 from rclpy.node import Node
 
 
+def default_map_yaml_path() -> str:
+    """
+    Carte par défaut dans ros_launcher (lookup runtime, sans exec_depend pour éviter le cycle colcon).
+    Postcondition : chemin absolu ou chaîne vide si ros_launcher absent.
+    """
+    try:
+        share_dir: str = get_package_share_directory('ros_launcher')
+    except PackageNotFoundError:
+        return ''
+    return os.path.join(share_dir, 'map_results', 'ma_carte_2.yaml')
+
+
 def resolve_map_yaml_path(yaml_path_param: str) -> str:
     """
-    Précondition : yaml_path_param est une chaîne (vide = défaut package ros_launcher).
+    Précondition : yaml_path_param est une chaîne (vide = ma_carte_2.yaml via ros_launcher si installé).
     Postcondition : chemin absolu vers un fichier .yaml de carte, ou chaîne vide si introuvable.
     """
     if not yaml_path_param.strip():
-        share_dir: str = get_package_share_directory('ros_launcher')
-        return os.path.join(share_dir, 'map_results', 'ma_carte_2.yaml')
+        return default_map_yaml_path()
     if os.path.isabs(yaml_path_param):
         return yaml_path_param
     return os.path.abspath(yaml_path_param)
@@ -104,7 +115,7 @@ class MapPointPlotter(Node):
         if not os.path.exists(self.yaml_path):
             self.get_logger().error(f'Fichier YAML non trouvé : {self.yaml_path}')
             self.get_logger().error(
-                'Fournir map_yaml_path (ex. carte AMCL ou ma_carte_2.yaml du package ros_launcher)'
+                'Fournir map_yaml_path ou installer/sourcer ros_launcher (ma_carte_2.yaml par défaut)'
             )
         else:
             self.get_logger().info(f'Carte : {self.yaml_path}')
