@@ -36,14 +36,14 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Nettoyage du code, fichiers non utilisés ou dépréciés
 
 ### Documentation
-- [x] Documentation complète sur comment utiliser le robot (`DEMARRAGE_ROBOT.md`)
+- [x] Documentation complète sur comment utiliser le robot (`docs/DEMARRAGE_ROBOT.md`)
 - [x] Guide connexion réseau TechLab vs Hotspot (`docs/HOTSPOT.md`)
-- [x] Explication de la structure du projet (`STRUCTURE.md`)
-- [x] Guide d'utilisation des scripts (`SCRIPTS.md`)
-- [x] Guide de débogage (`DEBUG.md`)
-- [x] Guide de contrôle PTZ (`PTZ_PRESETS.md`)
-- [x] Guide de visualisation RViz2 (`VISUALISATION.md`)
-- [x] Documentation de l'arbre TF (`TF_TREE.md`)
+- [x] Explication de la structure du projet (`docs/STRUCTURE.md`)
+- [x] Guide d'utilisation des scripts (`docs/SCRIPTS.md`)
+- [x] Guide de débogage (`docs/DEBUG.md`)
+- [x] Guide de contrôle PTZ (`docs/PTZ_PRESETS.md`)
+- [x] Guide de visualisation RViz2 (`docs/VISUALISATION.md`)
+- [x] Documentation de l'arbre TF (`docs/TF_TREE.md`)
 - [x] Documentation détection YOLO et TensorRT (`docs/DETECTION_YOLO.md`)
 - [x] Guide mission trajectoire AMCL/Nav2 (`docs/TRAJECTOIRE_MISSION.md`)
 - [x] Procédure sauvegarde / restauration image disque (`docs/BACKUP.md`)
@@ -69,10 +69,10 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] Transforms TF statiques révisés
 
 ### Utilisation des capteurs
-- [x] LiDAR YDLidar TG15 : en service ; scan OK sur `/scan` ; USB `/dev/ttyUSB0`, baud 512000, 10 Hz, 20 kHz ; problèmes hardware (Micro USB, mauvaise config G4 vs TG15) résolus ; fichier custom `ydlidar_TG15.yaml` + paramètre `laser_mount_yaw` selon montage (π/2 vs 0 pour SLAM) ; qualité de carte dégradée par les piliers (support 3D pour carto).
+- [x] LiDAR YDLidar TG15 : en service ; scan OK sur `/scan` ; USB `/dev/ttyUSB0`, baud 512000, 10 Hz, 20 kHz ; problèmes matériels (Micro USB, mauvaise config G4 vs TG15) résolus ; fichier custom `ydlidar_TG15.yaml` + paramètre `laser_mount_yaw` selon montage (π/2 vs 0 pour SLAM) ; qualité de carte dégradée par les piliers (support 3D pour carto).
 - [x] Caméra ZED 2i : driver `zed_wrapper` installé et OK ; odom/IMU/image publiés ; EKF : IMU ZED pour `vyaw` seulement, pas de fusion de la VO `/zed/zed_node/odom` ; profondeur/nuages désactivés côté GPU pour libérer la charge (YOLO).
 - [x] Base Scout / odométrie des roues : `scout_base` fonctionnel via CAN `agilex`, topic `/odom_robot` aligné EKF ; dérive mentionnée roue avant gauche.
-- [x] Caméra PTZ Marshall CV-605 : réseau `192.168.5.x` (Jetson en `192.168.5.100`), capture RTSP + pub `/photo_topic`, contrôle VISCA (`ptz_controller`) ; script `ptz-network-setup.sh` pour éviter conflits WiFi.
+- [x] Caméra PTZ Marshall CV-605 : réseau `192.168.5.x` (Jetson en `192.168.5.100`), capture RTSP + pub `/photo_topic`, contrôle VISCA (`ptz_controller`) ; script `ptz-network-setup.sh` pour éviter les conflits Wi-Fi.
 
 ### Utilisation de RViz
 - [x] macOS / Docker : tentative RViz2 via Docker + XQuartz (`launch-macos.sh`) puis abandon (trop complexe) — usage ciblé Linux (machine TechLab).
@@ -170,10 +170,10 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - **Cause** : La connexion Ethernet de la Jetson n'était pas sur le même sous-réseau que la caméra PTZ (192.168.5.x)
   - **Solution** : Configuration de l'adresse IP statique sur l'interface Ethernet `enP8p1s0`
   - **Configuration réseau** : Interface configurée avec `192.168.5.100/24` pour accéder à la caméra `192.168.5.163`
-- [x] **Conflits** : Le WiFi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
+- [x] **Conflits** : Le Wi-Fi (`wlP1p1s0`) obtenait aussi l'adresse `192.168.5.100`, créant un conflit de routes
   - **Solution** : Création du script `scripts/ptz-network-setup.sh` qui :
     - Configure automatiquement l'IP sur `enP8p1s0`
-    - Supprime les routes WiFi conflictuelles vers `192.168.5.0/24`
+    - Supprime les routes Wi-Fi conflictuelles vers `192.168.5.0/24`
     - Vérifie que la route passe bien par Ethernet
   - **État actuel** : La caméra PTZ est accessible, les images sont capturées et publiées sur `/photo_topic`
 - [x] **Contrôle PTZ** : opérationnel via VISCA over IP port 1259
@@ -242,7 +242,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [x] **À tester** : Connexion et stabilité SSH depuis un PC portable connecté au hotspot du robot, dans un environnement extérieur au labo.
 - [x] **Référence** : Procédure détaillée dans `docs/HOTSPOT.md` (mode Terrain, commandes `nmcli`).
 
-### Inventaire et analyse hardware
+### Inventaire et analyse matériel
 - [x] **Inventaire complet** : Paul-Antoine a effectué un inventaire de l'ensemble des composants matériels du robot et a organisé le câblage interne de la tourelle.
 - [x] **Étude de la structure de la tourelle** : Démontage puis remontage de la tourelle pour :
   - Identifier les composants effectivement utilisés ou non
@@ -265,7 +265,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Solutions à explorer :
     - Passer d'une séquence de 3 photos à 5 photos
     - Revoir l'enchaînement des positions de la PTZ
-    - Essayer d'utiliser le script video à très basse vitesse
+    - Essayer d'utiliser le script vidéo à très basse vitesse
 
 ### Amélioration de la vitesse de traitement des images (surtout avec les vidéos)
 - [x] **Optimisation de la détection YOLO avec Docker et TensorRT** :
@@ -346,30 +346,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Nouvelle idée : nous allons positionner la caméra derrière la tourelle.
   - Elle doit seulement prendre des photos/vidéos d'une arche ; elle n'a pas besoin de voir devant elle.
   - Il faut finir la platine prototype du LiDAR et fabriquer un nouveau support pour la caméra.
-  - Conception et impression 3D de nouveaux support par Vincent
-  - Nous n'avons donc pu besoin du paramètre `laser_mount_yaw`
-- [x] **Arret d'urgence** :
+  - Conception et impression 3D de nouveaux supports par Vincent
+  - Nous n'avons donc plus besoin du paramètre `laser_mount_yaw`
+- [x] **Arrêt d'urgence** :
   - Les tests terrain ont montré trop de faux positifs LiDAR malgré plusieurs filtrages (angle, distance, confirmations temporelles/spatiales).
   - Décision actuelle : retrait de l'arrêt d'urgence logiciel dans `trajectoire_mission.py` pour éviter les arrêts intempestifs de mission.
   - Stratégie retenue : s'appuyer sur l'évitement Nav2 (comportement d'esquive jugé globalement fiable) plutôt que forcer un stop logiciel instable.
   - Action future si nécessaire : réintroduire un arrêt d'urgence uniquement avec une source capteur plus robuste / dédiée.
-
-### Backup
-- [x] **Sauvegarde disque** : 
-  - En début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. 
-  - Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. 
-- [x] **Création de l'archive** :
-  - L’archive d’image compressée (trop volumineuse pour Git) sera fournie sur une **clé USB transmise avec le robot** à l’équipe suivante / pour maintenance.
-  - L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
-
-### Chaîne de détection révisé pour tracer la position de la detection sur une carte
-- [x] **`image_subscriber`** : mémoire CUDA globale (`mem_get_info`), `MIN_GPU_FREE_GB`, warmup TensorRT, fallbacks CPU ; doc `docs/DETECTION_YOLO.md`
-- [x] **`report_fissures`** : plus de dépendance build `ros_launcher` ; carte par défaut au runtime ; tracé Pillow (plus matplotlib)
-- [x] **`report_fissures`** : `/position_detectee` en odom → conversion map via TF (AMCL / 2D Pose Estimate) ; PNG dans `ros2_ws/map_detections/`
-
----
-
-## Problèmes actuels / en cours de résolution
 
 ### Fusion de l'analyse et de la navigation
 - [x] **Rendre les séquences autonomes** :
@@ -387,16 +370,33 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
   - Le découpage automatique est fortement réduit (`extract_rate:=0.5` lors du trigger) pour limiter le nombre d'images générées.
   - Le shutdown de `sequence_video` a été réordonné/renforcé pour qu'un `Ctrl+C` ne bloque plus la finalisation vidéo et le déclenchement du traitement.
   - Les logs d'état de traitement ont été ajoutés directement dans `video_publisher.py` (démarrage, progression, fin, déplacement vers `processed/failed`).
-- [ ] **Retoucher les séquences**
-  - Aligner `sequence_photo` et `sequence_video` sur un usage "capture only" quand elles sont lancées via `patrouille_autonome` (ne jamais concurrencer Nav2 sur `/cmd_vel`).
-  - Revoir le timing PTZ/capture pour éviter les captures pendant les phases d'accélération/virage (fenêtre stable ou waypoint atteint).
-  - Uniformiser le comportement de fin : arrêt propre des séquences, `cmd_vel=0`, retour PTZ Home, fermeture sans processus orphelin.
-  - Clarifier les paramètres d'orchestration (distance/rythme de capture, loop, vitesse, waypoint file) et leurs valeurs par défaut.
-- [ ] **Associer chaque média à la pose robot** :
+
+### Backup
+- [x] **Sauvegarde disque** : 
+  - En début de projet, la perte de l’image disque préparée l’année précédente — sans backup exploitable — nous a forcés à tout réinstaller et reconfigurer, avec un coût en temps très élevé. 
+  - Pour éviter de revivre ce scénario, une **image complète du NVMe** du robot a été réalisée selon `docs/BACKUP.md` ; l’empreinte SHA256 correspondante est conservée dans `backup/` afin de vérifier toute copie de l’archive avant restauration. 
+- [x] **Création de l'archive** :
+  - L’archive d’image compressée (trop volumineuse pour Git) sera fournie sur une **clé USB transmise avec le robot** à l’équipe suivante / pour maintenance.
+  - L’objectif est simple : en cas de brick matériel/logiciel ou de préparation d’une seconde machine, repartir d’un état connu plutôt que de tout reconstruire from scratch.
+
+### Chaîne de détection révisée pour tracer la position de la détection sur une carte
+- [x] **Associer chaque média à la pose robot** :
   - Réviser les nœuds `show_pos.py`, `position_publisher.py` (inutile).
   - Comprendre comment fonctionne `report_fissures.py`.
   - `report_fissures` : odom → map via TF, tracé PNG (Pillow), intégré au launch (`/position_detectee`).
   - Lier chaque image YOLO sauvegardée au même horodatage / métadonnées que le point carte.
+- [x] **`image_subscriber`** : mémoire CUDA globale (`mem_get_info`), `MIN_GPU_FREE_GB`, warmup TensorRT, fallbacks CPU ; doc `docs/DETECTION_YOLO.md`
+- [x] **`report_fissures`** : plus de dépendance build `ros_launcher` ; carte par défaut au runtime ; tracé Pillow (plus matplotlib)
+- [x] **`report_fissures`** : `/position_detectee` en odom → conversion map via TF (AMCL / 2D Pose Estimate) ; PNG dans `ros2_ws/map_detections/`
+
+---
+
+## Problèmes actuels / en cours de résolution
+
+### Séquence d'analyse vs patrouille
+- [ ] **Retoucher les séquences**
+  - Revoir le timing PTZ/capture pour éviter les captures pendant les phases d'accélération/virage (fenêtre stable ou waypoint atteint).
+  - Clarifier les paramètres d'orchestration (distance/rythme de capture, loop, vitesse, waypoint file) et leurs valeurs par défaut.
 
 ### Pas de caméra 360° au TechLab (intégration impossible)
 - [ ] **Disposer d'une caméra 360°** :

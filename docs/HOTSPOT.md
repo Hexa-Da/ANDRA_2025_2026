@@ -4,9 +4,9 @@ Ce document explique comment se connecter au robot (Orin2) selon que vous êtes 
 
 ## Au Techlab (Mode Client)
 
-**Le contexte :** Le robot est allumé dans les locaux. Il détecte le WiFi du Techlab et s'y connecte automatiquement car c'est sa priorité haute.
+**Le contexte :** Le robot est allumé dans les locaux. Il détecte le Wi-Fi du TechLab et s'y connecte automatiquement car c'est sa priorité haute.
 
-1. **Votre Ordi :** Restez connecté au Techlab-wifi.
+1. **Votre ordinateur :** Restez connecté au Techlab-wifi.
 2. **Le Robot :** Il est connecté au même réseau que vous (IP type `192.168.40.xxx`).
 3. **Connexion :**
 ```bash
@@ -19,11 +19,11 @@ ssh techlab@orin2.local
 
 ## Sur le Terrain (Mode Hotspot)
 
-**Le contexte :** Vous allumez le robot dehors. Il ne trouve pas le WiFi du Techlab. Il bascule automatiquement sur sa connexion de secours et crée son propre réseau WiFi.
+**Le contexte :** Vous allumez le robot dehors. Il ne trouve pas le Wi-Fi du TechLab. Il bascule automatiquement sur sa connexion de secours et crée son propre réseau Wi-Fi.
 
-1. **Votre Ordi :** Ouvrez vos réseaux WiFi et chercher `JetsonWIFI`.
-3. **Connectez-vous** Mdp : `depinfonancy`.
-4. **Connexion SSH :**
+1. **Votre ordinateur :** Ouvrez vos réseaux Wi-Fi et cherchez `JetsonWIFI`.
+2. **Connectez-vous** (mot de passe : `depinfonancy`).
+3. **Connexion SSH :**
 ```bash
 ssh techlab@orin2.local
 

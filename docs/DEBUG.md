@@ -7,7 +7,7 @@
 ros2 node list
 
 # Voir les détails d'un nœud
-ros2 node info <nom_du_noeud>
+ros2 node info <nom_du_nœud>
 ```
 
 ### Vérifier les topics actifs
@@ -110,7 +110,7 @@ echo $RMW_IMPLEMENTATION  # Doit également afficher rmw_fastrtps_cpp (ou vide =
 
 ### Prendre le contrôle manuel
 
-Pour controler les roues :
+Pour contrôler les roues :
 ```bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```

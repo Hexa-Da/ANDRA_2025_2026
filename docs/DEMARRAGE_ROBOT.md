@@ -6,9 +6,9 @@ Ce document explique comment démarrer les nœuds ROS2 sur le robot Agilex Scout
 
 ### 1. Connexion au robot
 
-Pour vous connecter au robot, vous devez être sur le même réseau que lui (soit via le routeur du Techlab, soit via le Hotspot du robot) le mot de passe de la connexion ssh est toujours `depinfonancy`.
+Pour vous connecter au robot, vous devez être sur le même réseau que lui (soit via le routeur du TechLab, soit via le hotspot du robot) ; le mot de passe de la connexion SSH est toujours `depinfonancy`.
 
-## Au techlab (Techlab-wifi)
+## Au TechLab (Techlab-wifi)
 
 ```bash
 ssh techlab@192.168.40.100
@@ -18,13 +18,13 @@ ssh techlab@orin2.local
 ```
 
 **Note :** Si vous ne trouvez pas l'IP, scannez le réseau :
-`nmap -sn 192.168.40.0/24` (Chercher "orin2") ou `nmap -Pn -p 22 192.168.40.0/24` pour forcer la reponse de tous les host 
+`nmap -sn 192.168.40.0/24` (chercher « orin2 ») ou `nmap -Pn -p 22 192.168.40.0/24` pour forcer la réponse de tous les hôtes
 
-## En dehors du techlab (HotspotRobot)
+## En dehors du TechLab (hotspot robot)
 
-S'il ne capte pas le réseau du Techlab, le robot crée automatiquement son propre réseau WiFi.
+S'il ne capte pas le réseau du TechLab, le robot crée automatiquement son propre réseau Wi-Fi.
 
-Connectez votre ordinateur au WiFi du robot : **JetsonWIFI** (Mdp : depinfonancy)
+Connectez votre ordinateur au Wi-Fi du robot : **JetsonWIFI** (mot de passe : `depinfonancy`)
 
 ```bash
 ssh techlab@orin2.local
@@ -85,7 +85,7 @@ ip route show | grep 192.168.5
 ping -c 3 192.168.5.163
 ```
 
-**Note** : Ce script configure l'interface Ethernet `enP8p1s0` de la orin2 avec l'adresse IP statique `192.168.5.100/24` et supprime les routes WiFi conflictuelles. 
+**Note** : Ce script configure l'interface Ethernet `enP8p1s0` de l'Orin avec l'adresse IP statique `192.168.5.100/24` et supprime les routes WiFi conflictuelles.
 
 ### 5. Configurer CAN (normalement déjà configuré)
 
@@ -104,7 +104,7 @@ sudo systemctl start agilex-handler.service
 candump agilex -n 5 -T 2000
 ```
 
-**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, le neoud s'arrête sans faire d'erreur.
+**Note :** Vérifiez toujours que l'interface CAN est active avant de lancer le système. Si elle n'est pas active, le nœud s'arrête sans faire d'erreur.
 
 ### 6. Lancer le système
 
@@ -349,7 +349,7 @@ ros2 run patrouille_autonome fusion_photo_navigation
 # Fusion autonome vidéo (mission + sequence_video)
 ros2 run patrouille_autonome fusion_video_navigation
 
-# Rapport des fissures (ma_carte_2 par default)
+# Rapport des fissures (ma_carte_2 par défaut)
 ros2 run navigation_utils report_fissures
 ```
 

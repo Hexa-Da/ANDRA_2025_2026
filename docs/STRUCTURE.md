@@ -33,7 +33,7 @@ Ce document explique l'organisation du projet et l'intérêt de chaque dossier.
 - `SCRIPTS.md` : Documentation détaillée de tous les scripts
 - `STRUCTURE.md` : Ce fichier (structure du projet)
 - `TRAJECTOIRE_MISSION.md` : Guide de création et exécution des missions par waypoints (AMCL/Nav2)
-- `TF_TREE.md` : Arbre TF du robot et repères 
+- `TF_TREE.md` : Arbre TF du robot et repères
 - `VISUALISATION.md` : Guide complet de visualisation avec RViz2 et interprétation des cartes
 
 **Intérêt** : Centralise toute la documentation pour faciliter la compréhension et la maintenance du projet.
