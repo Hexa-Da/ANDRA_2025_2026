@@ -394,7 +394,7 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 ## Problèmes actuels / en cours de résolution
 
 ### Séquence d'analyse vs patrouille
-- [ ] **Retoucher les séquences**
+- [ ] **Retoucher les séquences pour les patrouilles**
   - Revoir le timing PTZ/capture pour éviter les captures pendant les phases d'accélération/virage (fenêtre stable ou waypoint atteint).
   - Clarifier les paramètres d'orchestration (distance/rythme de capture, loop, vitesse, waypoint file) et leurs valeurs par défaut.
 
@@ -412,10 +412,6 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ## À faire
 
-### Test et compréhension du projet
-- [ ] Tester les nœuds de position sur une carte
-- [ ] Tests de bout en bout du système complet
-
 ### Amélioration du modèle de détection
 - [x] Dataset caméra 360 : Dataset créé
 - [ ] Lucas et Adrien : Trier et annoter le dataset de la caméra 360
@@ -423,15 +419,13 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 - [ ] Améliorer l'efficacité du robot avec le nouveau modèle
 - [ ] Tester le nouveau modèle sur les images capturées
 
-### Amélioration du positionnement
-- [x] Améliorer l'estimation de position relative
-- [ ] Utiliser les étiquettes au mur pour recalibrage ?
-
 ### Amélioration de la cartographie
-- [x] Améliorer la cartographie des tunnels (actuellement fonctionne mal à cause des piliers qui entourent le LiDAR)
+- [x] Améliorer la cartographie des tunnels (actuellement fonctionne mal à cause des piliers qui entourent le LiDAR et de la dérive de la roue avant gauche)
 - [x] Tester la cartographie dans les tunnels réels
 - [ ] Réduire les erreurs de divergence dues à la roue avant gauche
-- [ ] Créer des cartes précises des galeries
+- [ ] Générer des cartes précises des galeries
+  - Une demande a été faite auprès des ingénieurs du TechLab pour accéder aux cartes des tunnels de l'ANDRA déjà réalisées à l’aide d’un LiDAR de haute qualité, mais nous n'avons, à ce jour, reçu aucun retour de leur part.
+  - Il est peut etre aussi possible de faire cette demande à l'ANDRA directement
 
 ---
 
@@ -439,8 +433,8 @@ Mission : rendre le robot Agilex Scout Mini autonome dans les galeries de l'ANDR
 
 ### Robot autonome complet
 - [x] Robot autonome faisant des rondes dans les tunnels
-- [ ] Système de mission/planification de parcours
-- [ ] Système de localisation robuste combinant plusieurs méthodes
+- [x] Système de mission/planification de parcours
+- [x] Système de localisation robuste combinant plusieurs méthodes
 
 ### Cartographie complète
 - [ ] Cartographier tous les tunnels nécessaires

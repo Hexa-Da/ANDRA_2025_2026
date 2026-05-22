@@ -23,7 +23,7 @@ Ce projet vise à **automatiser l’inspection** : un robot mobile parcourt la g
 
 Encadrement : TechLab, tuteurs Mines Nancy, intervenant ANDRA.
 
-Le rapport détaillé est disponible sur le dépôt : [@ANDRA_2025_2026.pdf](./@ANDRA_2025_2026.pdf)
+Le rapport détaillé est disponible sur le dépôt : [ANDRA_2025_2026.pdf](./ANDRA_2025_2026.pdf)
 
 ---
 
