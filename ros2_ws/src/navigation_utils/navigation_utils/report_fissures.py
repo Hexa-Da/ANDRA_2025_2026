@@ -7,9 +7,13 @@ from typing import Optional, Tuple
 import rclpy
 import yaml
 from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PointStamped
 from PIL import Image, ImageDraw
+from rclpy.duration import Duration
 from rclpy.node import Node
+from rclpy.time import Time
+import tf2_geometry_msgs  # noqa: F401 — enregistre PointStamped pour tf2
+from tf2_ros import Buffer, TransformException, TransformListener
 
 
 def default_map_yaml_path() -> str:
@@ -105,6 +109,9 @@ class MapPointPlotter(Node):
 
         self.declare_parameter('map_yaml_path', '')
         self.declare_parameter('output_dir', '')
+        self.declare_parameter('odom_frame', 'odom')
+        self.declare_parameter('map_frame', 'map')
+        self.declare_parameter('tf_timeout_sec', 0.5)
 
         yaml_path_param: str = (
             self.get_parameter('map_yaml_path').get_parameter_value().string_value
@@ -112,6 +119,20 @@ class MapPointPlotter(Node):
         output_dir_param: str = (
             self.get_parameter('output_dir').get_parameter_value().string_value
         )
+        self.odom_frame: str = (
+            self.get_parameter('odom_frame').get_parameter_value().string_value
+        )
+        self.map_frame: str = (
+            self.get_parameter('map_frame').get_parameter_value().string_value
+        )
+        self.tf_timeout: Duration = Duration(
+            seconds=float(
+                self.get_parameter('tf_timeout_sec').get_parameter_value().double_value
+            )
+        )
+
+        self.tf_buffer: Buffer = Buffer()
+        self.tf_listener: TransformListener = TransformListener(self.tf_buffer, self)
 
         self.yaml_path: str = resolve_map_yaml_path(yaml_path_param)
         self.output_dir: str = resolve_output_dir(output_dir_param)
@@ -132,14 +153,48 @@ class MapPointPlotter(Node):
             10,
         )
         self.get_logger().info('Abonné à /position_detectee')
+        self.get_logger().info(
+            f'TF : {self.odom_frame} → {self.map_frame} (aligné 2D Pose Estimate / AMCL)'
+        )
+
+    def _point_odom_to_map(self, msg: Point) -> Optional[Tuple[float, float]]:
+        """
+        Précondition : /position_detectee est en repère odom (EKF world_frame=odom).
+        Postcondition : (x, y) en repère map, ou None si TF map←odom indisponible.
+        """
+        stamped_odom: PointStamped = PointStamped()
+        stamped_odom.header.frame_id = self.odom_frame
+        stamped_odom.header.stamp = Time(seconds=0).to_msg()
+        stamped_odom.point = msg
+        try:
+            stamped_map: PointStamped = self.tf_buffer.transform(
+                stamped_odom,
+                self.map_frame,
+                timeout=self.tf_timeout,
+            )
+        except TransformException as exc:
+            self.get_logger().warn(
+                f'TF {self.odom_frame}→{self.map_frame} indisponible : {exc}. '
+                'Lancer AMCL/SLAM et faire 2D Pose Estimate si besoin.'
+            )
+            return None
+        return (float(stamped_map.point.x), float(stamped_map.point.y))
 
     def listener_callback(self, msg: Point) -> None:
-        self.get_logger().info(f'Détection à ({msg.x:.3f}, {msg.y:.3f})')
+        self.get_logger().info(
+            f'Détection odom ({self.odom_frame}) : ({msg.x:.3f}, {msg.y:.3f})'
+        )
         if not os.path.exists(self.yaml_path):
             self.get_logger().error(f'Carte introuvable : {self.yaml_path}')
             return
+        map_xy: Optional[Tuple[float, float]] = self._point_odom_to_map(msg)
+        if map_xy is None:
+            return
+        self.get_logger().info(
+            f'Détection map ({self.map_frame}) : ({map_xy[0]:.3f}, {map_xy[1]:.3f})'
+        )
         saved: Optional[str] = tracer_point(
-            (float(msg.x), float(msg.y)),
+            map_xy,
             self.yaml_path,
             self.output_dir,
         )

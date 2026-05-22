@@ -22,7 +22,7 @@ Les sections suivantes détaillent le fonctionnement du nœud et les commandes u
 - **Modèle** : YOLO Ultralytics en **segmentation** (`task='segment'`).
 - **Sorties** :
   - Images annotées (si détection) dans **`ros2_ws/images_detectees/`**
-  - **`geometry_msgs/Point`** sur **`position_detectee`** : position odom (`x`, `y`, `z`) au moment de la détection, si une odom a été reçue sur **`/odometry/filtered`**.
+  - **`geometry_msgs/Point`** sur **`position_detectee`** : position **odom** (`x`, `y`, `z`) au moment de la détection (topic **`/odometry/filtered`**). Le nœud **`report_fissures`** convertit ces coordonnées en repère **map** via TF (`map` ← `odom`, mis à jour par AMCL ou le 2D Pose Estimate).
 
 ## Fichiers modèle (`best.pt` / `best.engine`)
 
