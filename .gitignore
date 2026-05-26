@@ -48,6 +48,8 @@ ros2_ws/map_detections/
 
 # IDEs
 .vscode/
+.claude/
+.cursor/
 .idea/
 *.code-workspace
 
