@@ -397,47 +397,44 @@
         \column{0.55\textwidth}
         \textbf{Causes de dérive identifiées :}
         \begin{itemize}
-            \item Voilage de la roue avant gauche (héritage 2024-2025).
-            \item LiDAR masqué par les piliers (résolu par les platines 3D).
+            \item Voilage de la roue avant gauche.
+            \item LiDAR masqué par les piliers. (résolu)
         \end{itemize}
         \vspace{0.3cm}
-        \textbf{Résultat labo :} cartes exploitables, navigation AMCL validée.\\
-        \textbf{Résultat tunnel :} dérive résiduelle — cartes encore partielles.
+        \textbf{Résultat labo :} cartographie fiabilisée, cartes exploitables et navigation AMCL validée. \\
+        \vspace{0.3cm}
+        \textbf{Résultat tunnel :} dernière descente non satisfaisante, cartes encore partielles.
         \column{0.45\textwidth}
         \begin{figure}
             \centering
-            \includegraphics[width=0.8\textwidth]{ma_carte_2.png}
-            \caption{Carte labo TechLab (dérive corrigée)}
-        \end{figure}
-        \begin{figure}
-            \centering
-            \includegraphics[width=0.8\textwidth]{test_andra_slam.png}
-            \caption{Cartographie tunnel ANDRA (avec dérive)}
+            \includegraphics[width=0.6\textwidth]{ma_carte_2.png}
+            \caption{Carte labo TechLab}
         \end{figure}
     \end{columns}
 \end{frame}
 
 \begin{frame}{Résultats — Acquisition et IA}
     \begin{columns}
-        \column{0.5\textwidth}
+        \column{0.45\textwidth}
         \textbf{Chiffres clés :}
         \begin{itemize}
-            \item \textbf{11 nœuds} applicatifs opérationnels.
-            \item \textbf{500+} images PTZ capturées (2 descentes).
-            \item \textbf{110+} images panoramiques 360° (Ricoh Theta).
+            \item \textbf{11 nœuds} opérationnels.
+            \item \textbf{500+} images PTZ capturées.
+            \item \textbf{110+} images panoramiques 360°.
             \item Inférence : \textbf{$\times$4} avec TensorRT.
-            \item Segmentation activée (\texttt{task='segment'}).
+            \item Segmentation activée.
         \end{itemize}
-        \column{0.5\textwidth}
+        \column{0.25\textwidth}
         \begin{figure}
             \centering
-            \includegraphics[width=0.9\textwidth]{image.jpg}
-            \caption{Image brute (PTZ)}
+            \includegraphics[width=\textwidth]{image.jpg}
+            \caption{Image brute}
         \end{figure}
+        \column{0.25\textwidth}
         \begin{figure}
             \centering
-            \includegraphics[width=0.9\textwidth]{detection.jpg}
-            \caption{Détection YOLO — contours de fissure}
+            \includegraphics[width=\textwidth]{detection.jpg}
+            \caption{Détection YOLO}
         \end{figure}
     \end{columns}
 \end{frame}
@@ -498,7 +495,8 @@
         \caption{Calendrier du projet 2025-2026}
     \end{table}
     \vspace{0.3cm}
-    \textbf{Transmission inter-années :} image NVMe sauvegardée sur clé USB + $>$10 guides opérationnels pour permettre une prise en main en moins d'une demi-journée par l'équipe 2026-2027.
+    \centering
+    \textbf{Transmission inter-années :} image NVMe sauvegardée sur clé USB + $>$10 guides opérationnels pour permettre une prise en main rapide par l'équipe 2026-2027.
 \end{frame}
 
 % ============================================================
@@ -507,41 +505,43 @@
 
 \begin{frame}{Conclusion}
     \begin{block}{Bilan 2025-2026}
-        Transition réussie d'une infrastructure perdue vers une plateforme de patrouille autonome complète.
+        Transition réussie d'une infrastructure perdue vers une plateforme de patrouille autonome.
     \end{block}
     \vspace{0.4cm}
     \textbf{Trois étapes clés franchies :}
     \begin{enumerate}
-        \item \textbf{Acquisition fiable :} séquence 5 photos PTZ, couverture de l'arche validée en tunnel.
-        \item \textbf{Navigation autonome :} AMCL + Nav2 opérationnel sur carte, fusion nav/acquisition prototypée.
-        \item \textbf{Pipeline complet :} détection TensorRT ($\times$4) $\rightarrow$ géolocalisation sur carte $\rightarrow$ PNG horodaté.
+        \item \textbf{Acquisition fiable :} séquence photos ou vidéo, couverture de l'arche validée en tunnel.
+        \item \textbf{Navigation autonome :} AMCL + Nav2 opérationnel sur carte, fusion nav/acquisition.
+        \item \textbf{Pipeline complet :} détection TensorRT ($\times$4) $\rightarrow$ géolocalisation $\rightarrow$ PNG horodaté.
     \end{enumerate}
-    \vspace{0.3cm}
+    \vspace{0.4cm}
+    \centering
     \textbf{Chiffres clés :} 11 nœuds $\cdot$ 500+ images PTZ $\cdot$ 110+ panoramiques $\cdot$ $\times$4 TensorRT.
 \end{frame}
 
 \begin{frame}{Perspectives pour l'équipe 2026-2027}
     \begin{columns}
-        \column{0.33\textwidth}
+        \column[t]{0.33\textwidth}
         \textbf{\small Court terme :}
         \begin{itemize}\small
-            \item Affiner timings \texttt{patrouille\_autonome} (séquences PTZ en mouvement).
+            \item Affiner les timings \texttt{patrouille\_autonome} (séquences en mouvement).
             \item Trier, annoter et entraîner un modèle YOLO sur les 110+ images 360°.
             \item Enrichir \texttt{report\_fissures} : historique et comparaison inter-rondes.
         \end{itemize}
-        \column{0.33\textwidth}
+        \column[t]{0.33\textwidth}
         \textbf{\small Moyen terme :}
         \begin{itemize}\small
-            \item Réduire la dérive odométrique (roue voilée + étiquettes ANDRA comme ancres).
+            \item Réduire la dérive odométrique (roue voilée).
             \item Acquérir une caméra 360° compatible ROS (Insta360 ou équivalent) permanente sur le robot.
             \item Exploiter les cartes existantes du TechLab pour la navigation.
         \end{itemize}
-        \column{0.33\textwidth}
+        \column[t]{0.33\textwidth}
         \textbf{\small Long terme :}
         \begin{itemize}\small
-            \item Détection 360° en continu sans arrêt du robot.
+            \item Détection 360° en continu avec inférence en parallèle.
             \item Rapports automatiques avec suivi temporel des fissures.
             \item Extension du modèle IA à tous les types de revêtement.
+            \item Planification des missions et remontée automatique des rapports en base.
         \end{itemize}
     \end{columns}
     \vspace{0.5cm}
