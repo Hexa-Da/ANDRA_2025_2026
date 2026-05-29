@@ -568,14 +568,114 @@ Une fois le déplacement et l'acquisition stabilisés séparément, l'enjeu est 
     \item \textbf{Fin de mission robuste :} arrêt automatique des séquences, envoi d'une commande pour stopper le mouvement et retour de la PTZ en position Home.
 \end{itemize}
 
-\subsection{Amélioration du modèle de détection}
+\subsection{Amélioration du dataset et du modèle de détection}
 
-Le dataset 360° capturé sur les deux descentes constitue la base de travail du chantier IA mené par Lucas et Adrien. Les étapes suivantes restent à finaliser :
+\subsubsection{Annotation des nouvelles images}
 
-\begin{enumerate}
-    \item \textbf{Tri et annotation du dataset :} Les images panoramiques capturées dans les galeries doivent être triées pour ne conserver que les prises exploitables, puis annotées manuellement pour identifier les fissures.
-    \item \textbf{Entraînement d'un modèle adapté :} Un nouveau modèle de détection YOLO sera entraîné spécifiquement sur ces images 360°, afin de permettre une analyse continue de l'ensemble de la voûte pendant les déplacements du robot.
-\end{enumerate}
+À l'issue de chaque descente, des images des galeries ont été collectées selon deux méthodes distinctes : via la caméra PTZ et via la caméra 360°. Ces deux sources produisent des images de nature très différente, ce qui a nécessité des pipelines d'annotation adaptés à chacune.
+
+Pour les images PTZ, l'annotation a été réalisée directement dans le logiciel Label Studio : chaque image a été analysée manuellement, et les fissures ont été délimitées par des polygones de segmentation. Quelques exemples de cette annotation sont présentés ci-dessous.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[c]{0.475\textwidth}
+        \includegraphics[width=\linewidth]{images/Annotation.png}
+        \centering
+    \end{minipage}
+    \hspace{0.5cm}
+    \begin{minipage}[c]{0.475\textwidth}
+        \includegraphics[width=\linewidth]{images/Annotation2.png}
+        \centering
+    \end{minipage}
+    \caption{Exemples d'images PTZ annotées sur Label Studio}
+\end{figure}
+
+Les images 360°, quant à elles, ne peuvent pas être annotées directement en raison des distorsions introduites par la projection équirectangulaire. Un prétraitement est donc appliqué en amont : l'image panoramique est dépliée sur les faces d'un cube, dont seules les faces droite, gauche et supérieure sont conservées, correspondant aux parois et à la voûte de la galerie. Cette mise à plat réduit significativement les déformations géométriques et rend l'annotation fiable.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/Image360raw.jpg}
+    \caption*{Image 360° brute}
+    
+    \vspace{0.3cm}
+    
+    \begin{minipage}[c]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360droite.jpg}
+    \end{minipage}
+    \hspace{0.2cm}
+    \begin{minipage}[c]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360gauche.jpg}
+    \end{minipage}
+    \hspace{0.2cm}
+    \begin{minipage}[c]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360haut.jpg}
+    \end{minipage}
+    
+    \caption{Image 360° brute et les trois faces extraites après prétraitement}
+\end{figure}
+
+\subsubsection{Intégration au dataset existant}
+
+L'équipe 2024-2025 nous a transmis un Drive contenant les images d'entraînement ainsi que les poids de leur meilleur modèle (\texttt{best.pt}), mais sans script d'entraînement ni organisation claire : les métriques étaient dispersées et aucune convention de nommage n'avait été établie. Une phase de restructuration a donc été nécessaire avant toute intégration de nos nouvelles images.
+
+Ce travail a consisté à homogénéiser les formats d'annotation, à vérifier la cohérence des étiquettes entre les images héritées et celles issues de nos descentes, puis à fusionner les deux ensembles en un dataset unifié compatible avec l'entraînement YOLOv11.
+
+Un nouveau Drive organisé a été constitué à l'issue de ce travail, destiné à être transmis à l'équipe 2026-2027. Il comprend le dataset consolidé, les scripts d'entraînement et une documentation claire, dans l'objectif de faciliter la reprise et l'extension du modèle.
+
+Au cumulé pour le dataset de la PTZ on a 451 images dont 304 avec fissures et 147 sans.
+
+Pour le dataset de la caméra 360°, il y a actuellement 344 images, dont 214 avec fissures et 130 sans.
+
+\subsubsection{Amélioration du modèle existant}
+
+La restructuration du dataset hérité de l'équipe 2024-2025 s'est avérée plus longue que prévu. Les annotations des images héritées et celles issues de nos descentes utilisaient des formats et des conventions de nommage différents, ce qui a nécessité un travail d'homogénéisation important avant toute tentative de fusion. Malgré cet effort de restructuration, la consolidation complète des deux ensembles en un dataset unifié n'a pas pu être finalisée dans le temps imparti.
+Le modèle PTZ opérationnel reste donc le best.pt transmis par l'équipe 2024-2025, intégré à la stack TensorRT décrite en section 4.2. Ce modèle, entraîné sur environ 300 images, continue de donner des résultats satisfaisants sur les images PTZ des galeries de type GER, comme le montrent les détections obtenues lors de la seconde descente (voir figure 20).
+Le dataset PTZ consolidé (451 images dont 304 avec fissures et 147 sans) a finalement pu être unifié en un format compatible YOLOv11, mais cette étape n'a été achevée que trop tardivement pour permettre le lancement d'un nouvel entraînement. Ce dataset est disponible sur le Drive partagé et constitue une première priorité pour l'équipe 2026-2027, qui disposera d'une base significativement plus large que celle utilisée jusqu'ici.
+
+\subsubsection{Développement du nouveau modèle 360}
+
+Un nouveau modèle de segmentation \textbf{YOLOv11s-seg} a été développé spécifiquement pour les images issues de la caméra 360°. Après conversion cubemap, chaque image fait $1680 \times 1680$ pixels ; les fissures, très fines, n'y représentent que quelques dizaines de pixels de large. Les 610 images disponibles ont été annotées dans Label Studio (outil pinceau, export COCO converti en YOLO-seg), avec 367 tâches complétées au moment de l'entraînement, dont 233 contenant au moins une fissure. Après conversion et filtrage des contours trop petits, le dataset final comprend \textbf{344 images} dont \textbf{214 positives} et \textbf{130 négatives}.
+
+\paragraph{Problème et solution}
+
+Les premiers entraînements sur images plein format ont systématiquement produit des métriques nulles ($\text{mAP}_{50} = 0$) sur 100 epochs, avec une perte de validation (\texttt{val/seg\_loss}) indéfinie (\texttt{NaN}). La cause identifiée est que les fissures deviennent trop petites après redimensionnement en entrée du réseau.
+
+La solution retenue est une \textbf{découpe en tuiles} (\textit{tiling}) : chaque image est subdivisée en tuiles de $640 \times 640$ px avec 20\,\% de chevauchement, les annotations étant reprojetées géométriquement sur chaque tuile. Cette opération multiplie le nombre d'exemples d'entraînement et augmente la taille apparente des fissures dans chaque tuile.
+
+\paragraph{Résultats}
+
+L'effet est immédiat : la \texttt{val/seg\_loss} converge sans \texttt{NaN} dès la première epoch, et le modèle produit ses premières détections non nulles à partir de l'epoch\,5. Après 115 epochs au total, le meilleur point de contrôle (\texttt{best.pt}, epoch\,77) atteint les métriques suivantes :
+
+\begin{table}[H]
+\centering
+\begin{tabular}{cccc}
+\hline
+\textbf{Seuil conf.} & \textbf{Précision} & \textbf{Rappel} & \textbf{mAP$_{50}$ (masque)} \\
+\hline
+0,25 & 0,487 & 0,045 & 0,263 \\
+\textbf{0,10} & \textbf{0,295} & \textbf{0,130} & \textbf{0,199} \\
+0,05 & 0,165 & 0,226 & 0,155 \\
+\hline
+\end{tabular}
+\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu comme seuil opérationnel.}
+\label{tab:metrics_conf}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\linewidth]{images/results.jpg}
+    \caption{Courbes d'entraînement (115 epochs). La \texttt{val/seg\_loss} converge sans \texttt{NaN} et les métriques progressent de manière continue.}
+    \label{fig:training_curves}
+\end{figure}
+
+Le seuil de 0,10 est privilégié pour l'usage opérationnel : dans un contexte de surveillance structurelle, manquer une fissure est plus critique que produire une fausse alarme.
+
+\paragraph{Perspectives}
+
+Le rappel reste faible, principalement par manque de données annotées et par convergence incomplète (la perte d'entraînement n'est pas encore en plateau). Les pistes prioritaires pour l'équipe suivante sont : annoter les images restantes — idéalement en s'appuyant sur \texttt{best.pt} pour une pré-annotation automatique (\textit{pseudo-labeling}) — et développer un pipeline d'inférence par tiling sur images complètes pour intégrer ce modèle au flux de traitement du robot.
 
 \subsection{Association image/position sur carte}
 
