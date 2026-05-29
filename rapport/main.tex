@@ -635,49 +635,49 @@ Le dataset PTZ consolidé (451 images dont 304 avec fissures et 147 sans) a fina
 
 \newpage
 
-    \subsubsection{Développement du nouveau modèle 360}
+\subsubsection{Développement du nouveau modèle 360}
 
-    Un nouveau modèle de segmentation \textbf{YOLOv11s-seg} a été développé spécifiquement pour les images issues de la caméra 360°. Après conversion cubemap, chaque image fait $1680 \times 1680$ pixels ; les fissures, très fines, n'y représentent que quelques dizaines de pixels de large. Les 610 images disponibles ont été annotées dans Label Studio (outil pinceau, export COCO converti en YOLO-seg), avec 367 tâches complétées au moment de l'entraînement, dont 233 contenant au moins une fissure. Après conversion et filtrage des contours trop petits, le dataset final comprend \textbf{344 images} dont \textbf{214 positives} et \textbf{130 négatives}.
+Un nouveau modèle de segmentation \textbf{YOLOv11s-seg} a été développé spécifiquement pour les images issues de la caméra 360°. Après conversion cubemap, chaque image fait $1680 \times 1680$ pixels ; les fissures, très fines, n'y représentent que quelques dizaines de pixels de large. Les 610 images disponibles ont été annotées dans Label Studio (outil pinceau, export COCO converti en YOLO-seg), avec 367 tâches complétées au moment de l'entraînement, dont 233 contenant au moins une fissure. Après conversion et filtrage des contours trop petits, le dataset final comprend \textbf{344 images} dont \textbf{214 positives} et \textbf{130 négatives}.
 
-    \paragraph{Problème et solution}
+\paragraph{Problème et solution}
 
-    Les premiers entraînements sur images plein format ont systématiquement produit des métriques nulles ($\text{mAP}_{50} = 0$) sur 100 epochs, avec une perte de validation (\texttt{val/seg\_loss}) indéfinie (\texttt{NaN}). La cause identifiée est que les fissures deviennent trop petites après redimensionnement en entrée du réseau.
+Les premiers entraînements sur images plein format ont systématiquement produit des métriques nulles ($\text{mAP}_{50} = 0$) sur 100 epochs, avec une perte de validation (\texttt{val/seg\_loss}) indéfinie (\texttt{NaN}). La cause identifiée est que les fissures deviennent trop petites après redimensionnement en entrée du réseau.
 
-    La solution retenue est une \textbf{découpe en tuiles} (\textit{tiling}) : chaque image est subdivisée en tuiles de $640 \times 640$ px avec 20\,\% de chevauchement, les annotations étant reprojetées géométriquement sur chaque tuile. Cette opération multiplie le nombre d'exemples d'entraînement et augmente la taille apparente des fissures dans chaque tuile.
+La solution retenue est une \textbf{découpe en tuiles} (\textit{tiling}) : chaque image est subdivisée en tuiles de $640 \times 640$ px avec 20\,\% de chevauchement, les annotations étant reprojetées géométriquement sur chaque tuile. Cette opération multiplie le nombre d'exemples d'entraînement et augmente la taille apparente des fissures dans chaque tuile.
 
-    \paragraph{Résultats}
+\paragraph{Résultats}
 
-    L'effet est immédiat : la \texttt{val/seg\_loss} converge sans \texttt{NaN} dès la première epoch, et le modèle produit ses premières détections non nulles à partir de l'epoch\,5. Après 100 epochs, le meilleur point de contrôle (\texttt{best.pt}, epoch\,85) atteint les métriques suivantes :
+L'effet est immédiat : la \texttt{val/seg\_loss} converge sans \texttt{NaN} dès la première epoch, et le modèle produit ses premières détections non nulles à partir de l'epoch\,5. Après 100 epochs, le meilleur point de contrôle (\texttt{best.pt}, epoch\,85) atteint les métriques suivantes :
 
-    \begin{table}[H]
+\begin{table}[H]
+\centering
+\begin{tabular}{cccc}
+\hline
+\textbf{Seuil conf.} & \textbf{Précision} & \textbf{Rappel} & \textbf{mAP$_{50}$ (masque)} \\
+\hline
+0,50 & 0,655 & 0,044 & 0,346 \\
+0,25 & 0,433 & 0,239 & 0,302 \\
+\textbf{0,10} & \textbf{0,353} & \textbf{0,358} & \textbf{0,287} \\
+0,05 & 0,376 & 0,334 & 0,264 \\
+\hline
+\end{tabular}
+\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu comme seuil opérationnel.}
+\label{tab:metrics_conf}
+\end{table}
+
+\begin{figure}[H]
     \centering
-    \begin{tabular}{cccc}
-    \hline
-    \textbf{Seuil conf.} & \textbf{Précision} & \textbf{Rappel} & \textbf{mAP$_{50}$ (masque)} \\
-    \hline
-    0,50 & 0,655 & 0,044 & 0,346 \\
-    0,25 & 0,433 & 0,239 & 0,302 \\
-    \textbf{0,10} & \textbf{0,353} & \textbf{0,358} & \textbf{0,287} \\
-    0,05 & 0,376 & 0,334 & 0,264 \\
-    \hline
-    \end{tabular}
-    \caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu comme seuil opérationnel.}
-    \label{tab:metrics_conf}
-    \end{table}
+    \includegraphics[width=\linewidth]{images/results.jpg}
+    \caption{Courbes d'entraînement (100 epochs). La \texttt{val/seg\_loss} converge sans \texttt{NaN} et les métriques progressent de manière continue.}
+    \label{fig:training_curves}
+\end{figure}
 
-    \begin{figure}[H]
-        \centering
-        \includegraphics[width=\linewidth]{images/results.jpg}
-        \caption{Courbes d'entraînement (100 epochs). La \texttt{val/seg\_loss} converge sans \texttt{NaN} et les métriques progressent de manière continue.}
-        \label{fig:training_curves}
-    \end{figure}
+Le seuil de 0,10 est privilégié pour l'usage opérationnel : dans un contexte de surveillance structurelle, manquer une fissure est plus critique que produire une fausse alarme.
 
-    Le seuil de 0,10 est privilégié pour l'usage opérationnel : dans un contexte de surveillance structurelle, manquer une fissure est plus critique que produire une fausse alarme.
+\paragraph{Perspectives}
 
-    \paragraph{Perspectives}
+Le rappel reste faible, principalement par manque de données annotées et par convergence incomplète (la perte d'entraînement n'est pas encore en plateau). Les pistes prioritaires pour l'équipe suivante sont : annoter les images restantes — idéalement en s'appuyant sur \texttt{best.pt} pour une pré-annotation automatique (\textit{pseudo-labeling}) — et développer un pipeline d'inférence par tiling sur images complètes pour intégrer ce modèle au flux de traitement du robot.
 
-    Le rappel reste faible, principalement par manque de données annotées et par convergence incomplète (la perte d'entraînement n'est pas encore en plateau). Les pistes prioritaires pour l'équipe suivante sont : annoter les images restantes — idéalement en s'appuyant sur \texttt{best.pt} pour une pré-annotation automatique (\textit{pseudo-labeling}) — et développer un pipeline d'inférence par tiling sur images complètes pour intégrer ce modèle au flux de traitement du robot.
-    
 \subsection{Association image/position sur carte}
 
 La dernière brique logicielle de l'année consistait à relier détection et position : savoir où sur la carte se trouve chaque fissure détectée lors d'une prise de vue. Cette chaîne est aujourd'hui validée en laboratoire et clôt le périmètre fonctionnel défini pour 2025-2026.
