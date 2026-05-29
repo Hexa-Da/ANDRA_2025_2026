@@ -14,6 +14,7 @@
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{csquotes}
+\usepackage[justification=centering]{caption}
 \usepackage{graphbox}
 \usepackage[backend=biber,style=numeric,sorting=none,language=french,hyperref=true]{biblatex}
 \usepackage{overpic}
@@ -572,9 +573,9 @@ Une fois le déplacement et l'acquisition stabilisés séparément, l'enjeu est 
 
 \subsubsection{Annotation des nouvelles images}
 
-À l'issue de chaque descente, des images des galeries ont été collectées selon deux méthodes distinctes : via la caméra PTZ et via la caméra 360°. Ces deux sources produisent des images de nature très différente, ce qui a nécessité des pipelines d'annotation adaptés à chacune.
+À l'issue de chaque descente, des images des galeries ont été collectées selon deux méthodes distinctes : via la caméra PTZ et via la caméra 360°. Ces deux sources produisent des images de nature très différente, ce qui a nécessité deux pipelines d'annotation adaptés.
 
-Pour les images PTZ, l'annotation a été réalisée directement dans le logiciel Label Studio : chaque image a été analysée manuellement, et les fissures ont été délimitées par des polygones de segmentation. Quelques exemples de cette annotation sont présentés ci-dessous.
+Pour les images PTZ, l'annotation a été réalisée directement dans le logiciel Label Studio : chaque image a été analysée manuellement, et les fissures ont été délimitées par des polygones de segmentation.
 
 \begin{figure}[htbp]
     \centering
@@ -592,13 +593,22 @@ Pour les images PTZ, l'annotation a été réalisée directement dans le logicie
 
 Les images 360°, quant à elles, ne peuvent pas être annotées directement en raison des distorsions introduites par la projection équirectangulaire. Un prétraitement est donc appliqué en amont : l'image panoramique est dépliée sur les faces d'un cube, dont seules les faces droite, gauche et supérieure sont conservées, correspondant aux parois et à la voûte de la galerie. Cette mise à plat réduit significativement les déformations géométriques et rend l'annotation fiable.
 
+\subsubsection{Intégration au dataset existant}
+
+L'équipe 2024-2025 nous a transmis un Drive contenant les images d'entraînement ainsi que les poids de leur meilleur modèle (\texttt{best.pt}), mais sans script d'entraînement ni organisation claire : les métriques étaient dispersées et aucune convention de nommage n'avait été établie. Une phase de restructuration a donc été nécessaire avant toute intégration de nos nouvelles images.
+
+Ce travail a consisté à homogénéiser les formats d'annotation, à vérifier la cohérence des étiquettes entre les images héritées et celles issues de nos descentes, puis à fusionner les deux ensembles en un dataset unifié compatible avec l'entraînement YOLOv11.
+
+Un nouveau Drive organisé a été constitué à l'issue de ce travail, destiné à être transmis à l'équipe 2026-2027. Il comprend le dataset consolidé, les scripts d'entraînement et une documentation claire, dans l'objectif de faciliter la reprise et l'extension du modèle.
+
+Au cumulé pour le dataset de la PTZ on a 451 images dont 304 avec fissures et 147 sans.
+
+Et pour le dataset de la caméra 360°, nous disposons de 344 images, dont 214 avec fissures et 130 sans.
+
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.7\textwidth]{images/Image360raw.jpg}
-    \caption*{Image 360° brute}
-    
-    \vspace{0.3cm}
-    
+    \includegraphics[width=0.7\textwidth]{images/Image360raw.jpg} \\
+    \vspace{0.2cm}
     \begin{minipage}[c]{0.3\textwidth}
         \centering
         \includegraphics[width=\linewidth]{images/Image360droite.jpg}
@@ -617,23 +627,13 @@ Les images 360°, quant à elles, ne peuvent pas être annotées directement en 
     \caption{Image 360° brute et les trois faces extraites après prétraitement}
 \end{figure}
 
-\subsubsection{Intégration au dataset existant}
-
-L'équipe 2024-2025 nous a transmis un Drive contenant les images d'entraînement ainsi que les poids de leur meilleur modèle (\texttt{best.pt}), mais sans script d'entraînement ni organisation claire : les métriques étaient dispersées et aucune convention de nommage n'avait été établie. Une phase de restructuration a donc été nécessaire avant toute intégration de nos nouvelles images.
-
-Ce travail a consisté à homogénéiser les formats d'annotation, à vérifier la cohérence des étiquettes entre les images héritées et celles issues de nos descentes, puis à fusionner les deux ensembles en un dataset unifié compatible avec l'entraînement YOLOv11.
-
-Un nouveau Drive organisé a été constitué à l'issue de ce travail, destiné à être transmis à l'équipe 2026-2027. Il comprend le dataset consolidé, les scripts d'entraînement et une documentation claire, dans l'objectif de faciliter la reprise et l'extension du modèle.
-
-Au cumulé pour le dataset de la PTZ on a 451 images dont 304 avec fissures et 147 sans.
-
-Pour le dataset de la caméra 360°, il y a actuellement 344 images, dont 214 avec fissures et 130 sans.
-
 \subsubsection{Amélioration du modèle existant}
 
 La restructuration du dataset hérité de l'équipe 2024-2025 s'est avérée plus longue que prévu. Les annotations des images héritées et celles issues de nos descentes utilisaient des formats et des conventions de nommage différents, ce qui a nécessité un travail d'homogénéisation important avant toute tentative de fusion. Malgré cet effort de restructuration, la consolidation complète des deux ensembles en un dataset unifié n'a pas pu être finalisée dans le temps imparti.
 Le modèle PTZ opérationnel reste donc le best.pt transmis par l'équipe 2024-2025, intégré à la stack TensorRT décrite en section 4.2. Ce modèle, entraîné sur environ 300 images, continue de donner des résultats satisfaisants sur les images PTZ des galeries de type GER, comme le montrent les détections obtenues lors de la seconde descente (voir figure 20).
 Le dataset PTZ consolidé (451 images dont 304 avec fissures et 147 sans) a finalement pu être unifié en un format compatible YOLOv11, mais cette étape n'a été achevée que trop tardivement pour permettre le lancement d'un nouvel entraînement. Ce dataset est disponible sur le Drive partagé et constitue une première priorité pour l'équipe 2026-2027, qui disposera d'une base significativement plus large que celle utilisée jusqu'ici.
+
+\newpage
 
 \subsubsection{Développement du nouveau modèle 360}
 
