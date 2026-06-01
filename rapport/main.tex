@@ -593,6 +593,28 @@ Pour les images PTZ, l'annotation a été réalisée directement dans le logicie
 
 Les images 360°, quant à elles, ne peuvent pas être annotées directement en raison des distorsions introduites par la projection équirectangulaire. Un prétraitement est donc appliqué en amont : l'image panoramique est dépliée sur les faces d'un cube, dont seules les faces droite, gauche et supérieure sont conservées, correspondant aux parois et à la voûte de la galerie. Cette mise à plat réduit significativement les déformations géométriques et rend l'annotation fiable.
 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{images/Image360raw.jpg} \\
+    \vspace{0.2cm}
+    \begin{minipage}[c]{0.225\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360droite.jpg}
+    \end{minipage}
+    \hspace{0.2cm}
+    \begin{minipage}[c]{0.225\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360gauche.jpg}
+    \end{minipage}
+    \hspace{0.2cm}
+    \begin{minipage}[c]{0.225\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/Image360haut.jpg}
+    \end{minipage}
+    
+    \caption{Image 360° brute et les trois faces extraites après prétraitement}
+\end{figure}
+
 \subsubsection{Intégration au dataset existant}
 
 L'équipe 2024-2025 nous a transmis un Drive contenant les images d'entraînement ainsi que les poids de leur meilleur modèle (\texttt{best.pt}), mais sans script d'entraînement ni organisation claire : les métriques étaient dispersées et aucune convention de nommage n'avait été établie. Une phase de restructuration a donc été nécessaire avant toute intégration de nos nouvelles images.
@@ -601,39 +623,13 @@ Ce travail a consisté à homogénéiser les formats d'annotation, à vérifier 
 
 Un nouveau Drive organisé a été constitué à l'issue de ce travail, destiné à être transmis à l'équipe 2026-2027. Il comprend le dataset consolidé, les scripts d'entraînement et une documentation claire, dans l'objectif de faciliter la reprise et l'extension du modèle.
 
-Au cumulé pour le dataset de la PTZ on a 451 images dont 304 avec fissures et 147 sans.
-
-Et pour le dataset de la caméra 360°, nous disposons de 344 images, dont 214 avec fissures et 130 sans.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.7\textwidth]{images/Image360raw.jpg} \\
-    \vspace{0.2cm}
-    \begin{minipage}[c]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/Image360droite.jpg}
-    \end{minipage}
-    \hspace{0.2cm}
-    \begin{minipage}[c]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/Image360gauche.jpg}
-    \end{minipage}
-    \hspace{0.2cm}
-    \begin{minipage}[c]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\linewidth]{images/Image360haut.jpg}
-    \end{minipage}
-    
-    \caption{Image 360° brute et les trois faces extraites après prétraitement}
-\end{figure}
+Au cumulé, le dataset PTZ compte \textbf{451 images}, dont \textbf{304} avec fissures et \textbf{147} sans. Pour la caméra 360°, nous disposons de \textbf{344 images} après prétraitement cubemap, dont \textbf{214} avec fissures et \textbf{130} sans.
 
 \subsubsection{Amélioration du modèle existant}
 
-La restructuration du dataset hérité de l'équipe 2024-2025 s'est avérée plus longue que prévu. Les annotations des images héritées et celles issues de nos descentes utilisaient des formats et des conventions de nommage différents, ce qui a nécessité un travail d'homogénéisation important avant toute tentative de fusion. Malgré cet effort de restructuration, la consolidation complète des deux ensembles en un dataset unifié n'a pas pu être finalisée dans le temps imparti.
-Le modèle PTZ opérationnel reste donc le best.pt transmis par l'équipe 2024-2025, intégré à la stack TensorRT décrite en section 4.2. Ce modèle, entraîné sur environ 300 images, continue de donner des résultats satisfaisants sur les images PTZ des galeries de type GER, comme le montrent les détections obtenues lors de la seconde descente (voir figure 20).
-Le dataset PTZ consolidé (451 images dont 304 avec fissures et 147 sans) a finalement pu être unifié en un format compatible YOLOv11, mais cette étape n'a été achevée que trop tardivement pour permettre le lancement d'un nouvel entraînement. Ce dataset est disponible sur le Drive partagé et constitue une première priorité pour l'équipe 2026-2027, qui disposera d'une base significativement plus large que celle utilisée jusqu'ici.
+La restructuration du dataset hérité de l'équipe 2024-2025 s'est avérée plus longue que prévu. Les annotations des images héritées et celles issues de nos descentes utilisaient des formats et des conventions de nommage différents, ce qui a nécessité un travail d'homogénéisation important avant toute tentative de fusion. La fusion complète des deux corpus en un jeu d'entraînement commun n'a pas été finalisée dans le temps imparti ; en revanche, le dataset PTZ consolidé (451 images) a pu être unifié en format compatible YOLOv11, trop tardivement pour lancer un nouvel entraînement cette année.
 
-\newpage
+Le modèle PTZ opérationnel reste donc le \texttt{best.pt} transmis par l'équipe 2024-2025, intégré à la stack TensorRT décrite en section~4.2. Ce modèle, entraîné sur environ 300 images, continue de donner des résultats satisfaisants sur les images PTZ des galeries de type GER, comme le montrent les détections obtenues lors de la seconde descente (figure~\ref{fig:detection_ptz}). Ce dataset de 451 images est disponible sur le Drive partagé et constitue une première priorité pour l'équipe 2026-2027, qui disposera d'une base significativement plus large que celle utilisée jusqu'ici.
 
 \subsubsection{Développement du nouveau modèle 360}
 
@@ -661,7 +657,7 @@ L'effet est immédiat : la \texttt{val/seg\_loss} converge sans \texttt{NaN} dè
 0,05 & 0,376 & 0,334 & 0,264 \\
 \hline
 \end{tabular}
-\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu comme seuil opérationnel.}
+\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu.}
 \label{tab:metrics_conf}
 \end{table}
 
@@ -725,7 +721,7 @@ Une fois le projet lancé, nous nous sommes répartis en deux binômes compléme
 Lucas et Adrien ont pris en charge toute la chaîne de détection et d'analyse d'images :
 \begin{itemize}
     \item tri et annotation des jeux de données (images PTZ et panoramiques 360°) ;
-    \item entraînement et évaluation du modèle YOLO sur images PTZ, puis tentative de création d'un second modèle adapté aux images panoramiques 360° ;
+    \item entraînement et évaluation du modèle YOLO sur images PTZ, puis développement d'un modèle YOLOv11s-seg adapté aux images panoramiques 360° ;
     \item comparaison des performances d'inférence entre PyTorch et TensorRT~\cite{tensorrt,jetson_orin} ;
 \end{itemize}
 
@@ -796,7 +792,7 @@ La transmission du projet d'une équipe à l'autre est le défi structurel de ce
     \item \textbf{Dépôt GitHub :} code, configuration Docker, configuration RViz et \texttt{TODO.md} utilisée comme feuille de suivi.
     \item \textbf{Documentation opérationnelle :} plus de 10 guides couvrant le démarrage, le débogage, la visualisation, la navigation, la connexion réseau, entre autres.
     \item \textbf{Image disque NVMe :} transmise sur clé USB avec le robot.
-    \item \textbf{Modèles YOLO :} \texttt{best.pt} et \texttt{best.engine} (TensorRT~\cite{tensorrt}) conservés sur le Drive partagé avec les jeux de données annotés.
+    \item \textbf{Modèles et datasets YOLO :} \texttt{best.pt} et \texttt{best.engine}  du modèle PTZ ; \texttt{best.pt} du modèle 360° (YOLOv11s-seg) ; datasets annotés consolidés (451 images PTZ, 344 images 360°).
 \end{itemize}
 
 L'objectif est qu'une équipe 2026-2027 puisse remettre le robot en service en moins d'une demi-journée, sans dépendre d'une connaissance préalable du système.
@@ -812,22 +808,23 @@ La stack ROS2~\cite{ros2} a été reconstruite à partir des sources de l'équip
 
 \subsection{Acquisition d'images}
 
-La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt, positions gauche/haut/droite) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à 0.06 m/s avec balayage PTZ sinusoïdal. Au total, 500+ images ont été capturées via la caméra PTZ lors des deux descentes, auxquelles s'ajoutent 230+ images panoramiques 360° collectées grâce à la caméra Ricoh Theta prêtée par l'ANDRA.
+La séquence photo (5 prises PTZ~\cite{marshall_cv605} par arrêt) couvre désormais l'intégralité de l'arche de la galerie, ce qui a été validé lors de la seconde descente d'avril 2026. La séquence vidéo permet une acquisition continue à 0.06 m/s avec balayage PTZ sinusoïdal. Au total, plus de 500 images ont été capturées via la caméra PTZ lors des deux descentes ; le dataset PTZ annoté consolidé compte \textbf{451 images}. Côté 360°, les panoramiques collectées avec la Ricoh Theta prêtée par l'ANDRA ont été converties en un dataset annoté de \textbf{344 images} (214 positives, 130 négatives) après prétraitement cubemap.
 
 \begin{figure}[htbp]
      \centering
-     \begin{minipage}[c]{0.475\textwidth}
+     \begin{minipage}[c]{0.45\textwidth}
          \includegraphics[width=\linewidth]{images/image.jpg}
          \centering
          \small \textit{Image brute (PTZ)}
      \end{minipage}
      \hspace{0.5cm}
-     \begin{minipage}[c]{0.475\textwidth}
+     \begin{minipage}[c]{0.45\textwidth}
          \includegraphics[width=\linewidth]{images/detection.jpg}
          \centering
          \small \textit{Détection YOLO}
      \end{minipage}
      \caption{Exemple de détection de fissures sur image PTZ en galerie}
+     \label{fig:detection_ptz}
 \end{figure}
 
 \vspace{-0.2cm}
@@ -905,13 +902,15 @@ La chaîne \texttt{image\_subscriber} $\rightarrow$ \texttt{/position\_detectee}
         \hline
         Association image/position & \textcolor{green!60!black}{Atteint} & Tracé sur carte (PNG) validé \\
         \hline
-        Annotation des datasets & \textcolor{orange}{Partiel} & Annotation à terminer \\
+        Annotation des datasets & \textcolor{orange}{Partiel} & PTZ : 451 img. ; 360° : 344 img. \\
         \hline
         Cartographie galeries & \textcolor{orange}{Partiel} & À réessayer avec les corrections \\
         \hline
-        Modèle IA 360° & \textcolor{red!70!black}{Reporté} & Hors périmètre annuel \\
+        Modèle IA 360° & \textcolor{orange}{Partiel} & YOLOv11s-seg entraîné \\
         \hline
         Rapports automatiques & \textcolor{red!70!black}{Reporté} & Création de rapport auto \\
+        \hline
+        Amélioration du modèle PTZ & \textcolor{red!70!black}{Reporté} & Ré-entraînement PTZ à faire \\
         \hline
         IA tous types de murs & \textcolor{red!70!black}{Reporté} & Actuellement limité au GER \\
         \hline
@@ -925,20 +924,19 @@ La chaîne \texttt{image\_subscriber} $\rightarrow$ \texttt{/position\_detectee}
 
 \subsection{Conclusion}
 
-Ce projet nous a confrontés, dès les premières semaines, à une réalité courante en ingénierie : la partie la plus difficile n'est pas toujours la conception, mais la reprise d'un système existant dont les fondations ont disparu. La perte de l'image système du robot a imposé une réinstallation complète et une compréhension approfondie de chaque composant avant de pouvoir avancer.
-
-Malgré ce point de départ contraint, l'équipe a franchi trois étapes clés : une acquisition fiable et automatisée des images de galerie, un premier déplacement autonome sur carte préétablie, et l'association de chaque fissure détectée à sa position sur la carte. Le pipeline de détection de fissures est accéléré grâce à TensorRT~\cite{tensorrt}, le robot effectue des missions autonomes avec Nav2~\cite{nav2}, la fusion navigation/acquisition est prototypée, et la chaîne image/position est opérationnelle.
+Ce projet nous a confrontés, dès les premières semaines, à une réalité courante en ingénierie : la partie la plus difficile n'est pas toujours la conception, mais la reprise d'un système existant dont les fondations ont disparu. La perte de l'image système du robot a imposé une réinstallation complète et une compréhension approfondie de chaque composant avant de pouvoir avancer. Malgré ce point de départ contraint, l'équipe a franchi trois étapes clés : une acquisition fiable et automatisée des images de galerie, un premier déplacement autonome sur carte préétablie, et l'association de chaque fissure détectée à sa position sur la carte. Le pipeline de détection PTZ est accéléré grâce à TensorRT~\cite{tensorrt}, un premier modèle de segmentation 360° a été entraîné en laboratoire, le robot effectue des missions autonomes avec Nav2~\cite{nav2}, la fusion navigation/acquisition est prototypée, et la chaîne image/position est opérationnelle.
 
 \subsection{Ouvertures}
 
 Les pistes d'amélioration sont organisées par priorité pour guider l'équipe 2026-2027. La boucle détection + navigation + géolocalisation des fissures sur carte est en place ; les éléments ci-dessous visent surtout la montée en maturité terrain et les extensions (360°, type de mur, rapports historiques).
 
-Plusieurs limites subsistent. La dérive odométrique dégrade la cartographie : nous ne disposons pas encore d'une carte fiable pour y mener des missions autonomes reproductibles, malgré des validations convaincantes au TechLab. Côté détection, le modèle YOLO associé à la PTZ reste entraîné pour le revêtement de type GER uniquement. Enfin, l'absence de caméra 360° permanente au TechLab rend impossible son intégration au robot.
+Plusieurs limites subsistent. La dérive odométrique dégrade la cartographie : nous ne disposons pas encore d'une carte fiable pour y mener des missions autonomes reproductibles, malgré des validations convaincantes au TechLab. Côté détection, le modèle YOLO PTZ en production reste limité au revêtement de type GER ; le modèle 360° entraîné n'est pas encore branché au robot. Enfin, l'absence de caméra 360° permanente au TechLab empêche sa validation en conditions de patrouille autonome.
 
 \paragraph{Court terme — reprise par l'équipe suivante.}
 \begin{itemize}
     \item \textbf{Séquences en mode patrouille :} affiner \texttt{sequence\_photo} et \texttt{sequence\_video} lorsqu'elles sont orchestrées par \texttt{patrouille\_autonome} : adapter les timings PTZ ainsi que les déclenchements de capture au trajet et au rythme de la patrouille et vérifier que l'arche reste couverte sur l'ensemble du parcours.
-    \item \textbf{Dataset 360° :} trier, annoter et entraîner un modèle YOLOv11 sur les images panoramiques collectées lors des deux descentes.
+    \item \textbf{Modèle 360° :} intégrer le \texttt{best.pt} YOLOv11s-seg au robot, compléter les annotations restantes via pseudo-labeling et améliorer le rappel.
+    \item \textbf{Ré-entraînement PTZ :} lancer un entraînement sur le dataset consolidé.
     \item \textbf{Enrichir \texttt{report\_fissures} :} ajouter historique et comparaison inter-rondes au tracé carte pour générer des rapports détaillés de chaque fissure détectée.
 \end{itemize}
 

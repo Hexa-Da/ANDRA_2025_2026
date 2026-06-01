@@ -360,6 +360,45 @@
     \textit{Fin de mission : arrêt des processus, commande STOP, retour PTZ Home.}
 \end{frame}
 
+\begin{frame}{S2 — Datasets et modèle 360°}
+    \begin{columns}[t]
+        \column{0.52\textwidth}
+        \textbf{Datasets annotés :}
+        \begin{itemize}
+            \item \textbf{PTZ :} 451 images \\ 
+            (304 avec fissures, 147 sans)
+            \item \textbf{360° :} 344 images après cubemap \\ 
+            (214 positives, 130 négatives)
+        \end{itemize}
+        \vspace{0.5cm}
+        \textbf{Modèles :}
+        \begin{itemize}
+            \item \textbf{PTZ (production) :} \texttt{best.pt} 2024-2025 ; \\
+            ré-entraînement sur 451 images à faire.
+            \item \textbf{360° (labo) :} YOLOv11s-seg ; \\
+            entraînement par \textit{tiling} ($640 \times 640$ px).
+        \end{itemize}
+        \column{0.48\textwidth}
+        \small
+        \begin{table}
+            \centering
+            \begin{tabular}{cccc}
+                \toprule
+                \textbf{Conf.} & \textbf{Préc.} & \textbf{Rappel} & \textbf{mAP$_{50}$} \\
+                \midrule
+                0,10 & 0,353 & 0,358 & \textbf{0,287} \\
+                \bottomrule
+            \end{tabular}
+            \caption{Modèle 360° (\texttt{best.pt}, epoch 85)}
+        \end{table}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\linewidth]{results.jpg}
+            \caption{Courbes d'entraînement (100 epochs)}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
 \begin{frame}{S2 — Géolocalisation des Fissures sur Carte}
     \begin{columns}
         \column{0.58\textwidth}
@@ -419,10 +458,11 @@
         \textbf{Chiffres clés :}
         \begin{itemize}
             \item \textbf{11 nœuds} opérationnels.
-            \item \textbf{500+} images PTZ capturées.
-            \item \textbf{230+} images panoramiques 360°.
-            \item Inférence : \textbf{$\times$4} avec TensorRT.
-            \item Segmentation activée.
+            \item \textbf{500+} images PTZ capturées ; dataset annoté : \textbf{451}.
+            \item Dataset 360° : \textbf{344} images annotées après redécoupage cubemap.
+            \item Inférence PTZ : \textbf{$\times$4} avec TensorRT.
+            \item Segmentation activée sur modèle PTZ.
+            \item Modèle 360° YOLOv11s-seg entraîné en laboratoire.
         \end{itemize}
         \column{0.25\textwidth}
         \begin{figure}
@@ -451,21 +491,27 @@
             \hline
             Séquence photo PTZ & \textcolor{green!60!black}{Atteint} & 5 prises, arche couverte \\
             \hline
+            Séquence vidéo & \textcolor{green!60!black}{Atteint} & Fonctionnelle \\
+            \hline
             Inférence TensorRT & \textcolor{green!60!black}{Atteint} & $\times$4 sur Jetson \\
             \hline
             Navigation AMCL + Nav2 & \textcolor{green!60!black}{Atteint} & Validé en labo \\
             \hline
             Fusion navigation/acquisition & \textcolor{green!60!black}{Atteint} & Prototype labo validé \\
             \hline
-            Association image/position & \textcolor{green!60!black}{Atteint} & Tracé sur carte (PNG) \\
+            Localisation robuste & \textcolor{green!60!black}{Atteint} & Nouvelle architecture validée \\
             \hline
-            Annotation des datasets & \textcolor{orange}{Partiel} & Annotation à terminer \\
+            Association image/position & \textcolor{green!60!black}{Atteint} & Tracé sur carte (PNG) validé \\
             \hline
-            Cartographie galeries & \textcolor{orange}{Partiel} & Dérive résiduelle en tunnel \\
+            Annotation des datasets & \textcolor{orange}{Partiel} & PTZ : 451 img. ; 360° : 344 img. \\
             \hline
-            Modèle IA 360° & \textcolor{red!70!black}{Reporté} & Hors périmètre annuel \\
+            Cartographie galeries & \textcolor{orange}{Partiel} & À réessayer avec les corrections \\
             \hline
-            Rapports automatiques & \textcolor{red!70!black}{Reporté} & Génération de rapport auto \\
+            Modèle IA 360° & \textcolor{orange}{Partiel} & YOLOv11s-seg entraîné \\
+            \hline
+            Rapports automatiques & \textcolor{red!70!black}{Reporté} & Création de rapport auto \\
+            \hline
+            Amélioration du modèle PTZ & \textcolor{red!70!black}{Reporté} & Ré-entraînement PTZ à faire \\
             \hline
             IA tous types de murs & \textcolor{red!70!black}{Reporté} & Actuellement limité au GER \\
             \hline
@@ -496,7 +542,7 @@
     \end{table}
     \vspace{0.3cm}
     \centering
-    \textbf{Transmission inter-années :} image NVMe sauvegardée sur clé USB + $>$10 guides opérationnels pour permettre une prise en main rapide par l'équipe 2026-2027.
+    \textbf{Transmission :} image NVMe sur clé USB, plus de 10 guides qui accompagnent le code sur Github et le Drive (\texttt{best.pt} PTZ + TensorRT, \texttt{best.pt} 360°, datasets 451 / 344).
 \end{frame}
 
 % ============================================================
@@ -511,12 +557,12 @@
     \textbf{Trois étapes clés franchies :}
     \begin{enumerate}
         \item \textbf{Acquisition fiable :} séquence photos ou vidéo, couverture de l'arche validée en tunnel.
-        \item \textbf{Navigation autonome :} AMCL + Nav2 opérationnel sur carte, fusion nav/acquisition.
-        \item \textbf{Pipeline complet :} détection TensorRT ($\times$4) $\rightarrow$ géolocalisation $\rightarrow$ PNG horodaté.
+        \item \textbf{Navigation autonome :} AMCL + Nav2 sur carte, fusion nav/acquisition prototypée.
+        \item \textbf{Pipeline complet :} détection PTZ TensorRT ($\times$4) $\rightarrow$ géolocalisation $\rightarrow$ PNG horodaté.
     \end{enumerate}
     \vspace{0.4cm}
     \centering
-    \textbf{Chiffres clés :} 11 nœuds $\cdot$ 500+ images PTZ $\cdot$ 230+ panoramiques $\cdot$ $\times$4 TensorRT.
+    \textbf{Chiffres clés :} 11 nœuds $\cdot$ 12 guides $\cdot$ 451 PTZ $\cdot$ 344 img. 360° $\cdot$ $\times$4 TensorRT.
 \end{frame}
 
 \begin{frame}{Perspectives pour l'équipe 2026-2027}
@@ -524,14 +570,15 @@
         \column[t]{0.33\textwidth}
         \textbf{\small Court terme :}
         \begin{itemize}\small
-            \item Affiner les timings \texttt{patrouille\_autonome} (séquences en mouvement).
-            \item Trier, annoter et entraîner un modèle YOLO sur les 230+ images 360°.
-            \item Enrichir \texttt{report\_fissures} : historique et comparaison inter-rondes.
+            \item Affiner les timings PTZ lors des patrouilles autonomes.
+            \item \textbf{Modèle 360° :} intégrer \texttt{best.pt}, pseudo-labeling, améliorer le rappel.
+            \item \textbf{Ré-entraînement PTZ :} sur le dataset consolidé.
+            \item Enrichir \texttt{report\_fissures} : historique inter-rondes.
         \end{itemize}
         \column[t]{0.33\textwidth}
         \textbf{\small Moyen terme :}
         \begin{itemize}\small
-            \item Réduire la dérive odométrique (roue voilée).
+            \item Réduire la dérive (roue voilée, étiquettes ANDRA).
             \item Acquérir une caméra 360° compatible ROS (Insta360 ou équivalent) permanente sur le robot.
             \item Exploiter les cartes existantes du TechLab pour la navigation.
         \end{itemize}
@@ -544,7 +591,7 @@
             \item Planification des missions et remontée automatique des rapports en base.
         \end{itemize}
     \end{columns}
-    \vspace{0.5cm}
+    \vspace{0.75cm}
     \centering
     \Large \textbf{Merci de votre attention. Avez-vous des questions ?}
 \end{frame}
