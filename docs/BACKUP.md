@@ -4,11 +4,11 @@ Ce document décrit la procédure permettant de réaliser une image de sauvegard
 
 ## Dépôt Git : dossier `backup/`
 
-À la racine du projet, le dossier **`backup/`** sert à versionner **`backup_robot_usine.img.zst.sha256`** (empreinte SHA256 de l’image). Le fichier **`backup_robot_usine.img.zst`** lui-même n’est en principe **pas** dans le dépôt (plusieurs centaines de gigaoctets). La copie de travail de l’archive pour l’équipe est fournie sur une **clé USB jointe au robot** (transmission projet à projet) ; vous pouvez en dupliquer le contenu ailleurs (disque, NAS) pour vos sauvegardes personnelles. Lors d’une nouvelle sauvegarde, mettez à jour le fichier `.sha256` dans `backup/` pour refléter la nouvelle image, afin que l’équipe puisse vérifier toute copie avec `sha256sum -c`.
+À la racine du projet, le dossier **`backup/`** sert à versionner **`backup_robot_usine.img.zst.sha256`** (empreinte SHA256 de l’image). Le fichier **`backup_robot_usine.img.zst`** lui-même n’est en principe **pas** dans le dépôt (plusieurs dizaines de gigaoctets). La copie de travail de l’archive pour l’équipe est fournie sur une **clé USB jointe au robot** (transmission projet à projet) ; vous pouvez en dupliquer le contenu ailleurs (disque, NAS) pour vos sauvegardes personnelles. Lors d’une nouvelle sauvegarde, mettez à jour le fichier `.sha256` dans `backup/` pour refléter la nouvelle image, afin que l’équipe puisse vérifier toute copie avec `sha256sum -c`.
 
 ## 🛠️ Prérequis
 
-1. **Matériel :** Un câble USB-C/USB-C (ou USB-A/USB-C) de bonne qualité connecté entre le robot et votre ordinateur. Votre ordinateur doit disposer d'un port USB performant.
+1. **Matériel :** Un câble USB-C/USB-C (ou USB-A/USB-C) de bonne qualité connecté entre le robot et votre ordinateur. Votre ordinateur doit disposer d'un port USB performant. Le cable USB-C du Lidar est suffisant.
 2. **Logiciels sur le Robot :** Les paquets `zstd`, `pv` et `ncdu` doivent être installés.  
    ```bash  
    sudo apt update && sudo apt install -y zstd pv ncdu
@@ -98,7 +98,7 @@ Cette procédure va **écraser intégralement** le disque NVMe interne du robot.
 * **Écran :** Un écran DisplayPort/USB-C branché à la carte du robot.  
 * **Clavier :** Un clavier USB branché au robot.  
 * **Clé USB Système :** Une clé USB amorçable (Live USB) contenant un système d'exploitation Linux compatible ARM64.  
-* **Clé USB Sauvegarde :** Le fichier `backup_robot_usine.img.zst` stocké sur une autre clé USB.
+* **Clé USB Sauvegarde :** Le fichier `backup_robot_usine.img.zst` stocké sur une autre clé USB (ou la même clé partitionnée).
 
 
 ## 🚀 ÉTAPES DE RESTAURATION
