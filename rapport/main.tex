@@ -657,7 +657,7 @@ La \texttt{val/seg\_loss} converge sans \texttt{NaN} dès la première epoch, et
 0,05 & 0,376 & 0,334 & 0,264 \\
 \hline
 \end{tabular}
-\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu.}
+\caption{Métriques de \texttt{best.pt} selon le seuil de confiance. Le seuil 0,10 est retenu comme seuil opérationnel.}
 \label{tab:metrics_conf}
 \end{table}
 
@@ -668,11 +668,12 @@ La \texttt{val/seg\_loss} converge sans \texttt{NaN} dès la première epoch, et
     \label{fig:training_curves}
 \end{figure}
 
-Le seuil de 0,10 est privilégié pour l'usage opérationnel : dans un contexte de surveillance structurelle, manquer une fissure est plus critique que produire une fausse alarme.
+Le seuil de 0,10 a été retenu sur la base des métriques calculées sur le jeu de validation : il offre le meilleur équilibre rappel/précision, et dans un contexte de surveillance structurelle, manquer une fissure est plus critique que produire une fausse alarme.
 
-\paragraph{Perspectives}
+\paragraph{Limites actuelles}
 
-Le rappel reste faible, principalement par manque de données annotées et par convergence incomplète (la perte d'entraînement n'est pas encore en plateau). Les pistes prioritaires pour l'équipe suivante sont : annoter les images restantes — idéalement en s'appuyant sur \texttt{best.pt} pour une pré-annotation automatique (\textit{pseudo-labeling}) — et développer un pipeline d'inférence par tiling sur images complètes pour intégrer ce modèle au flux de traitement du robot.
+Le rappel reste faible, principalement par manque de données annotées et par convergence incomplète (la perte d'entraînement n'est pas encore en plateau). Ces résultats constituent néanmoins une première base fonctionnelle pour un modèle 360°, développé dans le cadre du temps imparti à ce projet.
+
 
 \subsection{Association image/position sur carte}
 
