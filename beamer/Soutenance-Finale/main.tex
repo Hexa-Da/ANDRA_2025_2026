@@ -101,9 +101,52 @@
         \begin{figure}
             \centering
             \includegraphics[width=0.75\textwidth]{images/avant.JPG}
-            \caption{Robot dans sa configuration finale}
+            \caption{Robot dans sa configuration initiale}
         \end{figure}
     \end{columns}
+\end{frame}
+
+% ============================================================
+\section{Cadrage du projet}
+% ============================================================
+
+\begin{frame}{Cadrage initial}
+    \begin{columns}[T]
+        \column{0.5\textwidth}
+        \textbf{Contexte de reprise}
+        \begin{itemize}
+            \item Projet transmis entre année depuis 6 ans.
+            \item Ressources récupérées, équipe 2024-2025 : GitHub (stack ROS2), Drive (YOLO PTZ)
+            \item Contrainte de départ : image système perdue $\Rightarrow$ reconfiguration complète du robot et de ses capteurs.
+        \end{itemize}
+        \column{0.5\textwidth}
+        \textbf{Organisation de l'équipe}
+        \begin{itemize}
+            \item \textbf{Binôme robotique} (Vincent, PA)\\
+            Drivers, navigation, géolocalisation, séquences PTZ, création de maps
+            \item \textbf{Binôme IA} (Lucas, Adrien)\\
+            Datasets, annotation, modèles YOLO, TensorRT, rapport sur les fissures.
+        \end{itemize}
+    \end{columns}
+    \begin{table}
+        \centering
+        \small
+        \begin{tabular}{|l|l|p{8.5cm}|}
+            \hline
+            \textbf{Jalon} & \textbf{Date} & \textbf{Objectif visé à l'échéance} \\
+            \hline
+            Démarrage officiel & Nov 2025 & Prise en main du robot et reprise des résultats 2024-2025 \\
+            \hline
+            Soutenance mi-parcours & 23 Janv & Bilan S1 : infra opérationnelle, workflow équipe \\
+            \hline
+            1\textsuperscript{ère} descente & 6 Fév & Validation système en galerie + dataset caméra 360° \\
+            \hline
+            2\textsuperscript{ème} descente & 10 Avr & Navigation autonome et cartographie terrain \\
+            \hline
+            Soutenance finale & 12 Juin & Robot en patrouille : détection + position sur carte \\
+            \hline
+        \end{tabular}
+    \end{table}
 \end{frame}
 
 \begin{frame}{État de l'art — Détection de fissures}
@@ -179,8 +222,8 @@
         \column{0.42\textwidth}
         \begin{figure}
             \centering
-            \includegraphics[width=0.8\textwidth]{chipset_lidar.jpg}
-            \caption{Port micro-USB arraché }
+            \includegraphics[width=0.75\textwidth]{premier_descente.jpg}
+            \caption{Première descente}
         \end{figure}
     \end{columns}
 \end{frame}
@@ -191,23 +234,49 @@
 
 \begin{frame}{S2 — Résolution du problème LiDAR}
     \begin{columns}
-        \column{0.6\textwidth}
+        \column{0.5\textwidth}
         \begin{block}{Correction matérielle}
             Branchement de secours via \textbf{USB-C}.\\
             Port série : \texttt{/dev/ttyTHS1} → \texttt{/dev/ttyUSB0}.
         \end{block}
         \begin{block}{Correction logicielle}
-            Mauvais fichier de configuration \texttt{G4.yaml} → adoption du fichier officiel \textbf{\texttt{TG.yaml}} (spécifique au TG15).
+            Mauvais fichier de configuration \texttt{G4.yaml} → adoption du fichier officiel \textbf{\texttt{TG.yaml}}.
         \end{block}
         \vspace{0.3cm}
-        \textbf{Résultat :} Scan 360° fonctionnel dès le 18 février 2026. Navigation AMCL et cartographie SLAM désormais possibles.
+        \textbf{Résultat :} Scan 360° fonctionnel depuis le 18 février 2026. Navigation AMCL et cartographie SLAM désormais possibles.
         \column{0.4\textwidth}
         \begin{figure}
             \centering
-            \includegraphics[width=0.85\textwidth]{images/chipset_lidar_repare.jpg}
-            \caption{Carte Radar\_Con réparée}
+            \begin{minipage}[t]{0.47225\columnwidth}
+                \centering
+                \includegraphics[width=\linewidth]{chipset_lidar.jpg}\\
+                \scriptsize Avant
+            \end{minipage}\hfill
+            \begin{minipage}[t]{0.52775\columnwidth}
+                \centering
+                \includegraphics[width=\linewidth]{chipset_lidar_repare.jpg}\\
+                \scriptsize Après
+            \end{minipage}
+            \caption{Réparation du LiDAR}
         \end{figure}
     \end{columns}
+\end{frame}
+
+\begin{frame}{S2 — Reconstruction de l'arbre TF et de l'EKF}
+    \textbf{Symptôme :} trajectoire non planaire dans RViz (visible dès la 1\textsuperscript{ère} descente).
+
+    \vspace{0.3cm}
+    \textbf{Corrections apportées :}
+    \begin{itemize}
+        \item Reprise complète des frames et transformations statiques (distances inter-capteurs).
+        \item Suppression de la frame \texttt{world} (redondante avec \texttt{odom}).
+        \item EKF simplifié : position/vitesse depuis \texttt{/odom\_robot} uniquement ; IMU ZED pour \texttt{vyaw}.
+        \item SLAM Toolbox paramétré avec des frames strictes : \texttt{map} → \texttt{odom} → \texttt{base\_link}.
+    \end{itemize}
+    \vspace{0.2cm}
+    \begin{block}{Résultat}
+        Trajectoire cohérente sur plan horizontale. La navigation AMCL et la cartographie SLAM deviennent donc exploitables. Pilotage du robot depuis RViz possible.
+    \end{block}
 \end{frame}
 
 \begin{frame}{S2 — Optimisation IA : TensorRT \& Docker}
@@ -230,23 +299,6 @@
         \end{tabular}
         \caption{Performances d'inférence sur Jetson Orin Nano (chaîne complète)}
     \end{table}
-\end{frame}
-
-\begin{frame}{S2 — Reconstruction de l'arbre TF et de l'EKF}
-    \textbf{Symptôme :} trajectoire non planaire dans RViz (visible dès la 1\textsuperscript{ère} descente).
-
-    \vspace{0.3cm}
-    \textbf{Corrections apportées :}
-    \begin{itemize}
-        \item Reprise complète des frames et transformations statiques (distances inter-capteurs).
-        \item Suppression de la frame \texttt{world} (redondante avec \texttt{odom}).
-        \item EKF simplifié : position/vitesse depuis \texttt{/odom\_robot} uniquement ; IMU ZED pour \texttt{vyaw}.
-        \item SLAM Toolbox paramétré avec des frames strictes : \texttt{map} → \texttt{odom} → \texttt{base\_link}.
-    \end{itemize}
-    \vspace{0.2cm}
-    \begin{block}{Résultat}
-        Trajectoire cohérente sur plan horizontale. La navigation AMCL et la cartographie SLAM deviennent donc exploitables. Pilotage du robot depuis RViz possible.
-    \end{block}
 \end{frame}
 
 \begin{frame}{S2 — Seconde Descente (10 Avril 2026)}
@@ -399,6 +451,33 @@
     \end{columns}
 \end{frame}
 
+\begin{frame}{Résultats — Acquisition et IA}
+    \begin{columns}
+        \column{0.45\textwidth}
+        \textbf{Chiffres clés :}
+        \begin{itemize}
+            \item \textbf{11 nœuds} opérationnels.
+            \item \textbf{500+} images PTZ capturées ; dataset annoté : \textbf{451}.
+            \item Dataset 360° : \textbf{344} images annotées après redécoupage cubemap.
+            \item Inférence PTZ : \textbf{$\times$4} avec TensorRT.
+            \item Segmentation sur modèle PTZ.
+            \item Modèle 360° YOLOv11s-seg entraîné en laboratoire.
+        \end{itemize}
+        \column{0.25\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\textwidth]{image.jpg}
+            \caption{Image brute}
+        \end{figure}
+        \column{0.25\textwidth}
+        \begin{figure}
+            \centering
+            \includegraphics[width=\textwidth]{detection.jpg}
+            \caption{Détection YOLO}
+        \end{figure}
+    \end{columns}
+\end{frame}
+
 \begin{frame}{S2 — Géolocalisation des Fissures sur Carte}
     \begin{columns}
         \column{0.58\textwidth}
@@ -427,10 +506,6 @@
     \end{columns}
 \end{frame}
 
-% ============================================================
-\section{Résultats}
-% ============================================================
-
 \begin{frame}{Résultats — Cartographie}
     \begin{columns}
         \column{0.55\textwidth}
@@ -448,33 +523,6 @@
             \centering
             \includegraphics[width=0.6\textwidth]{ma_carte_2.png}
             \caption{Carte labo TechLab}
-        \end{figure}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{Résultats — Acquisition et IA}
-    \begin{columns}
-        \column{0.45\textwidth}
-        \textbf{Chiffres clés :}
-        \begin{itemize}
-            \item \textbf{11 nœuds} opérationnels.
-            \item \textbf{500+} images PTZ capturées ; dataset annoté : \textbf{451}.
-            \item Dataset 360° : \textbf{344} images annotées après redécoupage cubemap.
-            \item Inférence PTZ : \textbf{$\times$4} avec TensorRT.
-            \item Segmentation activée sur modèle PTZ.
-            \item Modèle 360° YOLOv11s-seg entraîné en laboratoire.
-        \end{itemize}
-        \column{0.25\textwidth}
-        \begin{figure}
-            \centering
-            \includegraphics[width=\textwidth]{image.jpg}
-            \caption{Image brute}
-        \end{figure}
-        \column{0.25\textwidth}
-        \begin{figure}
-            \centering
-            \includegraphics[width=\textwidth]{detection.jpg}
-            \caption{Détection YOLO}
         \end{figure}
     \end{columns}
 \end{frame}
@@ -566,23 +614,28 @@
 \end{frame}
 
 \begin{frame}{Perspectives pour l'équipe 2026-2027}
+    \textbf{\small Court terme :}
+    \begin{itemize}\small
+        \item Affiner les timings PTZ lors des patrouilles autonomes.
+        \item \textbf{Modèle 360° :} intégrer \texttt{best.pt}, pseudo-labeling, améliorer le rappel.
+        \item \textbf{Ré-entraînement PTZ :} sur le dataset consolidé.
+        \item Enrichir \texttt{report\_fissures} : historique inter-rondes.
+    \end{itemize}
+    \vspace{0.75cm}
+    \centering
+    \Large \textbf{Merci de votre attention. Avez-vous des questions ?}
+\end{frame}
+
+\begin{frame}{Perspectives pour l'équipe 2026-2027}
     \begin{columns}
-        \column[t]{0.33\textwidth}
-        \textbf{\small Court terme :}
-        \begin{itemize}\small
-            \item Affiner les timings PTZ lors des patrouilles autonomes.
-            \item \textbf{Modèle 360° :} intégrer \texttt{best.pt}, pseudo-labeling, améliorer le rappel.
-            \item \textbf{Ré-entraînement PTZ :} sur le dataset consolidé.
-            \item Enrichir \texttt{report\_fissures} : historique inter-rondes.
-        \end{itemize}
-        \column[t]{0.33\textwidth}
+        \column[t]{0.48\textwidth}
         \textbf{\small Moyen terme :}
         \begin{itemize}\small
             \item Réduire la dérive (roue voilée, étiquettes ANDRA).
             \item Acquérir une caméra 360° compatible ROS (Insta360 ou équivalent) permanente sur le robot.
             \item Exploiter les cartes existantes du TechLab pour la navigation.
         \end{itemize}
-        \column[t]{0.33\textwidth}
+        \column[t]{0.48\textwidth}
         \textbf{\small Long terme :}
         \begin{itemize}\small
             \item Détection 360° en continu avec inférence en parallèle.
@@ -591,9 +644,6 @@
             \item Planification des missions et remontée automatique des rapports en base.
         \end{itemize}
     \end{columns}
-    \vspace{0.75cm}
-    \centering
-    \Large \textbf{Merci de votre attention. Avez-vous des questions ?}
 \end{frame}
 
 \end{document}
